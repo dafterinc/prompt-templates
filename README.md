@@ -1,38 +1,50 @@
-# sv
+# Prompt Templates
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A web application for building, managing, and generating text prompts with customizable variables for day-to-day usage.
 
-## Creating a project
+## Technologies Used
 
-If you're seeing this, you've probably already done this step. Congrats!
+- [SvelteKit](https://kit.svelte.dev/) - Frontend framework
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [TailwindCSS](https://tailwindcss.com/) - Styling
+- [ShadCN UI](https://shadcn-svelte.com/) - Component library
+- [Supabase](https://supabase.com/) - Backend services (Auth, Database)
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Setup Instructions
 
-# create a new project in my-app
-npx sv create my-app
-```
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Developing
+2. Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Fill in your Supabase credentials
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
+4. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Building for Production
 
-## Building
-
-To create a production version of your app:
+To create a production build:
 
 ```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build with:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+npm run preview
+```
+
+## Features
+
+- Create, edit, and manage prompt templates
+- Define custom variables within templates
+- Generate final text with variables substituted
+- Cloud synchronization with offline support
