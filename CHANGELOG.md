@@ -12,3 +12,5 @@ All notable changes to this project will be documented in this file.
 - Created Supabase client file structure (integration pending)
 - Added environment variable template (.env.example)
 - Updated README.md with setup instructions and project details
+- Created basic component directory structure
+- Implemented styled landing page with Tailwind classes
