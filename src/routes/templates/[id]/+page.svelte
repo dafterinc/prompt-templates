@@ -52,6 +52,7 @@
 	let error = '';
 	let copySuccess = false;
 	let templateSegments: ContentSegment[] = [];
+	let duplicating = false;
 	
 	const templateId = $page.params.id;
 	
@@ -112,6 +113,69 @@
 			error = e.message;
 		} finally {
 			loading = false;
+		}
+	}
+	
+	async function duplicateTemplate() {
+		if (!template) return;
+		
+		try {
+			duplicating = true;
+			error = '';
+			
+			// Get current user's session
+			const { data: { session } } = await supabase.auth.getSession();
+			if (!session) {
+				goto('/auth/login');
+				return;
+			}
+			
+			// Create a new template as a copy of the current one
+			const { data: newTemplate, error: templateError } = await supabase
+				.from('templates')
+				.insert({
+					title: `${template.title} (Copy)`,
+					description: template.description,
+					content: template.content,
+					category_id: template.category?.id || null,
+					user_id: session.user.id
+				})
+				.select()
+				.single();
+			
+			if (templateError) {
+				error = templateError.message;
+				return;
+			}
+			
+			// Duplicate variables for the new template
+			if (variables.length > 0 && newTemplate) {
+				const newVariables = variables.map(variable => ({
+					template_id: newTemplate.id,
+					name: variable.name,
+					description: variable.description,
+					type: variable.type,
+					default_value: variable.default_value,
+					is_required: variable.is_required
+				}));
+				
+				const { error: variablesError } = await supabase
+					.from('variables')
+					.insert(newVariables);
+				
+				if (variablesError) {
+					console.error('Error duplicating variables:', variablesError);
+				}
+			}
+			
+			// Navigate to the new template
+			if (newTemplate) {
+				goto(`/templates/${newTemplate.id}`);
+			}
+		} catch (e: any) {
+			error = e.message || 'Failed to duplicate template';
+		} finally {
+			duplicating = false;
 		}
 	}
 	
@@ -245,6 +309,15 @@
 						<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
 						Copy to Clipboard
 					{/if}
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					on:click={duplicateTemplate}
+					disabled={duplicating}
+				>
+					<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
+					{duplicating ? 'Duplicating...' : 'Duplicate'}
 				</Button>
 				<a href={`/templates/${templateId}/edit`}>
 					<Button variant="secondary" size="sm">Edit Template</Button>
