@@ -10,6 +10,8 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Label } from '$lib/components/ui/label';
+	// Import individual components directly to avoid import errors
+	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
 	
 	interface Template {
 		id: string;
@@ -48,7 +50,6 @@
 	let error = '';
 	let copySuccess = false;
 	let templateSegments: ContentSegment[] = [];
-	let activeVariable: Variable | null = null;
 	
 	const templateId = $page.params.id;
 	
@@ -178,20 +179,10 @@
 		generatedText = text;
 	}
 	
-	// Function to safely handle variables
-	function safeHandleVariableClick(variable: Variable | undefined) {
-		if (variable) {
-			setActiveVariable(variable);
-		}
-	}
-	
-	function handleVariableChange(variable: Variable, value: string) {
-		variableValues[variable.name] = value;
+	// TypeScript safe function to handle variable value changes
+	function handleVariableChange(variableName: string, value: string) {
+		variableValues[variableName] = value;
 		generateText();
-	}
-	
-	function setActiveVariable(variable: Variable | null) {
-		activeVariable = variable;
 	}
 	
 	async function copyToClipboard() {
@@ -267,55 +258,49 @@
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
 						{:else if segment.type === 'variable' && segment.variable}
-							<button 
-								class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
-								on:click={() => safeHandleVariableClick(segment.variable)}
-							>
-								{getVariableDisplayValue(segment.variable)}
-							</button>
+							<Root>
+								<Trigger>
+									<button 
+										class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+									>
+										{getVariableDisplayValue(segment.variable)}
+									</button>
+								</Trigger>
+								<Content class="w-72 p-4">
+									<div class="space-y-2">
+										<Label for={segment.variable.id} class="font-medium">
+											{segment.variable.name}
+											{#if segment.variable.is_required}
+												<span class="text-destructive">*</span>
+											{/if}
+										</Label>
+										
+										{#if segment.variable.description}
+											<p class="text-xs text-muted-foreground mb-2">
+												{segment.variable.description}
+											</p>
+										{/if}
+										
+										{#if segment.variable.type === 'text'}
+											<Input
+												id={segment.variable.id}
+												type="text"
+												value={variableValues[segment.variable.name] || ''}
+												on:input={(e) => handleVariableChange(segment.variable.name, e.currentTarget.value)}
+											/>
+										{:else if segment.variable.type === 'textarea'}
+											<Textarea
+												id={segment.variable.id}
+												value={variableValues[segment.variable.name] || ''}
+												on:input={(e) => handleVariableChange(segment.variable.name, e.currentTarget.value)}
+											/>
+										{/if}
+									</div>
+								</Content>
+							</Root>
 						{/if}
 					{/each}
 				</div>
-				
-				{#if activeVariable}
-					<div class="mt-6 p-4 border border-primary/20 rounded-md bg-primary/5">
-						<div class="flex items-center justify-between mb-2">
-							<Label for={activeVariable.id} class="font-medium text-base">
-								{activeVariable.name}
-								{#if activeVariable.is_required}
-									<span class="text-destructive">*</span>
-								{/if}
-							</Label>
-							<button 
-								class="text-sm text-muted-foreground hover:text-foreground"
-								on:click={() => setActiveVariable(null)}
-							>
-								Close
-							</button>
-						</div>
-						
-						{#if activeVariable.description}
-							<p class="text-sm text-muted-foreground mb-2">
-								{activeVariable.description}
-							</p>
-						{/if}
-						
-						{#if activeVariable.type === 'text'}
-							<Input
-								id={activeVariable.id}
-								type="text"
-								value={variableValues[activeVariable.name] || ''}
-								on:input={(e) => handleVariableChange(activeVariable, e.currentTarget.value)}
-							/>
-						{:else if activeVariable.type === 'textarea'}
-							<Textarea
-								id={activeVariable.id}
-								value={variableValues[activeVariable.name] || ''}
-								on:input={(e) => handleVariableChange(activeVariable, e.currentTarget.value)}
-							/>
-						{/if}
-					</div>
-				{/if}
 			</CardContent>
 		</Card>
 		
