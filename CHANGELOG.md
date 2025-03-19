@@ -30,6 +30,15 @@ All notable changes to this project will be documented in this file.
 - Added protected routes and authentication guards
 - Implemented category management with CRUD operations
 - Added template count tracking per category
+- Created comprehensive landing page with detailed sections:
+  - Hero section with clear value proposition
+  - Features section showcasing core capabilities
+  - Use cases section highlighting common applications
+  - Testimonials section with user feedback
+  - Strong call-to-action section
+  - Added self-hostable/open-source messaging
+- Created static/images directory for future application screenshots
+- Added footer with attribution to Dafter with UTM parameters in the main layout
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -62,8 +71,18 @@ All notable changes to this project will be documented in this file.
 - Created comprehensive ambient.d.ts with complete svelteHTML namespace declarations to resolve "Cannot use namespace 'svelteHTML' as a value" errors in all Svelte components
 - Fixed Vite development server error by replacing require() with import for TailwindCSS in vite.config.ts
 - Fixed template creation error "new row violates row-level security policy for table templates" by adding the user_id field to the template insertion
+- Fixed "ReferenceError: variable_name is not defined" on the landing page by properly escaping template syntax in code examples
+- Fixed Supabase auth session retrieval in layout component to properly handle promises
+- Fixed type error in templates page by updating the Template interface to properly handle null values for variables_count
+- Updated templates page to use Shadcn UI components (Button, Card, CardHeader, CardTitle, CardDescription, CardFooter) for consistent styling
 
 ### Changed
 - Updated UI components to use Tailwind CSS for consistent styling
 - Improved error handling and user feedback throughout the application
 - Enhanced form validation for better user experience
+- Upgraded landing page to use shadcn components (Button, Card, Avatar) for a more polished look
+- Used placeholder design for app screenshot in hero section until actual screenshots are available
+- Removed testimonials section from landing page
+- Updated 'Get Started' button to link to login page
+- Updated GitHub links to point to the correct repository (dafterinc/prompt-templates)
+- Moved Dafter attribution from landing page to main application footer

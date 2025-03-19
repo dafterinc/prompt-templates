@@ -2,6 +2,8 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
 	
 	interface Template {
 		id: string;
@@ -12,7 +14,7 @@
 		updated_at: string;
 		category_id: string | null;
 		categories?: { name: string };
-		variables_count?: number;
+		variables_count?: number | null;
 		category_name?: string;
 	}
 	
@@ -91,12 +93,9 @@
 <div>
 	<div class="flex justify-between items-center mb-6">
 		<h1 class="text-2xl font-bold">My Templates</h1>
-		<button 
-			on:click={handleCreateNew}
-			class="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-		>
+		<Button on:click={handleCreateNew}>
 			Create New Template
-		</button>
+		</Button>
 	</div>
 	
 	{#if error}
@@ -113,36 +112,36 @@
 		<div class="text-center py-12 border rounded-md bg-muted/20">
 			<h2 class="text-xl font-medium mb-2">No templates yet</h2>
 			<p class="text-muted-foreground mb-4">Create your first template to get started</p>
-			<button 
-				on:click={handleCreateNew}
-				class="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-			>
+			<Button on:click={handleCreateNew}>
 				Create New Template
-			</button>
+			</Button>
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#each templates as template}
-				<div class="border rounded-md p-4 transition-shadow hover:shadow-md">
+				<Card>
 					<a href={`/templates/${template.id}`} class="block">
-						<h2 class="text-lg font-medium mb-1 truncate">{template.title}</h2>
-						{#if template.description}
-							<p class="text-muted-foreground text-sm mb-3 line-clamp-2">{template.description}</p>
-						{:else}
-							<p class="text-muted-foreground text-sm italic mb-3">No description</p>
-						{/if}
-						
-						<div class="flex justify-between text-xs text-muted-foreground">
-							<div class="flex gap-2">
-								<span>{template.variables_count} variables</span>
-								{#if template.category_name}
-									<span>• {template.category_name}</span>
-								{/if}
+						<CardHeader>
+							<CardTitle class="truncate">{template.title}</CardTitle>
+							{#if template.description}
+								<CardDescription class="line-clamp-2">{template.description}</CardDescription>
+							{:else}
+								<CardDescription class="italic">No description</CardDescription>
+							{/if}
+						</CardHeader>
+						<CardFooter>
+							<div class="flex justify-between w-full text-xs text-muted-foreground">
+								<div class="flex gap-2">
+									<span>{template.variables_count} variables</span>
+									{#if template.category_name}
+										<span>• {template.category_name}</span>
+									{/if}
+								</div>
+								<span>Updated {formatDate(template.updated_at)}</span>
 							</div>
-							<span>Updated {formatDate(template.updated_at)}</span>
-						</div>
+						</CardFooter>
 					</a>
-				</div>
+				</Card>
 			{/each}
 		</div>
 	{/if}

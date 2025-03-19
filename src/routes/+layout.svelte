@@ -9,8 +9,9 @@
 	
 	onMount(() => {
 		// Get initial auth state
-		const { data } = supabase.auth.getSession();
-		user = data?.session?.user || null;
+		supabase.auth.getSession().then(({ data: sessionData }) => {
+			user = sessionData?.session?.user || null;
+		});
 		
 		// Listen for auth changes
 		const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -63,6 +64,9 @@
 	<footer class="py-4 px-6 border-t text-center text-sm text-muted-foreground">
 		<div class="max-w-7xl mx-auto">
 			<p>© {new Date().getFullYear()} Prompt Templates. All rights reserved.</p>
+			<p class="mt-2">
+				Made with ❤️ by <a href="https://dafterinc.com?utm_source=prompt_templates&utm_medium=footer&utm_campaign=product" class="font-medium underline underline-offset-4 hover:text-primary" target="_blank" rel="noopener noreferrer">Dafter</a>
+			</p>
 		</div>
 	</footer>
 </div>
