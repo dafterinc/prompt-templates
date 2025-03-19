@@ -4,6 +4,7 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	
 	let user: User | null = null;
@@ -32,7 +33,7 @@
 		<nav class="flex justify-between items-center max-w-7xl mx-auto">
 			<a href="/" class="font-bold text-xl">Prompt Templates</a>
 			
-			<div class="flex gap-4">
+			<div class="flex items-center gap-4">
 				<a href="/" class:font-bold={$page.url.pathname === '/'}>
 					<Button variant="ghost" size="sm" class="hover:underline">Home</Button>
 				</a>
@@ -56,6 +57,7 @@
 						<Button variant="ghost" size="sm" class="hover:underline">Register</Button>
 					</a>
 				{/if}
+				<ThemeToggle />
 			</div>
 		</nav>
 	</header>

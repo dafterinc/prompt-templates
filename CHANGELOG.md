@@ -47,6 +47,13 @@ All notable changes to this project will be documented in this file.
   - Implemented popover interface for editing variables inline for better user experience
   - Improved visual highlighting of variables within the template text
   - Created a more minimal and clean user experience for template usage
+- Implemented dark mode support:
+  - Added theme toggle button in the application header
+  - Created ThemeToggle component with light/dark icons
+  - Implemented theme persistence using localStorage
+  - Added system preference detection for initial theme
+  - Updated app.html with inline script to prevent theme flashing
+  - Utilized Tailwind's dark mode class strategy for consistent styling
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
