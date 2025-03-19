@@ -34,6 +34,12 @@
 		value?: string;
 	}
 	
+	interface ContentSegment {
+		type: 'text' | 'variable';
+		content: string;
+		variable?: Variable;
+	}
+	
 	let template: Template | null = null;
 	let variables: Variable[] = [];
 	let variableValues: Record<string, string> = {};
@@ -41,6 +47,8 @@
 	let loading = true;
 	let error = '';
 	let copySuccess = false;
+	let templateSegments: ContentSegment[] = [];
+	let activeVariable: Variable | null = null;
 	
 	const templateId = $page.params.id;
 	
@@ -92,6 +100,9 @@
 				variableValues[variable.name] = variable.default_value || '';
 			});
 			
+			// Parse template content into segments
+			parseTemplateContent();
+			
 			// Generate initial text
 			generateText();
 		} catch (e: any) {
@@ -99,6 +110,58 @@
 		} finally {
 			loading = false;
 		}
+	}
+	
+	function parseTemplateContent() {
+		if (!template) return;
+		
+		const segments: ContentSegment[] = [];
+		let content = template.content;
+		let lastIndex = 0;
+		
+		// Regular expression to find variable placeholders like {{variable_name}}
+		const regex = /\{\{([^}]+)\}\}/g;
+		let match;
+		
+		while ((match = regex.exec(content)) !== null) {
+			const variableName = match[1];
+			const matchedVariable = variables.find(v => v.name === variableName);
+			
+			// Add text before the variable
+			if (match.index > lastIndex) {
+				segments.push({
+					type: 'text',
+					content: content.substring(lastIndex, match.index)
+				});
+			}
+			
+			// Add the variable
+			if (matchedVariable) {
+				segments.push({
+					type: 'variable',
+					content: variableName,
+					variable: matchedVariable
+				});
+			} else {
+				// If variable not found, treat it as text
+				segments.push({
+					type: 'text',
+					content: match[0]
+				});
+			}
+			
+			lastIndex = match.index + match[0].length;
+		}
+		
+		// Add remaining text
+		if (lastIndex < content.length) {
+			segments.push({
+				type: 'text',
+				content: content.substring(lastIndex)
+			});
+		}
+		
+		templateSegments = segments;
 	}
 	
 	function generateText() {
@@ -115,9 +178,20 @@
 		generatedText = text;
 	}
 	
+	// Function to safely handle variables
+	function safeHandleVariableClick(variable: Variable | undefined) {
+		if (variable) {
+			setActiveVariable(variable);
+		}
+	}
+	
 	function handleVariableChange(variable: Variable, value: string) {
 		variableValues[variable.name] = value;
 		generateText();
+	}
+	
+	function setActiveVariable(variable: Variable | null) {
+		activeVariable = variable;
 	}
 	
 	async function copyToClipboard() {
@@ -136,9 +210,15 @@
 		const date = new Date(dateString);
 		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 	}
+	
+	function getVariableDisplayValue(variable: Variable) {
+		const value = variableValues[variable.name];
+		if (!value) return `[${variable.name}]`;
+		return value;
+	}
 </script>
 
-<div>
+<div class="container mx-auto px-4 py-8 max-w-4xl">
 	{#if loading}
 		<div class="flex justify-center py-12">
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -158,9 +238,18 @@
 					<p class="text-muted-foreground mt-1">{template.description}</p>
 				{/if}
 			</div>
-			<a href={`/templates/${templateId}/edit`}>
-				<Button>Edit Template</Button>
-			</a>
+			<div class="flex gap-2">
+				<Button
+					variant="secondary"
+					size="sm"
+					on:click={copyToClipboard}
+				>
+					{copySuccess ? 'Copied!' : 'Copy to Clipboard'}
+				</Button>
+				<a href={`/templates/${templateId}/edit`}>
+					<Button size="sm">Edit Template</Button>
+				</a>
+			</div>
 		</div>
 		
 		{#if template.category}
@@ -171,82 +260,67 @@
 			</div>
 		{/if}
 		
-		<div class="flex flex-col md:flex-row gap-8">
-			<div class="w-full md:w-1/3">
-				<Card>
-					<CardHeader>
-						<CardTitle class="text-lg">Template Variables</CardTitle>
-					</CardHeader>
-					<CardContent>
-						{#if variables.length === 0}
-							<p class="text-muted-foreground">No variables found in this template.</p>
-						{:else}
-							<div class="space-y-4">
-								{#each variables as variable}
-									<div>
-										<Label for={variable.id} class="block mb-1">
-											{variable.name}
-											{#if variable.is_required}
-												<span class="text-destructive">*</span>
-											{/if}
-											{#if variable.description}
-												<span class="text-xs text-muted-foreground block">
-													{variable.description}
-												</span>
-											{/if}
-										</Label>
-										
-										{#if variable.type === 'text'}
-											<Input
-												id={variable.id}
-												type="text"
-												value={variableValues[variable.name] || ''}
-												on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
-											/>
-										{:else if variable.type === 'textarea'}
-											<Textarea
-												id={variable.id}
-												value={variableValues[variable.name] || ''}
-												on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
-											/>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</CardContent>
-					
-					<CardFooter>
-						<div class="text-xs text-muted-foreground w-full">
-							<p>Created: {formatDate(template.created_at)}</p>
-							<p>Last updated: {formatDate(template.updated_at)}</p>
-						</div>
-					</CardFooter>
-				</Card>
-			</div>
-			
-			<div class="w-full md:w-2/3">
-				<Card>
-					<CardHeader>
-						<div class="flex items-center justify-between">
-							<CardTitle class="text-lg">Generated Text</CardTitle>
-							<Button 
-								variant="secondary" 
-								size="sm"
-								on:click={copyToClipboard}
+		<Card class="mb-8">
+			<CardContent class="p-6">
+				<div class="text-xl leading-relaxed whitespace-pre-wrap">
+					{#each templateSegments as segment}
+						{#if segment.type === 'text'}
+							<span>{segment.content}</span>
+						{:else if segment.type === 'variable' && segment.variable}
+							<button 
+								class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+								on:click={() => safeHandleVariableClick(segment.variable)}
 							>
-								{copySuccess ? 'Copied!' : 'Copy to Clipboard'}
-							</Button>
+								{getVariableDisplayValue(segment.variable)}
+							</button>
+						{/if}
+					{/each}
+				</div>
+				
+				{#if activeVariable}
+					<div class="mt-6 p-4 border border-primary/20 rounded-md bg-primary/5">
+						<div class="flex items-center justify-between mb-2">
+							<Label for={activeVariable.id} class="font-medium text-base">
+								{activeVariable.name}
+								{#if activeVariable.is_required}
+									<span class="text-destructive">*</span>
+								{/if}
+							</Label>
+							<button 
+								class="text-sm text-muted-foreground hover:text-foreground"
+								on:click={() => setActiveVariable(null)}
+							>
+								Close
+							</button>
 						</div>
-					</CardHeader>
-					
-					<CardContent>
-						<div class="border rounded-md p-4 whitespace-pre-wrap font-mono bg-muted min-h-[200px]">
-							{generatedText}
-						</div>
-					</CardContent>
-				</Card>
-			</div>
+						
+						{#if activeVariable.description}
+							<p class="text-sm text-muted-foreground mb-2">
+								{activeVariable.description}
+							</p>
+						{/if}
+						
+						{#if activeVariable.type === 'text'}
+							<Input
+								id={activeVariable.id}
+								type="text"
+								value={variableValues[activeVariable.name] || ''}
+								on:input={(e) => handleVariableChange(activeVariable, e.currentTarget.value)}
+							/>
+						{:else if activeVariable.type === 'textarea'}
+							<Textarea
+								id={activeVariable.id}
+								value={variableValues[activeVariable.name] || ''}
+								on:input={(e) => handleVariableChange(activeVariable, e.currentTarget.value)}
+							/>
+						{/if}
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+		
+		<div class="text-sm text-muted-foreground">
+			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
 	{/if}
 </div> 

@@ -41,6 +41,12 @@ All notable changes to this project will be documented in this file.
 - Added footer with attribution to Dafter with UTM parameters in the main layout
 - Added Shadcn components (Input, Label, Alert, Textarea, Badge, Select) using the Shadcn CLI
 - Added svelte-radix package to support Shadcn Select component
+- Redesigned template usage page with a "fill-in-the-blank" style interface:
+  - Changed from a two-column layout to a more focused, reading-oriented design
+  - Implemented interactive variable substitution directly within template content
+  - Replaced problematic popover interface with a dedicated form below the template
+  - Improved visual highlighting of variables within the template text
+  - Created a more minimal and clean user experience for template usage
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -80,6 +86,8 @@ All notable changes to this project will be documented in this file.
 - Fixed "Failed to resolve import 'svelte-radix/CaretSort.svelte'" error by installing the svelte-radix package
 - Fixed Textarea component to use proper styling instead of the rows attribute which caused type errors
 - Fixed 500 internal server error in new template page by replacing the problematic Shadcn Select component with a standard HTML select element
+- Fixed template usage page errors by replacing problematic Popover component with a simpler variable editing interface
+- Fixed TypeScript type errors related to variable handling in the template page
 
 ### Changed
 - Updated UI components to use Tailwind CSS for consistent styling
@@ -94,3 +102,6 @@ All notable changes to this project will be documented in this file.
 - Updated all auth pages (login, register, forgot-password, reset-password) to use Shadcn components for improved UX and consistent design
 - Improved main layout navigation with Shadcn Button components
 - Enhanced template creation, edit, and details pages with Shadcn components for a better user experience and consistent UI
+- Revamped template usage page to use a fill-in-the-blank style form that places content at center stage
+- Replaced popup-based variable editing with a cleaner, more accessible form that appears below the selected variable
+- Improved variable editing workflow with a dedicated editing area for each selected variable
