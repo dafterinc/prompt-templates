@@ -1,4 +1,4 @@
-import { fontFamily } from "tailwindcss/defaultTheme";
+const { fontFamily } = require("tailwindcss/defaultTheme");
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -50,7 +50,8 @@ const config = {
 				}
 			},
 			borderColor: {
-				DEFAULT: "hsl(var(--border) / <alpha-value>)"
+				DEFAULT: "hsl(var(--border) / <alpha-value>)", 
+				border: "hsl(var(--border) / <alpha-value>)"
 			},
 			borderRadius: {
 				lg: "var(--radius)",
@@ -62,6 +63,7 @@ const config = {
 			}
 		}
 	},
+	plugins: [require("@tailwindcss/forms")]
 };
 
-export default config;
+module.exports = config;
