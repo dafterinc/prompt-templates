@@ -56,6 +56,12 @@ All notable changes to this project will be documented in this file.
 - Added global TypeScript declarations for Svelte HTML attributes
 - Fixed variable syntax display in template forms to prevent JavaScript errors
 - Improved variable handling in template view for better user experience
+- Enhanced svelteHTML namespace declaration in globals.d.ts with explicit event handlers to resolve "Cannot use namespace 'svelteHTML' as a value" errors
+- Fixed "Cannot use namespace 'svelteHTML' as a value" errors by moving the svelteHTML namespace inside the global declaration in app.d.ts and removing duplicate declaration from globals.d.ts
+- Resolved "Cannot use namespace 'svelteHTML' as a value" errors by creating a proper svelte.JSX namespace in a dedicated declaration file and updating TypeScript configuration
+- Created comprehensive ambient.d.ts with complete svelteHTML namespace declarations to resolve "Cannot use namespace 'svelteHTML' as a value" errors in all Svelte components
+- Fixed Vite development server error by replacing require() with import for TailwindCSS in vite.config.ts
+- Fixed template creation error "new row violates row-level security policy for table templates" by adding the user_id field to the template insertion
 
 ### Changed
 - Updated UI components to use Tailwind CSS for consistent styling

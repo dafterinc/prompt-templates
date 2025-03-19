@@ -29,6 +29,7 @@
 		"@tailwindcss/vite": "^4.0.14",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/svelte": "^5.2.7",
+		"bits-ui": "^0.22.0",
 		"clsx": "^2.1.1",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",

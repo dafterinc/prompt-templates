@@ -1,12 +1,6 @@
 /// <reference types="svelte" />
 /// <reference types="@sveltejs/kit" />
 
-declare namespace svelteHTML {
-	interface HTMLAttributes<T> {
-		[key: string]: any;
-	}
-}
-
 // Declare module types for SvelteKit modules to fix TypeScript errors
 declare module '$app/stores' {
 	import type { Readable } from 'svelte/store';

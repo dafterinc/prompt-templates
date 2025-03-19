@@ -11,7 +11,12 @@
 		"strict": true,
 		"moduleResolution": "bundler",
 		"types": ["svelte", "node"],
-		"ignoreDeprecations": "5.0"
+		"ignoreDeprecations": "5.0",
+		"jsx": "preserve",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"isolatedModules": true,
+		"verbatimModuleSyntax": false
 	}
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files

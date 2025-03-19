@@ -15,6 +15,7 @@
 	let categories: Category[] = [];
 	let loading = false;
 	let error = '';
+	let userId = '';
 	
 	onMount(() => {
 		checkAuth();
@@ -26,6 +27,8 @@
 		
 		if (!session) {
 			goto('/auth/login');
+		} else {
+			userId = session.user.id;
 		}
 	}
 	
@@ -62,7 +65,8 @@
 					title,
 					description: description || null,
 					content,
-					category_id: categoryId || null
+					category_id: categoryId || null,
+					user_id: userId
 				})
 				.select()
 				.single();
