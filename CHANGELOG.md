@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Implemented template management with listing, creation, and viewing functionality
 - Added template variables extraction and handling in the creation form
 - Created detailed template view with variable substitution and copy to clipboard
+- Implemented template editing with auto-detection of variable changes
+- Added template deletion with confirmation modal
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
