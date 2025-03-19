@@ -26,3 +26,4 @@ vite.config.ts.timestamp-*
 # Project Docs
 .documentation-old
 .documentation-old/*
+CHANGELOG.md
