@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
 - Set up navigation with conditional display based on auth state
 - Updated app.d.ts with proper TypeScript declarations for SvelteKit modules
 - Added global TypeScript declarations for Svelte HTML attributes
+- Implemented template management with listing, creation, and viewing functionality
+- Added template variables extraction and handling in the creation form
+- Created detailed template view with variable substitution and copy to clipboard
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
