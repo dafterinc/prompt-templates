@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	
 	let email = '';
 	let password = '';
@@ -38,56 +43,59 @@
 </script>
 
 <div class="max-w-md mx-auto">
-	<h1 class="text-2xl font-bold mb-6">Log In</h1>
-	
-	{#if error}
-		<div class="bg-destructive/10 text-destructive p-3 rounded-md mb-4">
-			{error}
-		</div>
-	{/if}
-	
-	<form on:submit|preventDefault={handleLogin} class="space-y-4">
-		<div>
-			<label for="email" class="block text-sm font-medium mb-1">Email</label>
-			<input
-				id="email"
-				type="email"
-				bind:value={email}
-				required
-				class="w-full p-2 border rounded-md"
-				placeholder="your@email.com"
-			/>
-		</div>
+	<Card>
+		<CardHeader>
+			<CardTitle>Log In</CardTitle>
+			<CardDescription>Enter your credentials to access your account</CardDescription>
+		</CardHeader>
 		
-		<div>
-			<label for="password" class="block text-sm font-medium mb-1">Password</label>
-			<input
-				id="password"
-				type="password"
-				bind:value={password}
-				required
-				class="w-full p-2 border rounded-md"
-				placeholder="••••••••"
-			/>
-		</div>
+		<CardContent>
+			{#if error}
+				<Alert variant="destructive" class="mb-4">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			{/if}
+			
+			<form on:submit|preventDefault={handleLogin} class="space-y-4">
+				<div class="space-y-2">
+					<Label for="email">Email</Label>
+					<Input
+						id="email"
+						type="email"
+						bind:value={email}
+						required
+						placeholder="your@email.com"
+					/>
+				</div>
+				
+				<div class="space-y-2">
+					<Label for="password">Password</Label>
+					<Input
+						id="password"
+						type="password"
+						bind:value={password}
+						required
+						placeholder="••••••••"
+					/>
+				</div>
+				
+				<Button
+					type="submit"
+					disabled={loading}
+					class="w-full"
+				>
+					{loading ? 'Logging in...' : 'Log In'}
+				</Button>
+			</form>
+		</CardContent>
 		
-		<div>
-			<button
-				type="submit"
-				disabled={loading}
-				class="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md disabled:opacity-70"
-			>
-				{loading ? 'Logging in...' : 'Log In'}
-			</button>
-		</div>
-		
-		<div class="text-center text-sm">
-			<p>
+		<CardFooter class="flex flex-col space-y-2">
+			<div class="text-center text-sm">
 				Don't have an account? <a href="/auth/register" class="text-primary hover:underline">Register</a>
-			</p>
-			<p class="mt-2">
+			</div>
+			<div class="text-center text-sm">
 				<a href="/auth/forgot-password" class="text-primary hover:underline">Forgot password?</a>
-			</p>
-		</div>
-	</form>
+			</div>
+		</CardFooter>
+	</Card>
 </div> 

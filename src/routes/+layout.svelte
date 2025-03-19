@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	
 	let user: User | null = null;
@@ -32,23 +33,27 @@
 			<a href="/" class="font-bold text-xl">Prompt Templates</a>
 			
 			<div class="flex gap-4">
-				<a href="/" class="hover:underline" class:font-bold={$page.url.pathname === '/'}>Home</a>
+				<a href="/" class:font-bold={$page.url.pathname === '/'}>
+					<Button variant="ghost" size="sm" class="hover:underline">Home</Button>
+				</a>
 				{#if user}
-					<a href="/templates" class="hover:underline" class:font-bold={$page.url.pathname.startsWith('/templates')}>
-						My Templates
+					<a href="/templates" class:font-bold={$page.url.pathname.startsWith('/templates')}>
+						<Button variant="ghost" size="sm" class="hover:underline">My Templates</Button>
 					</a>
-					<button 
+					<Button 
+						variant="ghost" 
+						size="sm"
 						on:click={() => supabase.auth.signOut()}
 						class="hover:underline"
 					>
 						Sign Out
-					</button>
+					</Button>
 				{:else}
-					<a href="/auth/login" class="hover:underline" class:font-bold={$page.url.pathname === '/auth/login'}>
-						Login
+					<a href="/auth/login" class:font-bold={$page.url.pathname === '/auth/login'}>
+						<Button variant="ghost" size="sm" class="hover:underline">Login</Button>
 					</a>
-					<a href="/auth/register" class="hover:underline" class:font-bold={$page.url.pathname === '/auth/register'}>
-						Register
+					<a href="/auth/register" class:font-bold={$page.url.pathname === '/auth/register'}>
+						<Button variant="ghost" size="sm" class="hover:underline">Register</Button>
 					</a>
 				{/if}
 			</div>

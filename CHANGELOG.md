@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
   - Added self-hostable/open-source messaging
 - Created static/images directory for future application screenshots
 - Added footer with attribution to Dafter with UTM parameters in the main layout
+- Added Shadcn components (Input, Label, Alert) using the Shadcn CLI
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -86,3 +87,5 @@ All notable changes to this project will be documented in this file.
 - Updated 'Get Started' button to link to login page
 - Updated GitHub links to point to the correct repository (dafterinc/prompt-templates)
 - Moved Dafter attribution from landing page to main application footer
+- Updated all auth pages (login, register, forgot-password, reset-password) to use Shadcn components for improved UX and consistent design
+- Improved main layout navigation with Shadcn Button components

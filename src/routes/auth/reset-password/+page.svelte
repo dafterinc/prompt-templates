@@ -2,6 +2,11 @@
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	
 	let password = '';
 	let confirmPassword = '';
@@ -60,66 +65,75 @@
 </script>
 
 <div class="max-w-md mx-auto">
-	<h1 class="text-2xl font-bold mb-6">Reset Your Password</h1>
-	
-	{#if success}
-		<div class="bg-green-100 text-green-800 p-4 rounded-md mb-4">
-			<p>Your password has been successfully reset!</p>
-			<p class="mt-2">You will be redirected to the login page in a few seconds...</p>
-		</div>
-	{:else if error && error === 'Invalid or expired password reset link'}
-		<div class="bg-destructive/10 text-destructive p-4 rounded-md">
-			<p>{error}</p>
-			<p class="mt-2">Please request a new password reset link.</p>
-		</div>
+	<Card>
+		<CardHeader>
+			<CardTitle>Reset Your Password</CardTitle>
+			<CardDescription>Create a new password for your account</CardDescription>
+		</CardHeader>
 		
-		<div class="text-center mt-4">
-			<a href="/auth/forgot-password" class="text-primary hover:underline">Request New Link</a>
-		</div>
-	{:else}
-		{#if error}
-			<div class="bg-destructive/10 text-destructive p-3 rounded-md mb-4">
-				{error}
-			</div>
-		{/if}
-		
-		<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
-			<div>
-				<label for="password" class="block text-sm font-medium mb-1">New Password</label>
-				<input
-					id="password"
-					type="password"
-					bind:value={password}
-					required
-					class="w-full p-2 border rounded-md"
-					placeholder="••••••••"
-				/>
-				<p class="text-xs text-muted-foreground mt-1">
-					Password must be at least 6 characters
-				</p>
-			</div>
-			
-			<div>
-				<label for="confirmPassword" class="block text-sm font-medium mb-1">Confirm New Password</label>
-				<input
-					id="confirmPassword"
-					type="password"
-					bind:value={confirmPassword}
-					required
-					class="w-full p-2 border rounded-md"
-					placeholder="••••••••"
-				/>
-			</div>
-			
-			<div>
-				<button
-					type="submit"
-					disabled={loading}
-					class="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md disabled:opacity-70"
-				>
-					{loading ? 'Updating...' : 'Update Password'}
-				</button>
-			</div>
-		</form>
-	{/if}
+		<CardContent>
+			{#if success}
+				<Alert variant="default" class="bg-green-100 text-green-800">
+					<AlertDescription>
+						<p>Your password has been successfully reset!</p>
+						<p class="mt-2">You will be redirected to the login page in a few seconds...</p>
+					</AlertDescription>
+				</Alert>
+			{:else if error && error === 'Invalid or expired password reset link'}
+				<Alert variant="destructive">
+					<AlertDescription>
+						<p>{error}</p>
+						<p class="mt-2">Please request a new password reset link.</p>
+					</AlertDescription>
+				</Alert>
+				
+				<div class="text-center mt-4">
+					<a href="/auth/forgot-password">
+						<Button variant="outline">Request New Link</Button>
+					</a>
+				</div>
+			{:else}
+				{#if error}
+					<Alert variant="destructive" class="mb-4">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				{/if}
+				
+				<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
+					<div class="space-y-2">
+						<Label for="password">New Password</Label>
+						<Input
+							id="password"
+							type="password"
+							bind:value={password}
+							required
+							placeholder="••••••••"
+						/>
+						<p class="text-xs text-muted-foreground">
+							Password must be at least 6 characters
+						</p>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="confirmPassword">Confirm New Password</Label>
+						<Input
+							id="confirmPassword"
+							type="password"
+							bind:value={confirmPassword}
+							required
+							placeholder="••••••••"
+						/>
+					</div>
+					
+					<Button
+						type="submit"
+						disabled={loading}
+						class="w-full"
+					>
+						{loading ? 'Updating...' : 'Update Password'}
+					</Button>
+				</form>
+			{/if}
+		</CardContent>
+	</Card>
 </div> 
