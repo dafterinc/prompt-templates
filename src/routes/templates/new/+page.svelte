@@ -8,6 +8,7 @@
 	import { Card, CardContent, CardHeader, CardFooter } from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import * as Dialog from '$lib/components/ui/dialog';
 	
 	interface Category {
 		id: string;
@@ -22,6 +23,13 @@
 	let loading = false;
 	let error = '';
 	let userId = '';
+	
+	// For new category dialog
+	let newCategoryDialogOpen = false;
+	let newCategoryName = '';
+	let newCategoryDescription = '';
+	let savingCategory = false;
+	let categoryError = '';
 	
 	onMount(() => {
 		checkAuth();
@@ -123,6 +131,48 @@
 			loading = false;
 		}
 	}
+	
+	async function createCategory() {
+		if (!newCategoryName.trim()) {
+			categoryError = 'Category name is required';
+			return;
+		}
+		
+		try {
+			savingCategory = true;
+			categoryError = '';
+			
+			const { data, error: insertError } = await supabase
+				.from('categories')
+				.insert({
+					name: newCategoryName.trim(),
+					user_id: userId
+				})
+				.select()
+				.single();
+			
+			if (insertError) {
+				categoryError = insertError.message;
+				return;
+			}
+			
+			// Close dialog and reset values
+			newCategoryDialogOpen = false;
+			newCategoryName = '';
+			newCategoryDescription = '';
+			
+			// Refresh categories and select the new one
+			await fetchCategories();
+			
+			if (data) {
+				categoryId = data.id;
+			}
+		} catch (e: any) {
+			categoryError = e.message || 'Failed to create category';
+		} finally {
+			savingCategory = false;
+		}
+	}
 </script>
 
 <div>
@@ -165,7 +215,17 @@
 				</div>
 				
 				<div class="space-y-2">
-					<Label for="category">Category</Label>
+					<div class="flex items-center justify-between">
+						<Label for="category">Category</Label>
+						<Button 
+							type="button" 
+							variant="outline" 
+							size="sm" 
+							on:click={() => newCategoryDialogOpen = true}
+						>
+							+ New Category
+						</Button>
+					</div>
 					<select
 						id="category"
 						bind:value={categoryId}
@@ -205,4 +265,51 @@
 			</form>
 		</CardContent>
 	</Card>
-</div> 
+</div>
+
+<!-- New Category Dialog -->
+<Dialog.Root bind:open={newCategoryDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Create New Category</Dialog.Title>
+			<Dialog.Description>
+				Add a new category to organize your templates.
+			</Dialog.Description>
+		</Dialog.Header>
+		
+		{#if categoryError}
+			<Alert variant="destructive" class="mb-4">
+				<AlertDescription>{categoryError}</AlertDescription>
+			</Alert>
+		{/if}
+		
+		<div class="space-y-4 py-4">
+			<div class="space-y-2">
+				<Label for="new-category-name">Name *</Label>
+				<Input
+					id="new-category-name"
+					type="text"
+					bind:value={newCategoryName}
+					placeholder="Enter category name"
+					required
+				/>
+			</div>
+		</div>
+		
+		<Dialog.Footer>
+			<Button 
+				variant="outline" 
+				on:click={() => newCategoryDialogOpen = false}
+			>
+				Cancel
+			</Button>
+			<Button 
+				type="button" 
+				disabled={savingCategory || !newCategoryName.trim()}
+				on:click={createCategory}
+			>
+				{savingCategory ? 'Creating...' : 'Create Category'}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root> 
