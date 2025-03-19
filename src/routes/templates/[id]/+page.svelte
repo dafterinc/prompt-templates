@@ -12,6 +12,8 @@
 	import { Label } from '$lib/components/ui/label';
 	// Import individual components directly to avoid import errors
 	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
+	// Import Iconify
+	import Icon from '@iconify/svelte';
 	
 	interface Template {
 		id: string;
@@ -231,14 +233,21 @@
 			</div>
 			<div class="flex gap-2">
 				<Button
-					variant="secondary"
+					variant="default"
 					size="sm"
 					on:click={copyToClipboard}
+					class="font-medium"
 				>
-					{copySuccess ? 'Copied!' : 'Copy to Clipboard'}
+					{#if copySuccess}
+						<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
+						Copied!
+					{:else}
+						<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
+						Copy to Clipboard
+					{/if}
 				</Button>
 				<a href={`/templates/${templateId}/edit`}>
-					<Button size="sm">Edit Template</Button>
+					<Button variant="secondary" size="sm">Edit Template</Button>
 				</a>
 			</div>
 		</div>
@@ -281,18 +290,18 @@
 											</p>
 										{/if}
 										
-										{#if segment.variable.type === 'text'}
+										{#if segment.variable!.type === 'text'}
 											<Input
-												id={segment.variable.id}
+												id={segment.variable!.id}
 												type="text"
-												value={variableValues[segment.variable.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable.name, e.currentTarget.value)}
+												value={variableValues[segment.variable!.name] || ''}
+												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
-										{:else if segment.variable.type === 'textarea'}
+										{:else if segment.variable!.type === 'textarea'}
 											<Textarea
-												id={segment.variable.id}
-												value={variableValues[segment.variable.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable.name, e.currentTarget.value)}
+												id={segment.variable!.id}
+												value={variableValues[segment.variable!.name] || ''}
+												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{/if}
 									</div>
@@ -306,6 +315,23 @@
 		
 		<div class="text-sm text-muted-foreground">
 			<p>Last updated: {formatDate(template.updated_at)}</p>
+		</div>
+		
+		<div class="sticky bottom-8 flex justify-center z-10">
+			<Button
+				variant="default"
+				size="lg"
+				class="shadow-lg px-8 py-6"
+				on:click={copyToClipboard}
+			>
+				{#if copySuccess}
+					<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
+					Copied to Clipboard! ✓
+				{:else}
+					<Icon icon="mdi:content-copy" class="mr-2 h-5 w-5" />
+					Copy to Clipboard
+				{/if}
+			</Button>
 		</div>
 	{/if}
 </div> 

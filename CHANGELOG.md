@@ -54,6 +54,12 @@ All notable changes to this project will be documented in this file.
   - Added system preference detection for initial theme
   - Updated app.html with inline script to prevent theme flashing
   - Utilized Tailwind's dark mode class strategy for consistent styling
+- Enhanced the Copy to Clipboard functionality:
+  - Added a prominent sticky button at the bottom of the template view for easier access
+  - Incorporated Iconify icons for consistent visual language across the application
+  - Improved button styling to make it the primary call-to-action
+  - Added visual confirmation when content is copied successfully
+- Added Iconify for Svelte for consistent, high-quality icons throughout the application
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -95,6 +101,7 @@ All notable changes to this project will be documented in this file.
 - Fixed 500 internal server error in new template page by replacing the problematic Shadcn Select component with a standard HTML select element
 - Fixed template usage page variable editing by implementing proper type-safe popover interfaces
 - Fixed TypeScript type errors related to variable handling in the template page
+- Fixed TypeScript errors in template page by adding non-null assertions for segment.variable
 
 ### Changed
 - Updated UI components to use Tailwind CSS for consistent styling
@@ -112,3 +119,5 @@ All notable changes to this project will be documented in this file.
 - Revamped template usage page to use a fill-in-the-blank style form that places content at center stage
 - Implemented popover interfaces for inline variable editing that appear when clicking on variables
 - Improved the UX for variable editing with contextual popovers that keep users in their reading flow
+- Enhanced the Copy to Clipboard button as primary CTA with improved visibility, positioning, and icon indicators
+- Implemented Iconify icons for better maintainability and consistent visual language across the application
