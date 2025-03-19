@@ -146,7 +146,7 @@
 						.select('name')
 						.eq('template_id', templateId);
 					
-					const existingVarNames = new Set(existingVars?.map(v => v.name) || []);
+					const existingVarNames = new Set((existingVars || []).map((v: any) => v.name));
 					
 					// Find new variables to add
 					const newVars = uniqueVars.filter(name => !existingVarNames.has(name));
@@ -170,7 +170,7 @@
 					}
 					
 					// Find variables to delete (they were in the original but not in the new content)
-					const deletedVars = [...existingVarNames].filter(name => !uniqueVars.includes(name));
+					const deletedVars = Array.from(existingVarNames).filter(name => !uniqueVars.includes(name));
 					
 					if (deletedVars.length > 0) {
 						for (const name of deletedVars) {
@@ -291,7 +291,7 @@
 				<label for="content" class="block text-sm font-medium mb-1">
 					Content *
 					<span class="text-xs font-normal text-muted-foreground">
-						(Use {{variable_name}} syntax to define variables)
+						(Use double curly braces syntax to define variables)
 					</span>
 				</label>
 				<textarea
@@ -300,7 +300,7 @@
 					rows="10"
 					required
 					class="w-full p-2 border rounded-md font-mono"
-					placeholder="Enter template content with {{variables}} placeholders"
+					placeholder="Enter template content with variables enclosed in double curly braces"
 				></textarea>
 			</div>
 			

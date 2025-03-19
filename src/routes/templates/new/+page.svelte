@@ -171,7 +171,7 @@
 			<label for="content" class="block text-sm font-medium mb-1">
 				Content *
 				<span class="text-xs font-normal text-muted-foreground">
-					(Use {{variable_name}} syntax to define variables)
+					(Use double curly braces syntax to define variables)
 				</span>
 			</label>
 			<textarea
@@ -180,7 +180,7 @@
 				rows="10"
 				required
 				class="w-full p-2 border rounded-md font-mono"
-				placeholder="Enter template content with {{variables}} placeholders"
+				placeholder="Enter template content with variables enclosed in double curly braces"
 			></textarea>
 		</div>
 		
