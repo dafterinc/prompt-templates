@@ -60,6 +60,7 @@ All notable changes to this project will be documented in this file.
   - Improved button styling to make it the primary call-to-action
   - Added visual confirmation when content is copied successfully
 - Added Iconify for Svelte for consistent, high-quality icons throughout the application
+- Updated theme toggle to use Iconify icons for better visual consistency
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -121,3 +122,4 @@ All notable changes to this project will be documented in this file.
 - Improved the UX for variable editing with contextual popovers that keep users in their reading flow
 - Enhanced the Copy to Clipboard button as primary CTA with improved visibility, positioning, and icon indicators
 - Implemented Iconify icons for better maintainability and consistent visual language across the application
+- Replaced inline SVG icons with Iconify components in the theme toggle
