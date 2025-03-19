@@ -54,6 +54,7 @@
 		"@supabase/auth-helpers-sveltekit": "^0.13.0",
 		"autoprefixer": "^10.4.19",
 		"postcss": "^8.4.35",
+		"svelte-radix": "^2.0.1",
 		"tailwindcss": "^3.4.1"
 	}
 }

@@ -3,6 +3,12 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Textarea } from '$lib/components/ui/textarea';
 	
 	interface Template {
 		id: string;
@@ -230,113 +236,118 @@
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
 		</div>
 	{:else if error}
-		<div class="bg-destructive/10 text-destructive p-4 rounded-md mb-4">
-			{error}
-		</div>
+		<Alert variant="destructive" class="mb-4">
+			<AlertDescription>{error}</AlertDescription>
+		</Alert>
 	{:else if template}
-		<div class="flex items-center justify-between mb-6">
-			<div class="flex items-center">
-				<a href={`/templates/${templateId}`} class="mr-4 text-muted-foreground hover:text-foreground">
-					&larr; Back to Template
-				</a>
-				<h1 class="text-2xl font-bold">Edit Template</h1>
-			</div>
-			<button 
-				on:click={() => deleteModalOpen = true}
-				class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md"
-			>
-				Delete Template
-			</button>
-		</div>
-		
-		<form on:submit|preventDefault={handleSubmit} class="space-y-4 max-w-2xl">
-			<div>
-				<label for="title" class="block text-sm font-medium mb-1">Title *</label>
-				<input
-					id="title"
-					type="text"
-					bind:value={title}
-					required
-					class="w-full p-2 border rounded-md"
-					placeholder="Enter template title"
-				/>
-			</div>
+		<Card>
+			<CardHeader>
+				<div class="flex items-center justify-between">
+					<div class="flex items-center">
+						<a href={`/templates/${templateId}`} class="mr-4 text-muted-foreground hover:text-foreground">
+							&larr; Back to Template
+						</a>
+						<CardTitle class="text-2xl">Edit Template</CardTitle>
+					</div>
+					<Button 
+						variant="destructive"
+						on:click={() => deleteModalOpen = true}
+					>
+						Delete Template
+					</Button>
+				</div>
+			</CardHeader>
 			
-			<div>
-				<label for="description" class="block text-sm font-medium mb-1">Description</label>
-				<textarea
-					id="description"
-					bind:value={description}
-					rows="3"
-					class="w-full p-2 border rounded-md"
-					placeholder="Enter optional description"
-				></textarea>
-			</div>
-			
-			<div>
-				<label for="category" class="block text-sm font-medium mb-1">Category</label>
-				<select
-					id="category"
-					bind:value={categoryId}
-					class="w-full p-2 border rounded-md"
-				>
-					<option value="">No Category</option>
-					{#each categories as category}
-						<option value={category.id}>{category.name}</option>
-					{/each}
-				</select>
-			</div>
-			
-			<div>
-				<label for="content" class="block text-sm font-medium mb-1">
-					Content *
-					<span class="text-xs font-normal text-muted-foreground">
-						(Use double curly braces syntax to define variables)
-					</span>
-				</label>
-				<textarea
-					id="content"
-					bind:value={content}
-					rows="10"
-					required
-					class="w-full p-2 border rounded-md font-mono"
-					placeholder="Enter template content with variables enclosed in double curly braces"
-				></textarea>
-			</div>
-			
-			<div class="flex justify-end">
-				<button
-					type="submit"
-					disabled={saving}
-					class="px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-70"
-				>
-					{saving ? 'Saving...' : 'Save Changes'}
-				</button>
-			</div>
-		</form>
+			<CardContent>
+				<form on:submit|preventDefault={handleSubmit} class="space-y-6 max-w-2xl">
+					<div class="space-y-2">
+						<Label for="title">Title *</Label>
+						<Input
+							id="title"
+							type="text"
+							bind:value={title}
+							required
+							placeholder="Enter template title"
+						/>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="description">Description</Label>
+						<Textarea
+							id="description"
+							bind:value={description}
+							placeholder="Enter optional description"
+						/>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="category">Category</Label>
+						<select
+							id="category"
+							bind:value={categoryId}
+							class="w-full p-2 border rounded-md"
+						>
+							<option value="">No Category</option>
+							{#each categories as category}
+								<option value={category.id}>{category.name}</option>
+							{/each}
+						</select>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="content">
+							Content *
+							<span class="text-xs font-normal text-muted-foreground">
+								(Use double curly braces syntax to define variables)
+							</span>
+						</Label>
+						<Textarea
+							id="content"
+							bind:value={content}
+							required
+							class="font-mono min-h-[200px]"
+							placeholder="Enter template content with variables enclosed in double curly braces"
+						/>
+					</div>
+					
+					<div class="flex justify-end">
+						<Button
+							type="submit"
+							disabled={saving}
+						>
+							{saving ? 'Saving...' : 'Save Changes'}
+						</Button>
+					</div>
+				</form>
+			</CardContent>
+		</Card>
 	{/if}
 	
 	{#if deleteModalOpen}
 		<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-			<div class="bg-background rounded-lg p-6 max-w-md w-full">
-				<h2 class="text-xl font-bold mb-4">Delete Template</h2>
-				<p class="mb-6">Are you sure you want to delete this template? This action cannot be undone.</p>
-				<div class="flex justify-end gap-3">
-					<button 
+			<Card class="max-w-md w-full">
+				<CardHeader>
+					<CardTitle>Delete Template</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p>Are you sure you want to delete this template? This action cannot be undone.</p>
+				</CardContent>
+				<CardFooter class="flex justify-end gap-3">
+					<Button 
+						variant="outline" 
 						on:click={() => deleteModalOpen = false}
-						class="px-4 py-2 border rounded-md"
 					>
 						Cancel
-					</button>
-					<button 
+					</Button>
+					<Button 
+						variant="destructive"
 						on:click={handleDelete}
 						disabled={saving}
-						class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md disabled:opacity-70"
 					>
 						{saving ? 'Deleting...' : 'Delete Template'}
-					</button>
-				</div>
-			</div>
+					</Button>
+				</CardFooter>
+			</Card>
 		</div>
 	{/if}
 </div> 

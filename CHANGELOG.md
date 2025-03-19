@@ -39,7 +39,8 @@ All notable changes to this project will be documented in this file.
   - Added self-hostable/open-source messaging
 - Created static/images directory for future application screenshots
 - Added footer with attribution to Dafter with UTM parameters in the main layout
-- Added Shadcn components (Input, Label, Alert) using the Shadcn CLI
+- Added Shadcn components (Input, Label, Alert, Textarea, Badge, Select) using the Shadcn CLI
+- Added svelte-radix package to support Shadcn Select component
 
 ### Fixed
 - Fixed incorrect border color utility class in app.css that was causing Tailwind compilation errors
@@ -76,6 +77,9 @@ All notable changes to this project will be documented in this file.
 - Fixed Supabase auth session retrieval in layout component to properly handle promises
 - Fixed type error in templates page by updating the Template interface to properly handle null values for variables_count
 - Updated templates page to use Shadcn UI components (Button, Card, CardHeader, CardTitle, CardDescription, CardFooter) for consistent styling
+- Fixed "Failed to resolve import 'svelte-radix/CaretSort.svelte'" error by installing the svelte-radix package
+- Fixed Textarea component to use proper styling instead of the rows attribute which caused type errors
+- Fixed 500 internal server error in new template page by replacing the problematic Shadcn Select component with a standard HTML select element
 
 ### Changed
 - Updated UI components to use Tailwind CSS for consistent styling
@@ -89,3 +93,4 @@ All notable changes to this project will be documented in this file.
 - Moved Dafter attribution from landing page to main application footer
 - Updated all auth pages (login, register, forgot-password, reset-password) to use Shadcn components for improved UX and consistent design
 - Improved main layout navigation with Shadcn Button components
+- Enhanced template creation, edit, and details pages with Shadcn components for a better user experience and consistent UI

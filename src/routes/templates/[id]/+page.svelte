@@ -3,6 +3,13 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '$lib/components/ui/card';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Label } from '$lib/components/ui/label';
 	
 	interface Template {
 		id: string;
@@ -137,9 +144,9 @@
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
 		</div>
 	{:else if error}
-		<div class="bg-destructive/10 text-destructive p-4 rounded-md mb-4">
-			{error}
-		</div>
+		<Alert variant="destructive" class="mb-4">
+			<AlertDescription>{error}</AlertDescription>
+		</Alert>
 	{:else if template}
 		<div class="flex items-center justify-between mb-6">
 			<div>
@@ -151,90 +158,94 @@
 					<p class="text-muted-foreground mt-1">{template.description}</p>
 				{/if}
 			</div>
-			<a 
-				href={`/templates/${templateId}/edit`}
-				class="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-			>
-				Edit Template
+			<a href={`/templates/${templateId}/edit`}>
+				<Button>Edit Template</Button>
 			</a>
 		</div>
 		
 		{#if template.category}
 			<div class="mb-4">
-				<span class="inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
+				<Badge variant="secondary">
 					{template.category.name}
-				</span>
+				</Badge>
 			</div>
 		{/if}
 		
 		<div class="flex flex-col md:flex-row gap-8">
 			<div class="w-full md:w-1/3">
-				<div class="bg-card rounded-md border p-4">
-					<h2 class="font-semibold mb-4">Template Variables</h2>
+				<Card>
+					<CardHeader>
+						<CardTitle class="text-lg">Template Variables</CardTitle>
+					</CardHeader>
+					<CardContent>
+						{#if variables.length === 0}
+							<p class="text-muted-foreground">No variables found in this template.</p>
+						{:else}
+							<div class="space-y-4">
+								{#each variables as variable}
+									<div>
+										<Label for={variable.id} class="block mb-1">
+											{variable.name}
+											{#if variable.is_required}
+												<span class="text-destructive">*</span>
+											{/if}
+											{#if variable.description}
+												<span class="text-xs text-muted-foreground block">
+													{variable.description}
+												</span>
+											{/if}
+										</Label>
+										
+										{#if variable.type === 'text'}
+											<Input
+												id={variable.id}
+												type="text"
+												value={variableValues[variable.name] || ''}
+												on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
+											/>
+										{:else if variable.type === 'textarea'}
+											<Textarea
+												id={variable.id}
+												value={variableValues[variable.name] || ''}
+												on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
+											/>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</CardContent>
 					
-					{#if variables.length === 0}
-						<p class="text-muted-foreground">No variables found in this template.</p>
-					{:else}
-						<div class="space-y-4">
-							{#each variables as variable}
-								<div>
-									<label for={variable.id} class="block text-sm font-medium mb-1">
-										{variable.name}
-										{#if variable.is_required}
-											<span class="text-destructive">*</span>
-										{/if}
-										{#if variable.description}
-											<span class="text-xs text-muted-foreground block">
-												{variable.description}
-											</span>
-										{/if}
-									</label>
-									
-									{#if variable.type === 'text'}
-										<input
-											id={variable.id}
-											type="text"
-											class="w-full p-2 border rounded-md"
-											value={variableValues[variable.name] || ''}
-											on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
-										/>
-									{:else if variable.type === 'textarea'}
-										<textarea
-											id={variable.id}
-											class="w-full p-2 border rounded-md"
-											rows="3"
-											value={variableValues[variable.name] || ''}
-											on:input={(e) => handleVariableChange(variable, e.currentTarget.value)}
-										></textarea>
-									{/if}
-								</div>
-							{/each}
+					<CardFooter>
+						<div class="text-xs text-muted-foreground w-full">
+							<p>Created: {formatDate(template.created_at)}</p>
+							<p>Last updated: {formatDate(template.updated_at)}</p>
 						</div>
-					{/if}
-				</div>
-				
-				<div class="text-xs text-muted-foreground mt-2">
-					<p>Created: {formatDate(template.created_at)}</p>
-					<p>Last updated: {formatDate(template.updated_at)}</p>
-				</div>
+					</CardFooter>
+				</Card>
 			</div>
 			
 			<div class="w-full md:w-2/3">
-				<div class="bg-card rounded-md border p-4">
-					<div class="flex items-center justify-between mb-4">
-						<h2 class="font-semibold">Generated Text</h2>
-						<button
-							on:click={copyToClipboard}
-							class="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-sm"
-						>
-							{copySuccess ? 'Copied!' : 'Copy to Clipboard'}
-						</button>
-					</div>
+				<Card>
+					<CardHeader>
+						<div class="flex items-center justify-between">
+							<CardTitle class="text-lg">Generated Text</CardTitle>
+							<Button 
+								variant="secondary" 
+								size="sm"
+								on:click={copyToClipboard}
+							>
+								{copySuccess ? 'Copied!' : 'Copy to Clipboard'}
+							</Button>
+						</div>
+					</CardHeader>
 					
-					<div class="border rounded-md p-4 whitespace-pre-wrap font-mono bg-muted min-h-[200px]">
-						{generatedText}
-					</div>
-				</div>
+					<CardContent>
+						<div class="border rounded-md p-4 whitespace-pre-wrap font-mono bg-muted min-h-[200px]">
+							{generatedText}
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	{/if}
