@@ -33,3 +33,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Vite configuration to use correct Tailwind import
 - Added @testing-library/svelte for testing components
 - Fixed testing configuration in vite.config.ts to use proper setup
+- Fixed incorrect props usage in +layout.svelte by replacing $props() with standard Svelte slot
