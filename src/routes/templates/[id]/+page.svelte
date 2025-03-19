@@ -53,6 +53,8 @@
 	let copySuccess = false;
 	let templateSegments: ContentSegment[] = [];
 	let duplicating = false;
+	let deleteModalOpen = false;
+	let deleting = false;
 	
 	const templateId = $page.params.id;
 	
@@ -179,6 +181,42 @@
 		}
 	}
 	
+	async function handleDelete() {
+		try {
+			deleting = true;
+			error = '';
+			
+			// Delete associated variables first
+			const { error: variablesError } = await supabase
+				.from('variables')
+				.delete()
+				.eq('template_id', templateId);
+			
+			if (variablesError) {
+				error = variablesError.message;
+				return;
+			}
+			
+			// Then delete the template
+			const { error: templateError } = await supabase
+				.from('templates')
+				.delete()
+				.eq('id', templateId);
+			
+			if (templateError) {
+				error = templateError.message;
+				return;
+			}
+			
+			// Navigate back to templates list
+			goto('/templates');
+		} catch (e: any) {
+			error = e.message || 'Failed to delete template';
+		} finally {
+			deleting = false;
+		}
+	}
+	
 	function parseTemplateContent() {
 		if (!template) return;
 		
@@ -300,7 +338,7 @@
 					variant="default"
 					size="sm"
 					on:click={copyToClipboard}
-					class="font-medium"
+					class="font-medium min-w-[140px]"
 				>
 					{#if copySuccess}
 						<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
@@ -315,13 +353,29 @@
 					size="sm"
 					on:click={duplicateTemplate}
 					disabled={duplicating}
+					class="min-w-[120px]"
 				>
 					<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
 					{duplicating ? 'Duplicating...' : 'Duplicate'}
 				</Button>
 				<a href={`/templates/${templateId}/edit`}>
-					<Button variant="secondary" size="sm">Edit Template</Button>
+					<Button 
+						variant="secondary" 
+						size="sm"
+						class="min-w-[120px]"
+					>
+						<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
+						Edit Template
+					</Button>
 				</a>
+				<Button
+					variant="destructive"
+					size="sm"
+					on:click={() => deleteModalOpen = true}
+					class="min-w-[40px]"
+				>
+					<Icon icon="mdi:delete" class="h-4 w-4" />
+				</Button>
 			</div>
 		</div>
 		
@@ -405,6 +459,34 @@
 					Copy to Clipboard
 				{/if}
 			</Button>
+		</div>
+	{/if}
+	
+	{#if deleteModalOpen}
+		<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+			<Card class="max-w-md w-full">
+				<CardHeader>
+					<CardTitle>Delete Template</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p>Are you sure you want to delete this template? This action cannot be undone.</p>
+				</CardContent>
+				<CardFooter class="flex justify-end gap-3">
+					<Button 
+						variant="outline" 
+						on:click={() => deleteModalOpen = false}
+					>
+						Cancel
+					</Button>
+					<Button 
+						variant="destructive"
+						on:click={handleDelete}
+						disabled={deleting}
+					>
+						{deleting ? 'Deleting...' : 'Delete Template'}
+					</Button>
+				</CardFooter>
+			</Card>
 		</div>
 	{/if}
 </div> 
