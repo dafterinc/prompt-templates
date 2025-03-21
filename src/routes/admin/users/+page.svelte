@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
@@ -147,10 +148,16 @@
 <div>
 	<div class="flex justify-between items-center mb-6">
 		<h1 class="text-3xl font-bold">User Management</h1>
-		<Button variant="outline" on:click={loadUsers}>
-			<Icon icon="mdi:refresh" class="mr-2 h-4 w-4" />
-			Refresh
-		</Button>
+		<div class="flex gap-2">
+			<Button variant="outline" on:click={() => goto('/admin')}>
+				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
+				Back to Dashboard
+			</Button>
+			<Button variant="outline" on:click={loadUsers}>
+				<Icon icon="mdi:refresh" class="mr-2 h-4 w-4" />
+				Refresh
+			</Button>
+		</div>
 	</div>
 	
 	{#if error}

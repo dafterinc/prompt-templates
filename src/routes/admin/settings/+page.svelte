@@ -5,6 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
 	
 	let saving = false;
@@ -34,15 +35,21 @@
 <div>
 	<div class="flex justify-between items-center mb-6">
 		<h1 class="text-3xl font-bold">Site Settings</h1>
-		<Button on:click={saveSettings} disabled={saving}>
-			{#if saving}
-				<Icon icon="mdi:loading" class="mr-2 h-4 w-4 animate-spin" />
-				Saving...
-			{:else}
-				<Icon icon="mdi:content-save" class="mr-2 h-4 w-4" />
-				Save Changes
-			{/if}
-		</Button>
+		<div class="flex gap-2">
+			<Button variant="outline" on:click={() => goto('/admin')}>
+				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
+				Back to Dashboard
+			</Button>
+			<Button on:click={saveSettings} disabled={saving}>
+				{#if saving}
+					<Icon icon="mdi:loading" class="mr-2 h-4 w-4 animate-spin" />
+					Saving...
+				{:else}
+					<Icon icon="mdi:content-save" class="mr-2 h-4 w-4" />
+					Save Changes
+				{/if}
+			</Button>
+		</div>
 	</div>
 	
 	{#if saveSuccess}

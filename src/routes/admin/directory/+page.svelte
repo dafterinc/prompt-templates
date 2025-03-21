@@ -277,10 +277,14 @@
 	}
 </script>
 
-<div class="container mx-auto py-8">
+<div>
 	<div class="flex justify-between items-center mb-6">
 		<h1 class="text-3xl font-bold">Template Directory Admin</h1>
 		<div class="flex gap-2">
+			<Button on:click={() => goto('/admin')} variant="outline">
+				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
+				Back to Dashboard
+			</Button>
 			<Button on:click={() => newCategoryDialogOpen = true} variant="outline">
 				<Icon icon="mdi:folder-plus" class="mr-2 h-4 w-4" />
 				New Category
@@ -392,6 +396,13 @@
 											</div>
 										</div>
 									</CardHeader>
+									<CardContent class="pt-0">
+										<div class="flex justify-between items-center">
+											<div class="text-sm text-muted-foreground">
+												{templates.filter(t => t.category_id === category.id).length} templates
+											</div>
+										</div>
+									</CardContent>
 								</Card>
 							{/each}
 						</div>
