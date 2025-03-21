@@ -42,7 +42,7 @@
 	// For filtering
 	let searchTerm = '';
 	let selectedCategoryIds: Set<string> = new Set();
-	let showFilters = false;
+	let showSidebar = true;
 	
 	// For new category
 	let newCategoryDialogOpen = false;
@@ -237,28 +237,16 @@
 	}
 </script>
 
-<div>
-	<div class="flex justify-between items-center mb-6">
-		<h1 class="text-2xl font-bold">My Templates</h1>
-		<div class="flex gap-2">
-			<Button 
-				variant="outline" 
-				on:click={() => showFilters = !showFilters}
-			>
-				{showFilters ? 'Hide Filters' : 'Show Filters'}
-			</Button>
-			<Button on:click={handleCreateNew}>
-				Create New Template
-			</Button>
-		</div>
-	</div>
-	
-	{#if showFilters}
-		<div class="mb-6 p-4 bg-muted/20 rounded-md border">
-			<div class="flex items-center gap-4">
-				<div class="relative flex-1">
+<div class="flex min-h-screen">
+	<!-- Sidebar -->
+	<aside class={`border-r bg-muted/10 w-64 flex-shrink-0 ${showSidebar ? 'block' : 'hidden'} md:block transition-all duration-300`}>
+		<div class="p-4 sticky top-0">
+			<div class="mb-6">
+				<h2 class="text-lg font-semibold mb-2">Filters</h2>
+				
+				<!-- Search input -->
+				<div class="relative mb-4">
 					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-						<!-- Search icon (you can replace with an actual icon component) -->
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<circle cx="11" cy="11" r="8"></circle>
 							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -273,121 +261,158 @@
 					/>
 				</div>
 				
-				{#if categories.length > 0}
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger asChild let:builder>
-							<Button 
-								variant="outline" 
-								builders={[builder]}
-							>
-								Categories
-								{#if selectedCategoryIds.size > 0}
-									<span class="ml-1.5 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
-										{selectedCategoryIds.size}
-									</span>
-								{/if}
-							</Button>
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content align="end" class="w-56">
-							<DropdownMenu.Label>Filter by Category</DropdownMenu.Label>
-							<DropdownMenu.Separator />
-							
+				<!-- Categories section -->
+				<div class="mb-4">
+					<div class="flex justify-between items-center mb-2">
+						<h3 class="font-medium text-sm">Categories</h3>
+						<Button 
+							variant="ghost"
+							on:click={() => newCategoryDialogOpen = true}
+							size="icon"
+							class="h-6 w-6"
+							title="Add New Category"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="12" y1="5" x2="12" y2="19"></line>
+								<line x1="5" y1="12" x2="19" y2="12"></line>
+							</svg>
+						</Button>
+					</div>
+					
+					{#if categories.length > 0}
+						<ul class="space-y-1">
 							{#each categories as category}
-								<DropdownMenu.CheckboxItem
-									checked={category.checked}
-									onCheckedChange={() => toggleCategoryFilter(category.id)}
-								>
-									{category.name}
-									<span class="ml-auto text-xs text-muted-foreground">({category.count})</span>
-								</DropdownMenu.CheckboxItem>
+								<li>
+									<button 
+										class="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors {category.checked ? 'bg-muted' : ''}"
+										on:click={() => toggleCategoryFilter(category.id)}
+									>
+										<div class="w-5 h-5 mr-2 flex items-center justify-center border rounded-sm {category.checked ? 'bg-primary border-primary' : 'border-muted-foreground/30'}">
+											{#if category.checked}
+												<Check class="h-3.5 w-3.5 text-primary-foreground" />
+											{/if}
+										</div>
+										<span class="flex-1 truncate">{category.name}</span>
+										<span class="text-xs text-muted-foreground">({category.count})</span>
+									</button>
+								</li>
 							{/each}
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
-				{/if}
+						</ul>
+					{:else}
+						<p class="text-sm text-muted-foreground">No categories available</p>
+					{/if}
+				</div>
 				
-				<Button 
-					variant="outline"
-					on:click={() => newCategoryDialogOpen = true}
-					size="icon"
-					title="Add New Category"
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<line x1="12" y1="5" x2="12" y2="19"></line>
-						<line x1="5" y1="12" x2="19" y2="12"></line>
-					</svg>
-				</Button>
-				
+				<!-- Active filters indicator and clear button -->
 				{#if searchTerm || selectedCategoryIds.size > 0}
-					<Button 
-						variant="ghost"
-						on:click={clearFilters}
-						size="sm"
-					>
-						Clear
-					</Button>
+					<div class="pt-2 border-t">
+						<div class="flex justify-between items-center">
+							<span class="text-sm">Active filters: {selectedCategoryIds.size + (searchTerm ? 1 : 0)}</span>
+							<Button 
+								variant="ghost"
+								on:click={clearFilters}
+								size="sm"
+								class="h-7 px-2 text-xs"
+							>
+								Clear all
+							</Button>
+						</div>
+					</div>
 				{/if}
 			</div>
 		</div>
-	{/if}
+	</aside>
 	
-	{#if error}
-		<Alert variant="destructive" class="mb-4">
-			<AlertDescription>{error}</AlertDescription>
-		</Alert>
-	{/if}
-	
-	{#if loading}
-		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-		</div>
-	{:else if templates.length === 0}
-		<div class="text-center py-12 border rounded-md bg-muted/20">
-			<h2 class="text-xl font-medium mb-2">No templates found</h2>
-			<p class="text-muted-foreground mb-4">
-				{searchTerm || selectedCategoryIds.size > 0 
-					? 'Try adjusting your filters or create a new template'
-					: 'Create your first template to get started'}
-			</p>
-			<div class="flex gap-2 justify-center">
-				{#if searchTerm || selectedCategoryIds.size > 0}
-					<Button variant="outline" on:click={clearFilters}>
-						Clear Filters
+	<!-- Main content -->
+	<main class="flex-1 p-6">
+		<div class="max-w-6xl mx-auto">
+			<div class="flex justify-between items-center mb-6">
+				<div class="flex items-center">
+					<!-- Mobile sidebar toggle -->
+					<Button 
+						variant="ghost" 
+						class="md:hidden mr-2" 
+						size="icon"
+						on:click={() => showSidebar = !showSidebar}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							{#if showSidebar}
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							{:else}
+								<line x1="3" y1="12" x2="21" y2="12"></line>
+								<line x1="3" y1="6" x2="21" y2="6"></line>
+								<line x1="3" y1="18" x2="21" y2="18"></line>
+							{/if}
+						</svg>
 					</Button>
-				{/if}
+					<h1 class="text-2xl font-bold">My Templates</h1>
+				</div>
 				<Button on:click={handleCreateNew}>
 					Create New Template
 				</Button>
 			</div>
-		</div>
-	{:else}
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-			{#each templates as template}
-				<Card>
-					<a href={`/templates/${template.id}`} class="block">
-						<CardHeader>
-							<CardTitle class="truncate">{template.title}</CardTitle>
-							{#if template.description}
-								<CardDescription class="line-clamp-2">{template.description}</CardDescription>
-							{:else}
-								<CardDescription class="italic">No description</CardDescription>
-							{/if}
-						</CardHeader>
-						<CardFooter>
-							<div class="flex justify-between w-full text-xs text-muted-foreground">
-								<div class="flex gap-2">
-									<span>{template.variables_count} variables</span>
-									{#if template.category_name}
-										<span>• {template.category_name}</span>
+			
+			{#if error}
+				<Alert variant="destructive" class="mb-4">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			{/if}
+			
+			{#if loading}
+				<div class="flex justify-center py-12">
+					<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+				</div>
+			{:else if templates.length === 0}
+				<div class="text-center py-12 border rounded-md bg-muted/20">
+					<h2 class="text-xl font-medium mb-2">No templates found</h2>
+					<p class="text-muted-foreground mb-4">
+						{searchTerm || selectedCategoryIds.size > 0 
+							? 'Try adjusting your filters or create a new template'
+							: 'Create your first template to get started'}
+					</p>
+					<div class="flex gap-2 justify-center">
+						{#if searchTerm || selectedCategoryIds.size > 0}
+							<Button variant="outline" on:click={clearFilters}>
+								Clear Filters
+							</Button>
+						{/if}
+						<Button on:click={handleCreateNew}>
+							Create New Template
+						</Button>
+					</div>
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					{#each templates as template}
+						<Card>
+							<a href={`/templates/${template.id}`} class="block">
+								<CardHeader>
+									<CardTitle class="truncate">{template.title}</CardTitle>
+									{#if template.description}
+										<CardDescription class="line-clamp-2">{template.description}</CardDescription>
+									{:else}
+										<CardDescription class="italic">No description</CardDescription>
 									{/if}
-								</div>
-								<span>Updated {formatDate(template.updated_at)}</span>
-							</div>
-						</CardFooter>
-					</a>
-				</Card>
-			{/each}
+								</CardHeader>
+								<CardFooter>
+									<div class="flex justify-between w-full text-xs text-muted-foreground">
+										<div class="flex gap-2">
+											<span>{template.variables_count} variables</span>
+											{#if template.category_name}
+												<span>• {template.category_name}</span>
+											{/if}
+										</div>
+										<span>Updated {formatDate(template.updated_at)}</span>
+									</div>
+								</CardFooter>
+							</a>
+						</Card>
+					{/each}
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</main>
 </div>
 
 <!-- New Category Dialog -->
