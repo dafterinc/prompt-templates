@@ -96,6 +96,27 @@ BEFORE UPDATE ON user_profiles
 FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
 
+-- Enable RLS on user_profiles
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for user_profiles
+CREATE POLICY "Users can view their own profile"
+    ON user_profiles
+    FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile"
+    ON user_profiles
+    FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+-- Replace the recursive policy with a simpler one
+CREATE POLICY "Super admins can view all profiles"
+    ON user_profiles
+    FOR SELECT
+    TO authenticated
+    USING (pg_has_role(auth.uid(), 'authenticated', 'member'));
+
 -- Replace auth.users is_admin references in RLS policies
 
 -- Only allow admins to insert/update/delete
@@ -103,53 +124,80 @@ CREATE POLICY "Allow admin insert to directory_templates"
     ON directory_templates
     FOR INSERT
     TO authenticated
-    WITH CHECK (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin update to directory_templates"
     ON directory_templates
     FOR UPDATE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin delete from directory_templates"
     ON directory_templates
     FOR DELETE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 -- Repeat for other tables
 CREATE POLICY "Allow admin insert to directory_categories"
     ON directory_categories
     FOR INSERT
     TO authenticated
-    WITH CHECK (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin update to directory_categories"
     ON directory_categories
     FOR UPDATE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin delete from directory_categories"
     ON directory_categories
     FOR DELETE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin insert to directory_variables"
     ON directory_variables
     FOR INSERT
     TO authenticated
-    WITH CHECK (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin update to directory_variables"
     ON directory_variables
     FOR UPDATE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 CREATE POLICY "Allow admin delete from directory_variables"
     ON directory_variables
     FOR DELETE
     TO authenticated
-    USING (auth.uid() IN (SELECT id FROM user_profiles WHERE is_admin = true)); 
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    )); 
