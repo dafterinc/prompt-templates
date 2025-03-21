@@ -30,9 +30,10 @@ A powerful web application for building, managing, and generating text prompts w
    npm install
    ```
 
-2. Configure environment variables:
+2. Configure environment variables (IMPORTANT for security):
    - Copy `.env.example` to `.env`
-   - Fill in your Supabase credentials
+   - Add your Supabase credentials to the `.env` file
+   - NEVER commit your `.env` file to version control
 
 3. Start the development server:
    ```bash
