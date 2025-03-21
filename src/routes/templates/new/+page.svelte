@@ -9,6 +9,7 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Select from '$lib/components/ui/select';
 	
 	interface Category {
 		id: string;
@@ -226,16 +227,18 @@
 							+ New Category
 						</Button>
 					</div>
-					<select
-						id="category"
-						bind:value={categoryId}
-						class="w-full p-2 border rounded-md bg-background text-foreground"
-					>
-						<option value="" class="bg-background text-foreground">No Category</option>
-						{#each categories as category}
-							<option value={category.id} class="bg-background text-foreground">{category.name}</option>
-						{/each}
-					</select>
+					<div class="w-full p-0 border rounded-md bg-background text-foreground">
+						<select
+							id="category"
+							bind:value={categoryId}
+							class="w-full p-2 bg-transparent border-0 outline-none focus:ring-0"
+						>
+							<option value="" class="bg-background text-foreground">No Category</option>
+							{#each categories as category}
+								<option value={category.id} class="bg-background text-foreground">{category.name}</option>
+							{/each}
+						</select>
+					</div>
 				</div>
 				
 				<div class="space-y-2">
