@@ -229,11 +229,11 @@
 					<select
 						id="category"
 						bind:value={categoryId}
-						class="w-full p-2 border rounded-md"
+						class="w-full p-2 border rounded-md bg-background text-foreground"
 					>
-						<option value="">No Category</option>
+						<option value="" class="bg-background text-foreground">No Category</option>
 						{#each categories as category}
-							<option value={category.id}>{category.name}</option>
+							<option value={category.id} class="bg-background text-foreground">{category.name}</option>
 						{/each}
 					</select>
 				</div>
