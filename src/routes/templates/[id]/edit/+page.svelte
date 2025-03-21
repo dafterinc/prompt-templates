@@ -286,7 +286,7 @@
 	}
 </script>
 
-<div>
+<div class="container mx-auto px-4 py-6 max-w-4xl">
 	{#if loading}
 		<div class="flex justify-center py-12">
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -298,19 +298,22 @@
 	{:else if template}
 		<Card>
 			<CardHeader>
-				<div class="flex items-center justify-between">
-					<div class="flex items-center">
-						<a href={`/templates/${templateId}`} class="mr-4 text-muted-foreground hover:text-foreground">
-							&larr; Back to Template
+				<div class="flex flex-col gap-4">
+					<div>
+						<a href={`/templates/${templateId}`} class="text-muted-foreground hover:text-foreground inline-flex items-center">
+							&larr; <span class="ml-1">Back to Template</span>
 						</a>
-						<CardTitle class="text-2xl">Edit Template</CardTitle>
 					</div>
-					<Button 
-						variant="destructive"
-						on:click={() => deleteModalOpen = true}
-					>
-						Delete Template
-					</Button>
+					<div class="flex justify-between items-center">
+						<CardTitle class="text-xl sm:text-2xl">Edit Template</CardTitle>
+						<Button 
+							variant="destructive"
+							on:click={() => deleteModalOpen = true}
+							class="hidden sm:inline-flex"
+						>
+							Delete Template
+						</Button>
+					</div>
 				</div>
 			</CardHeader>
 			
@@ -337,7 +340,7 @@
 					</div>
 					
 					<div class="space-y-2">
-						<div class="flex items-center justify-between">
+						<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 							<Label for="category">Category</Label>
 							<Button 
 								type="button" 
@@ -378,12 +381,21 @@
 						/>
 					</div>
 					
-					<div class="flex justify-end">
+					<div class="flex flex-col sm:flex-row justify-end gap-3">
 						<Button
 							type="submit"
 							disabled={saving}
+							class="w-full sm:w-auto"
 						>
 							{saving ? 'Saving...' : 'Save Changes'}
+						</Button>
+						<Button 
+							variant="destructive"
+							type="button"
+							on:click={() => deleteModalOpen = true}
+							class="w-full sm:w-auto sm:hidden"
+						>
+							Delete Template
 						</Button>
 					</div>
 				</form>
@@ -400,10 +412,11 @@
 				<CardContent>
 					<p>Are you sure you want to delete this template? This action cannot be undone.</p>
 				</CardContent>
-				<CardFooter class="flex justify-end gap-3">
+				<CardFooter class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
 					<Button 
 						variant="outline" 
 						on:click={() => deleteModalOpen = false}
+						class="sm:mr-2 w-full sm:w-auto"
 					>
 						Cancel
 					</Button>
@@ -411,6 +424,7 @@
 						variant="destructive"
 						on:click={handleDelete}
 						disabled={saving}
+						class="w-full sm:w-auto"
 					>
 						{saving ? 'Deleting...' : 'Delete Template'}
 					</Button>
@@ -421,7 +435,7 @@
 	
 	<!-- New Category Dialog -->
 	<Dialog.Root bind:open={newCategoryDialogOpen}>
-		<Dialog.Content>
+		<Dialog.Content class="sm:max-w-md">
 			<Dialog.Header>
 				<Dialog.Title>Create New Category</Dialog.Title>
 				<Dialog.Description>
@@ -448,10 +462,11 @@
 				</div>
 			</div>
 			
-			<Dialog.Footer>
+			<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
 				<Button 
 					variant="outline" 
 					on:click={() => newCategoryDialogOpen = false}
+					class="sm:mr-2 w-full sm:w-auto"
 				>
 					Cancel
 				</Button>
@@ -459,6 +474,7 @@
 					type="button" 
 					disabled={savingCategory || !newCategoryName.trim()}
 					on:click={createCategory}
+					class="w-full sm:w-auto"
 				>
 					{savingCategory ? 'Creating...' : 'Create Category'}
 				</Button>

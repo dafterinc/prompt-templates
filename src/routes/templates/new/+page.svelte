@@ -177,14 +177,18 @@
 	}
 </script>
 
-<div>
+<div class="container mx-auto px-4 py-6 max-w-4xl">
 	<Card>
 		<CardHeader>
-			<div class="flex items-center mb-2">
-				<a href="/templates" class="mr-4 text-muted-foreground hover:text-foreground">
-					&larr; Back to Templates
-				</a>
-				<h1 class="text-2xl font-bold">Create New Template</h1>
+			<div class="flex flex-col gap-4">
+				<div>
+					<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+						&larr; <span class="ml-1">Back to Templates</span>
+					</a>
+				</div>
+				<div class="flex justify-between items-center">
+					<h1 class="text-xl sm:text-2xl font-bold">Create New Template</h1>
+				</div>
 			</div>
 		</CardHeader>
 		
@@ -217,7 +221,7 @@
 				</div>
 				
 				<div class="space-y-2">
-					<div class="flex items-center justify-between">
+					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 						<Label for="category">Category</Label>
 						<Button 
 							type="button" 
@@ -262,6 +266,7 @@
 					<Button
 						type="submit"
 						disabled={loading}
+						class="w-full sm:w-auto"
 					>
 						{loading ? 'Creating...' : 'Create Template'}
 					</Button>
@@ -273,7 +278,7 @@
 
 <!-- New Category Dialog -->
 <Dialog.Root bind:open={newCategoryDialogOpen}>
-	<Dialog.Content>
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Create New Category</Dialog.Title>
 			<Dialog.Description>
@@ -300,10 +305,11 @@
 			</div>
 		</div>
 		
-		<Dialog.Footer>
+		<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
 			<Button 
 				variant="outline" 
 				on:click={() => newCategoryDialogOpen = false}
+				class="sm:mr-2 w-full sm:w-auto"
 			>
 				Cancel
 			</Button>
@@ -311,6 +317,7 @@
 				type="button" 
 				disabled={savingCategory || !newCategoryName.trim()}
 				on:click={createCategory}
+				class="w-full sm:w-auto"
 			>
 				{savingCategory ? 'Creating...' : 'Create Category'}
 			</Button>

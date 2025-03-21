@@ -323,59 +323,63 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div class="flex items-center justify-between mb-6">
+		<div class="flex flex-col gap-4 mb-6">
+			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+				<div>
+					<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+						&larr; <span class="ml-1">Back to Templates</span>
+					</a>
+				</div>
+				<div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+					<Button
+						variant="default"
+						size="sm"
+						on:click={copyToClipboard}
+						class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none"
+					>
+						{#if copySuccess}
+							<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
+							Copied!
+						{:else}
+							<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
+							Copy to Clipboard
+						{/if}
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						on:click={duplicateTemplate}
+						disabled={duplicating}
+						class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none"
+					>
+						<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
+						{duplicating ? 'Duplicating...' : 'Duplicate'}
+					</Button>
+					<a href={`/templates/${templateId}/edit`} class="flex-1 sm:flex-none">
+						<Button 
+							variant="secondary" 
+							size="sm"
+							class="min-w-0 sm:min-w-[120px] w-full"
+						>
+							<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
+							Edit Template
+						</Button>
+					</a>
+					<Button
+						variant="destructive"
+						size="sm"
+						on:click={() => deleteModalOpen = true}
+						class="min-w-0 sm:min-w-[40px] aspect-square flex-none"
+					>
+						<Icon icon="mdi:delete" class="h-4 w-4" />
+					</Button>
+				</div>
+			</div>
 			<div>
-				<a href="/templates" class="text-muted-foreground hover:text-foreground">
-					&larr; Back to Templates
-				</a>
-				<h1 class="text-2xl font-bold mt-2">{template.title}</h1>
+				<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
 				{#if template.description}
 					<p class="text-muted-foreground mt-1">{template.description}</p>
 				{/if}
-			</div>
-			<div class="flex gap-2">
-				<Button
-					variant="default"
-					size="sm"
-					on:click={copyToClipboard}
-					class="font-medium min-w-[140px]"
-				>
-					{#if copySuccess}
-						<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
-						Copied!
-					{:else}
-						<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
-						Copy to Clipboard
-					{/if}
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					on:click={duplicateTemplate}
-					disabled={duplicating}
-					class="min-w-[120px]"
-				>
-					<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
-					{duplicating ? 'Duplicating...' : 'Duplicate'}
-				</Button>
-				<a href={`/templates/${templateId}/edit`}>
-					<Button 
-						variant="secondary" 
-						size="sm"
-						class="min-w-[120px]"
-					>
-						<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
-						Edit Template
-					</Button>
-				</a>
-				<Button
-					variant="destructive"
-					size="sm"
-					on:click={() => deleteModalOpen = true}
-					class="min-w-[40px]"
-				>
-					<Icon icon="mdi:delete" class="h-4 w-4" />
-				</Button>
 			</div>
 		</div>
 		
@@ -448,7 +452,7 @@
 			<Button
 				variant="default"
 				size="lg"
-				class="shadow-lg px-8 py-6"
+				class="shadow-lg px-4 sm:px-8 py-6"
 				on:click={copyToClipboard}
 			>
 				{#if copySuccess}
@@ -471,10 +475,11 @@
 				<CardContent>
 					<p>Are you sure you want to delete this template? This action cannot be undone.</p>
 				</CardContent>
-				<CardFooter class="flex justify-end gap-3">
+				<CardFooter class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
 					<Button 
 						variant="outline" 
 						on:click={() => deleteModalOpen = false}
+						class="sm:mr-2 w-full sm:w-auto"
 					>
 						Cancel
 					</Button>
@@ -482,6 +487,7 @@
 						variant="destructive"
 						on:click={handleDelete}
 						disabled={deleting}
+						class="w-full sm:w-auto"
 					>
 						{deleting ? 'Deleting...' : 'Delete Template'}
 					</Button>

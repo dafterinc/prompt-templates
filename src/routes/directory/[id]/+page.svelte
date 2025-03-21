@@ -360,52 +360,56 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div class="flex items-center justify-between mb-6">
+		<div class="flex flex-col gap-4 mb-6">
+			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+				<div>
+					<a href="/directory" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+						&larr; <span class="ml-1">Back to Directory</span>
+					</a>
+				</div>
+				<div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+					<Button
+						variant="default"
+						size="sm"
+						on:click={copyToClipboard}
+						class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none"
+					>
+						{#if copySuccess}
+							<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
+							Copied!
+						{:else}
+							<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
+							Copy to Clipboard
+						{/if}
+					</Button>
+					
+					{#if isAuthenticated}
+						<Button
+							variant="secondary"
+							size="sm"
+							on:click={openAddToCollectionDialog}
+							class="min-w-0 sm:min-w-[160px] flex-1 sm:flex-none"
+						>
+							<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
+							Add to My Collection
+						</Button>
+					{:else}
+						<Button
+							variant="secondary"
+							size="sm"
+							on:click={() => goto('/auth/login')}
+							class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none"
+						>
+							<Icon icon="mdi:login" class="mr-2 h-4 w-4" />
+							Sign In
+						</Button>
+					{/if}
+				</div>
+			</div>
 			<div>
-				<a href="/directory" class="text-muted-foreground hover:text-foreground">
-					&larr; Back to Directory
-				</a>
-				<h1 class="text-2xl font-bold mt-2">{template.title}</h1>
+				<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
 				{#if template.description}
 					<p class="text-muted-foreground mt-1">{template.description}</p>
-				{/if}
-			</div>
-			<div class="flex gap-2">
-				<Button
-					variant="default"
-					size="sm"
-					on:click={copyToClipboard}
-					class="font-medium min-w-[140px]"
-				>
-					{#if copySuccess}
-						<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
-						Copied!
-					{:else}
-						<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
-						Copy to Clipboard
-					{/if}
-				</Button>
-				
-				{#if isAuthenticated}
-					<Button
-						variant="secondary"
-						size="sm"
-						on:click={openAddToCollectionDialog}
-						class="min-w-[160px]"
-					>
-						<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
-						Add to My Collection
-					</Button>
-				{:else}
-					<Button
-						variant="secondary"
-						size="sm"
-						on:click={() => goto('/auth/login')}
-						class="min-w-[120px]"
-					>
-						<Icon icon="mdi:login" class="mr-2 h-4 w-4" />
-						Sign In
-					</Button>
 				{/if}
 			</div>
 		</div>
@@ -476,11 +480,11 @@
 		</div>
 		
 		<div class="sticky bottom-8 flex justify-center z-10">
-			<div class="flex flex-col sm:flex-row gap-3">
+			<div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
 				<Button
 					variant="default"
 					size="lg"
-					class="shadow-lg px-8 py-6"
+					class="shadow-lg px-4 sm:px-8 py-6"
 					on:click={copyToClipboard}
 				>
 					{#if copySuccess}
@@ -496,7 +500,7 @@
 					<Button
 						variant="secondary"
 						size="lg"
-						class="shadow-lg px-8 py-6"
+						class="shadow-lg px-4 sm:px-8 py-6"
 						on:click={openAddToCollectionDialog}
 					>
 						<Icon icon="mdi:plus" class="mr-2 h-5 w-5" />
@@ -506,7 +510,7 @@
 					<Button
 						variant="secondary"
 						size="lg"
-						class="shadow-lg px-8 py-6"
+						class="shadow-lg px-4 sm:px-8 py-6"
 						on:click={() => goto('/auth/login')}
 					>
 						<Icon icon="mdi:login" class="mr-2 h-5 w-5" />
@@ -520,7 +524,7 @@
 
 <!-- Add to Collection Dialog -->
 <Dialog.Root bind:open={addToCollectionDialogOpen}>
-	<Dialog.Content>
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Add to My Collection</Dialog.Title>
 			<Dialog.Description>
@@ -591,11 +595,12 @@
 			</div>
 		{/if}
 		
-		<Dialog.Footer>
+		<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
 			<Button 
 				variant="outline" 
 				on:click={() => addToCollectionDialogOpen = false}
 				disabled={addingToCollection || addToCollectionSuccess}
+				class="sm:mr-2 w-full sm:w-auto"
 			>
 				{addToCollectionSuccess ? 'Close' : 'Cancel'}
 			</Button>
@@ -604,6 +609,7 @@
 					type="button" 
 					disabled={addingToCollection || (createNewCategory && !newCategoryName)}
 					on:click={addToCollection}
+					class="w-full sm:w-auto"
 				>
 					{addingToCollection ? 'Adding...' : 'Add to Collection'}
 				</Button>

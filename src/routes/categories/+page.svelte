@@ -200,12 +200,12 @@
 	}
 </script>
 
-<div>
-	<div class="flex items-center justify-between mb-6">
-		<h1 class="text-2xl font-bold">Categories</h1>
-		<div class="flex">
-			<a href="/templates" class="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
-				Back to Templates
+<div class="container mx-auto px-4 py-6 max-w-6xl">
+	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+		<h1 class="text-xl sm:text-2xl font-bold">Categories</h1>
+		<div>
+			<a href="/templates" class="inline-flex items-center px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
+				&larr; <span class="ml-1">Back to Templates</span>
 			</a>
 		</div>
 	</div>
@@ -216,8 +216,8 @@
 		</div>
 	{/if}
 	
-	<div class="flex flex-col md:flex-row gap-8">
-		<div class="w-full md:w-1/3">
+	<div class="flex flex-col lg:flex-row gap-6">
+		<div class="w-full lg:w-1/3">
 			<div class="bg-card rounded-md border p-4">
 				<h2 class="font-semibold mb-4">Add New Category</h2>
 				<form on:submit|preventDefault={handleCreateCategory} class="space-y-4">
@@ -248,7 +248,7 @@
 						<button
 							type="submit"
 							disabled={saving || !newCategory.name.trim()}
-							class="px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-70"
+							class="w-full sm:w-auto px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-70"
 						>
 							{saving ? 'Creating...' : 'Create Category'}
 						</button>
@@ -257,7 +257,7 @@
 			</div>
 		</div>
 		
-		<div class="w-full md:w-2/3">
+		<div class="w-full lg:w-2/3">
 			{#if loading}
 				<div class="flex justify-center py-12">
 					<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -267,7 +267,7 @@
 					<p class="text-muted-foreground">No categories found. Create your first category to get started.</p>
 				</div>
 			{:else}
-				<div class="bg-card rounded-md border overflow-hidden">
+				<div class="bg-card rounded-md border overflow-hidden overflow-x-auto">
 					<table class="min-w-full divide-y divide-border">
 						<thead class="bg-muted/50">
 							<tr>
@@ -277,7 +277,7 @@
 								<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
 									Templates
 								</th>
-								<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+								<th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
 									Created
 								</th>
 								<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -339,7 +339,7 @@
 										<td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
 											{category.template_count || 0}
 										</td>
-										<td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+										<td class="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
 											{formatDate(category.created_at)}
 										</td>
 										<td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
@@ -372,17 +372,17 @@
 			<div class="bg-background rounded-lg p-6 max-w-md w-full">
 				<h2 class="text-xl font-bold mb-4">Delete Category</h2>
 				<p class="mb-6">Are you sure you want to delete the category "{categoryToDelete.name}"? This action cannot be undone.</p>
-				<div class="flex justify-end gap-3">
+				<div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
 					<button 
 						on:click={() => { deleteModalOpen = false; categoryToDelete = null; }}
-						class="px-4 py-2 border rounded-md"
+						class="px-4 py-2 border rounded-md w-full sm:w-auto"
 					>
 						Cancel
 					</button>
 					<button 
 						on:click={handleDeleteCategory}
 						disabled={saving}
-						class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md disabled:opacity-70"
+						class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md disabled:opacity-70 w-full sm:w-auto"
 					>
 						{saving ? 'Deleting...' : 'Delete Category'}
 					</button>
