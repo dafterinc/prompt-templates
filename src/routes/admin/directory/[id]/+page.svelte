@@ -327,7 +327,9 @@
 			await fetchCategories();
 			
 			if (data) {
-				template.category_id = data.id;
+				if (template) {
+					template.category_id = data.id;
+				}
 			}
 		} catch (e: any) {
 			categoryError = getUserFriendlyErrorMessage(e);
