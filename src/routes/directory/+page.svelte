@@ -328,11 +328,11 @@
 			{:else}
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					{#each templates as template}
-						<Card class={template.featured ? 'border-primary/50 shadow-md' : ''}>
+						<Card>
 							<a href={`/directory/${template.id}`} class="block">
 								<CardHeader>
 									{#if template.featured}
-										<div class="flex justify-end mb-1">
+										<div class="flex mb-1">
 											<span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Featured</span>
 										</div>
 									{/if}
@@ -361,4 +361,4 @@
 			{/if}
 		</div>
 	</main>
-</div> 
+</div>
