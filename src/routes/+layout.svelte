@@ -52,6 +52,10 @@
 			</a>
 			
 			<div class="flex items-center gap-4">
+				<a href="/directory" class:font-bold={$page.url.pathname.startsWith('/directory')}>
+					<Button variant="ghost" size="sm" class="hover:underline">Template Directory</Button>
+				</a>
+				
 				{#if user}
 					{#if isHomepage}
 						<a href="/templates">

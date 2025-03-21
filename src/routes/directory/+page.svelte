@@ -1,0 +1,364 @@
+<script lang="ts">
+	import { supabase } from '$lib/supabase';
+	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import Check from "svelte-radix/Check.svelte";
+	import Icon from '@iconify/svelte';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	
+	interface Template {
+		id: string;
+		title: string;
+		description: string | null;
+		content: string;
+		created_at: string;
+		updated_at: string;
+		category_id: string | null;
+		categories?: { name: string };
+		directory_categories?: { name: string };
+		variables_count?: number | null;
+		category_name?: string;
+		featured?: boolean;
+	}
+	
+	interface Category {
+		id: string;
+		name: string;
+		count?: number;
+		checked?: boolean;
+	}
+	
+	let templates: Template[] = [];
+	let allTemplates: Template[] = [];
+	let categories: Category[] = [];
+	let loading = true;
+	let error = '';
+	let isAuthenticated = false;
+	let userId = '';
+	
+	// For filtering
+	let searchTerm = '';
+	let selectedCategoryIds: Set<string> = new Set();
+	let showSidebar = true;
+	
+	onMount(() => {
+		loadTemplates();
+	});
+	
+	async function loadTemplates() {
+		try {
+			// Check if user is authenticated
+			const { data: { session } } = await supabase.auth.getSession();
+			isAuthenticated = !!session;
+			if (session) {
+				userId = session.user.id;
+			}
+			
+			await Promise.all([fetchTemplates(), fetchCategories()]);
+		} catch (e: any) {
+			error = e.message || 'Failed to load templates';
+		} finally {
+			loading = false;
+		}
+	}
+	
+	async function fetchTemplates() {
+		// For directory templates, we only fetch templates marked as public/directory
+		const { data, error: fetchError } = await supabase
+			.from('directory_templates')
+			.select(`
+				*,
+				directory_categories(name)
+			`)
+			.order('featured', { ascending: false })
+			.order('updated_at', { ascending: false });
+		
+		if (fetchError) {
+			error = fetchError.message;
+			return;
+		}
+		
+		// Also fetch variable count for each template
+		if (data) {
+			allTemplates = await Promise.all(
+				data.map(async (template: Template) => {
+					const { count } = await supabase
+						.from('directory_variables')
+						.select('id', { count: 'exact', head: true })
+						.eq('template_id', template.id);
+					
+					return {
+						...template,
+						category_name: template.directory_categories?.name,
+						variables_count: count
+					};
+				})
+			);
+			
+			templates = [...allTemplates];
+		}
+	}
+	
+	async function fetchCategories() {
+		const { data, error: fetchError } = await supabase
+			.from('directory_categories')
+			.select('*')
+			.order('name');
+		
+		if (fetchError) {
+			console.error('Error fetching categories:', fetchError);
+			return;
+		}
+		
+		if (data) {
+			categories = data.map(cat => ({
+				...cat,
+				checked: false,
+				count: 0
+			}));
+			
+			// Count templates in each category
+			if (allTemplates.length > 0) {
+				categories = categories.map(cat => {
+					const count = allTemplates.filter(t => t.category_id === cat.id).length;
+					return { ...cat, count };
+				});
+			}
+		}
+	}
+	
+	function applyFilters() {
+		if (!searchTerm && selectedCategoryIds.size === 0) {
+			templates = [...allTemplates];
+			return;
+		}
+		
+		templates = allTemplates.filter(template => {
+			// Filter by search term
+			const matchesSearch = searchTerm 
+				? template.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+				  (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
+				: true;
+			
+			// Filter by categories
+			const matchesCategory = selectedCategoryIds.size > 0
+				? template.category_id && selectedCategoryIds.has(template.category_id)
+				: true;
+			
+			return matchesSearch && matchesCategory;
+		});
+	}
+	
+	function toggleCategoryFilter(categoryId: string) {
+		if (selectedCategoryIds.has(categoryId)) {
+			selectedCategoryIds.delete(categoryId);
+		} else {
+			selectedCategoryIds.add(categoryId);
+		}
+		
+		// Update the categories list for UI
+		categories = categories.map(cat => ({
+			...cat,
+			checked: selectedCategoryIds.has(cat.id)
+		}));
+		
+		applyFilters();
+	}
+	
+	function clearFilters() {
+		searchTerm = '';
+		selectedCategoryIds.clear();
+		
+		categories = categories.map(cat => ({
+			...cat,
+			checked: false
+		}));
+		
+		templates = [...allTemplates];
+	}
+	
+	function formatDate(dateString: string) {
+		return new Date(dateString).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+</script>
+
+<div class="flex min-h-screen">
+	<!-- Sidebar -->
+	<aside class={`border-r bg-muted/10 w-64 flex-shrink-0 ${showSidebar ? 'block' : 'hidden'} md:block transition-all duration-300`}>
+		<div class="p-4 sticky top-0">
+			<div class="mb-6">
+				<h2 class="text-lg font-semibold mb-2">Filters</h2>
+				
+				<!-- Search input -->
+				<div class="relative mb-4">
+					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="11" cy="11" r="8"></circle>
+							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+						</svg>
+					</div>
+					<Input 
+						type="text" 
+						bind:value={searchTerm} 
+						placeholder="Search templates..."
+						on:input={applyFilters}
+						class="pl-10"
+					/>
+				</div>
+				
+				<!-- Categories section -->
+				<div class="mb-4">
+					<div class="flex justify-between items-center mb-2">
+						<h3 class="font-medium text-sm">Categories</h3>
+					</div>
+					
+					{#if categories.length > 0}
+						<ul class="space-y-1">
+							{#each categories as category}
+								<li>
+									<button 
+										class="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors {category.checked ? 'bg-muted' : ''}"
+										on:click={() => toggleCategoryFilter(category.id)}
+									>
+										<div class="w-5 h-5 mr-2 flex items-center justify-center border rounded-sm {category.checked ? 'bg-primary border-primary' : 'border-muted-foreground/30'}">
+											{#if category.checked}
+												<Check class="h-3.5 w-3.5 text-primary-foreground" />
+											{/if}
+										</div>
+										<span class="flex-1 truncate">{category.name}</span>
+										<span class="text-xs text-muted-foreground">({category.count})</span>
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<p class="text-sm text-muted-foreground">No categories available</p>
+					{/if}
+				</div>
+				
+				<!-- Active filters indicator and clear button -->
+				{#if searchTerm || selectedCategoryIds.size > 0}
+					<div class="pt-2 border-t">
+						<div class="flex justify-between items-center">
+							<span class="text-sm">Active filters: {selectedCategoryIds.size + (searchTerm ? 1 : 0)}</span>
+							<Button 
+								variant="ghost"
+								on:click={clearFilters}
+								size="sm"
+								class="h-7 px-2 text-xs"
+							>
+								Clear all
+							</Button>
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</aside>
+	
+	<!-- Main content -->
+	<main class="flex-1 p-6">
+		<div class="max-w-6xl mx-auto">
+			<div class="flex justify-between items-center mb-6">
+				<div class="flex items-center">
+					<!-- Mobile sidebar toggle -->
+					<Button 
+						variant="ghost" 
+						class="md:hidden mr-2" 
+						size="icon"
+						on:click={() => showSidebar = !showSidebar}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							{#if showSidebar}
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							{:else}
+								<line x1="3" y1="12" x2="21" y2="12"></line>
+								<line x1="3" y1="6" x2="21" y2="6"></line>
+								<line x1="3" y1="18" x2="21" y2="18"></line>
+							{/if}
+						</svg>
+					</Button>
+					<h1 class="text-2xl font-bold">Template Directory</h1>
+				</div>
+				{#if isAuthenticated}
+					<Button on:click={() => goto('/templates')}>
+						My Templates
+					</Button>
+				{:else}
+					<Button on:click={() => goto('/auth/login')}>
+						Sign In
+					</Button>
+				{/if}
+			</div>
+			
+			{#if error}
+				<Alert variant="destructive" class="mb-4">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			{/if}
+			
+			{#if loading}
+				<div class="flex justify-center py-12">
+					<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+				</div>
+			{:else if templates.length === 0}
+				<div class="text-center py-12 border rounded-md bg-muted/20">
+					<h2 class="text-xl font-medium mb-2">No templates found</h2>
+					<p class="text-muted-foreground mb-4">
+						{searchTerm || selectedCategoryIds.size > 0 
+							? 'Try adjusting your filters to find more templates'
+							: 'No templates are available in the directory yet'}
+					</p>
+					{#if searchTerm || selectedCategoryIds.size > 0}
+						<Button variant="outline" on:click={clearFilters}>
+							Clear Filters
+						</Button>
+					{/if}
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					{#each templates as template}
+						<Card class={template.featured ? 'border-primary/50 shadow-md' : ''}>
+							<a href={`/directory/${template.id}`} class="block">
+								<CardHeader>
+									{#if template.featured}
+										<div class="flex justify-end mb-1">
+											<span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Featured</span>
+										</div>
+									{/if}
+									<CardTitle class="truncate">{template.title}</CardTitle>
+									{#if template.description}
+										<CardDescription class="line-clamp-2">{template.description}</CardDescription>
+									{:else}
+										<CardDescription class="italic">No description</CardDescription>
+									{/if}
+								</CardHeader>
+								<CardFooter>
+									<div class="flex justify-between w-full text-xs text-muted-foreground">
+										<div class="flex gap-2">
+											<span>{template.variables_count} variables</span>
+											{#if template.category_name}
+												<span>• {template.category_name}</span>
+											{/if}
+										</div>
+										<span>Updated {formatDate(template.updated_at)}</span>
+									</div>
+								</CardFooter>
+							</a>
+						</Card>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</main>
+</div> 
