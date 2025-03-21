@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 	import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '$lib/components/ui/dropdown-menu';
@@ -10,17 +11,48 @@
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	
 	let user: User | null = null;
+	let isAdmin = false;
+	
+	async function checkAdminStatus(userId: string) {
+		if (!userId) return false;
+		
+		console.log('Checking admin status for user:', userId);
+		
+		const { data, error } = await supabase
+			.from('user_profiles')
+			.select('is_admin')
+			.eq('id', userId)
+			.single();
+			
+		if (error) {
+			console.error('Error checking admin status:', error);
+			return false;
+		}
+		
+		console.log('Admin status check result:', data);
+		return data?.is_admin || false;
+	}
 	
 	onMount(() => {
 		// Get initial auth state
-		supabase.auth.getSession().then(({ data: sessionData }) => {
+		supabase.auth.getSession().then(async ({ data: sessionData }) => {
 			user = sessionData?.session?.user || null;
+			if (user) {
+				isAdmin = await checkAdminStatus(user.id);
+				console.log('User logged in, isAdmin:', isAdmin);
+			}
 		});
 		
 		// Listen for auth changes
 		const { data: authListener } = supabase.auth.onAuthStateChange(
-			(event: AuthChangeEvent, session: Session | null) => {
+			async (event: AuthChangeEvent, session: Session | null) => {
 				user = session?.user || null;
+				if (user) {
+					isAdmin = await checkAdminStatus(user.id);
+					console.log('Auth state changed, isAdmin:', isAdmin);
+				} else {
+					isAdmin = false;
+				}
 			}
 		);
 		
@@ -76,6 +108,11 @@
 						<DropdownMenuContent>
 							<DropdownMenuLabel>My Account</DropdownMenuLabel>
 							<DropdownMenuSeparator />
+							{#if isAdmin}
+								<DropdownMenuItem on:click={() => goto('/admin')}>
+									Admin Dashboard
+								</DropdownMenuItem>
+							{/if}
 							<DropdownMenuItem>Profile</DropdownMenuItem>
 							<DropdownMenuItem>Settings</DropdownMenuItem>
 							<DropdownMenuSeparator />
