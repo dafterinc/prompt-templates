@@ -99,7 +99,7 @@
 		</CardHeader>
 		
 		<CardContent>
-			<Tabs value={activeTab === 'sign-up' ? 'sign-up' : 'sign-in'} onValueChange={(value) => activeTab = value} class="w-full">
+			<Tabs value={activeTab === 'sign-up' ? 'sign-up' : 'sign-in'} onValueChange={(value) => activeTab = value || 'sign-in'} class="w-full">
 				<TabsList class="grid w-full grid-cols-2">
 					<TabsTrigger value="sign-in">Sign In</TabsTrigger>
 					<TabsTrigger value="sign-up">Sign Up</TabsTrigger>
