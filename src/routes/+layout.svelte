@@ -26,6 +26,9 @@
 			authListener?.subscription.unsubscribe();
 		};
 	});
+
+	// Check if we're on the homepage
+	$: isHomepage = $page.url.pathname === '/';
 </script>
 
 <div class="min-h-screen flex flex-col">
@@ -62,10 +65,14 @@
 		</nav>
 	</header>
 	
-	<main class="flex-1 p-6">
-		<div class="max-w-7xl mx-auto">
+	<main class="flex-1 {isHomepage ? '' : 'p-6'}">
+		{#if isHomepage}
 			<slot />
-		</div>
+		{:else}
+			<div class="max-w-7xl mx-auto">
+				<slot />
+			</div>
+		{/if}
 	</main>
 	
 	<footer class="py-4 px-6 border-t text-center text-sm text-muted-foreground">
