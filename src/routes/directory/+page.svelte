@@ -234,8 +234,8 @@
 												<Check class="h-3.5 w-3.5 text-primary-foreground" />
 											{/if}
 										</div>
-										<span class="flex-1 truncate">{category.name}</span>
-										<span class="text-xs text-muted-foreground">({category.count})</span>
+										<span class="flex-1 text-left truncate">{category.name}</span>
+										<span class="text-xs text-muted-foreground ml-1">({category.count})</span>
 									</button>
 								</li>
 							{/each}

@@ -10,6 +10,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Category {
 		id: string;
@@ -153,7 +154,7 @@
 				.single();
 			
 			if (insertError) {
-				categoryError = insertError.message;
+				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
@@ -169,7 +170,7 @@
 				categoryId = data.id;
 			}
 		} catch (e: any) {
-			categoryError = e.message || 'Failed to create category';
+			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
 		}

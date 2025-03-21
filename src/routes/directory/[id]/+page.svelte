@@ -16,6 +16,7 @@
 	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
 	// Import Iconify
 	import Icon from '@iconify/svelte';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Template {
 		id: string;
@@ -283,7 +284,7 @@
 					.single();
 				
 				if (categoryError) {
-					addToCollectionError = categoryError.message;
+					addToCollectionError = getUserFriendlyErrorMessage(categoryError);
 					return;
 				}
 				

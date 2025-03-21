@@ -60,3 +60,24 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+/**
+ * Provides user-friendly messages for database errors
+ */
+export function getUserFriendlyErrorMessage(error: Error | string): string {
+	const message = typeof error === 'string' ? error : error.message;
+	
+	// Handle specific error types
+	if (message.includes('duplicate key value violates unique constraint "categories_name_user_id_key"')) {
+		return 'A category with this name already exists. Please use a different name.';
+	}
+	
+	if (message.includes('duplicate key value violates unique constraint "directory_categories_name_key"')) {
+		return 'A directory category with this name already exists. Please use a different name.';
+	}
+	
+	// Add more error mappings as needed
+	
+	// Return original message if no specific mapping exists
+	return message;
+}

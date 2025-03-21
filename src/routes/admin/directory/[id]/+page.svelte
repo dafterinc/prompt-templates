@@ -12,6 +12,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Template {
 		id: string;
@@ -313,7 +314,7 @@
 				.single();
 			
 			if (insertError) {
-				categoryError = insertError.message;
+				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
@@ -322,11 +323,14 @@
 			newCategoryName = '';
 			newCategoryDescription = '';
 			
-			// Refresh categories list and select the new category
+			// Refresh categories and select the new one
 			await fetchCategories();
-			categoryId = data.id;
+			
+			if (data) {
+				template.category_id = data.id;
+			}
 		} catch (e: any) {
-			categoryError = e.message || 'Failed to create category';
+			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
 		}

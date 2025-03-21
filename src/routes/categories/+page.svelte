@@ -2,6 +2,7 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Category {
 		id: string;
@@ -94,7 +95,7 @@
 				});
 			
 			if (insertError) {
-				error = insertError.message;
+				error = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
@@ -103,7 +104,7 @@
 			newCategory.description = '';
 			await fetchCategories();
 		} catch (e: any) {
-			error = e.message;
+			error = getUserFriendlyErrorMessage(e);
 		} finally {
 			saving = false;
 		}
@@ -128,7 +129,7 @@
 				.eq('id', editingCategory.id);
 			
 			if (updateError) {
-				error = updateError.message;
+				error = getUserFriendlyErrorMessage(updateError);
 				return;
 			}
 			
@@ -136,7 +137,7 @@
 			editingCategory = null;
 			await fetchCategories();
 		} catch (e: any) {
-			error = e.message;
+			error = getUserFriendlyErrorMessage(e);
 		} finally {
 			saving = false;
 		}

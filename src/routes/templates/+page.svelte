@@ -11,6 +11,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Check from "svelte-radix/Check.svelte";
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Template {
 		id: string;
@@ -218,7 +219,7 @@
 				.single();
 			
 			if (insertError) {
-				categoryError = insertError.message;
+				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
@@ -230,7 +231,7 @@
 			// Refresh categories list
 			await fetchCategories();
 		} catch (e: any) {
-			categoryError = e.message || 'Failed to create category';
+			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
 		}
@@ -292,8 +293,8 @@
 												<Check class="h-3.5 w-3.5 text-primary-foreground" />
 											{/if}
 										</div>
-										<span class="flex-1 truncate">{category.name}</span>
-										<span class="text-xs text-muted-foreground">({category.count})</span>
+										<span class="flex-1 text-left truncate">{category.name}</span>
+										<span class="text-xs text-muted-foreground ml-1">({category.count})</span>
 									</button>
 								</li>
 							{/each}

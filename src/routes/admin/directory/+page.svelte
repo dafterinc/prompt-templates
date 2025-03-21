@@ -12,6 +12,7 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Template {
 		id: string;
@@ -136,7 +137,7 @@
 				.single();
 			
 			if (insertError) {
-				categoryError = insertError.message;
+				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
@@ -148,7 +149,7 @@
 			// Refresh categories list
 			await fetchCategories();
 		} catch (e: any) {
-			categoryError = e.message || 'Failed to create category';
+			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
 		}

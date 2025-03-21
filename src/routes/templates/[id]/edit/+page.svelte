@@ -11,6 +11,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
+	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	
 	interface Template {
 		id: string;
@@ -261,23 +262,22 @@
 				.single();
 			
 			if (insertError) {
-				categoryError = insertError.message;
+				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
 			
 			// Close dialog and reset values
 			newCategoryDialogOpen = false;
 			newCategoryName = '';
-			newCategoryDescription = '';
 			
 			// Refresh categories and select the new one
 			await fetchCategories();
 			
 			if (data) {
-				categoryId = data.id;
+				template.category_id = data.id;
 			}
 		} catch (e: any) {
-			categoryError = e.message || 'Failed to create category';
+			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
 		}
