@@ -422,7 +422,7 @@
 			</div>
 		{/if}
 		
-		<Card class="mb-8">
+		<Card class="mb-2">
 			<CardContent class="p-6">
 				<div class="text-xl leading-relaxed whitespace-pre-wrap">
 					{#each templateSegments as segment}
