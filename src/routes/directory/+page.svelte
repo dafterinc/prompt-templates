@@ -191,7 +191,7 @@
 	}
 </script>
 
-<div class="flex min-h-screen">
+<div class="flex">
 	<!-- Sidebar -->
 	<aside class={`border-r bg-muted/10 w-64 flex-shrink-0 ${showSidebar ? 'block' : 'hidden'} md:block transition-all duration-300`}>
 		<div class="p-4 sticky top-0">
