@@ -18,19 +18,32 @@
 		
 		console.log('Checking admin status for user:', userId);
 		
-		const { data, error } = await supabase
-			.from('user_profiles')
-			.select('is_admin')
-			.eq('id', userId)
-			.single();
+		try {
+			// Add timeout protection to prevent stuck requests
+			const timeoutPromise = new Promise((_, reject) => {
+				setTimeout(() => reject(new Error('Admin status check timed out')), 5000);
+			});
 			
-		if (error) {
-			console.error('Error checking admin status:', error);
-			return false;
+			const queryPromise = supabase
+				.from('user_profiles')
+				.select('is_admin')
+				.eq('id', userId)
+				.single();
+				
+			// Race between the query and timeout
+			const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+				
+			if (error) {
+				console.error('Error checking admin status:', error);
+				return false;
+			}
+			
+			console.log('Admin status check result:', data);
+			return data?.is_admin || false;
+		} catch (err) {
+			console.error('Admin check failed:', err);
+			return false; // Default to non-admin on error
 		}
-		
-		console.log('Admin status check result:', data);
-		return data?.is_admin || false;
 	}
 	
 	onMount(() => {
@@ -41,6 +54,11 @@
 				isAdmin = await checkAdminStatus(user.id);
 				console.log('User logged in, isAdmin:', isAdmin);
 			}
+		}).catch(err => {
+			console.error('Session fetch error:', err);
+			// Reset auth state on error
+			user = null;
+			isAdmin = false;
 		});
 		
 		// Listen for auth changes
