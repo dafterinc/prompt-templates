@@ -18,8 +18,9 @@ extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [api.tls]
-# Enable HTTPS endpoints for production
-enabled = true
+# Disabled for local development to avoid HTTPS certificate issues
+# IMPORTANT: Set enabled = true for production deployments for security
+enabled = false
 
 [db]
 # Port to use for the local database URL.
