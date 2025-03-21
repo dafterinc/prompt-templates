@@ -8,10 +8,16 @@
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 	import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '$lib/components/ui/dropdown-menu';
 	import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
+	import * as Sheet from '$lib/components/ui/sheet';
+	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	
 	let user: User | null = null;
 	let isAdmin = false;
+	
+	function closeMenu() {
+		// The sheet will close automatically with Sheet.Root
+	}
 	
 	async function checkAdminStatus(userId: string) {
 		if (!userId) return false;
@@ -101,7 +107,8 @@
 				<span class="font-mono font-bold text-xl">Prompt Templates</span>
 			</a>
 			
-			<div class="flex items-center gap-4">
+			<!-- Desktop navigation -->
+			<div class="hidden md:flex items-center gap-4">
 				<a href="/directory" class:font-bold={$page.url.pathname.startsWith('/directory')}>
 					<Button variant="ghost" size="sm" class="hover:underline">Template Directory</Button>
 				</a>
@@ -145,6 +152,85 @@
 					</a>
 				{/if}
 				<ThemeToggle />
+			</div>
+			
+			<!-- Mobile navigation -->
+			<div class="flex md:hidden items-center gap-2">
+				<ThemeToggle />
+				
+				<Sheet.Root>
+					<Sheet.Trigger asChild let:builder>
+						<Button builders={[builder]} variant="ghost" size="icon">
+							<Icon icon="heroicons:bars-3" width="24" height="24" />
+							<span class="sr-only">Menu</span>
+						</Button>
+					</Sheet.Trigger>
+					<Sheet.Content side="right">
+						<Sheet.Header>
+							<Sheet.Title>Menu</Sheet.Title>
+							<Sheet.Description>
+								Navigate through the application
+							</Sheet.Description>
+						</Sheet.Header>
+						<div class="mt-6">
+							<nav class="flex flex-col gap-4">
+								<a 
+									href="/directory" 
+									class="px-4 py-2 hover:bg-muted rounded-md transition-colors {$page.url.pathname.startsWith('/directory') ? 'font-bold' : ''}"
+								>
+									Template Directory
+								</a>
+								
+								{#if user}
+									<a 
+										href="/templates" 
+										class="px-4 py-2 hover:bg-muted rounded-md transition-colors {$page.url.pathname.startsWith('/templates') ? 'font-bold' : ''}"
+									>
+										My Templates
+									</a>
+									
+									{#if isAdmin}
+										<a 
+											href="/admin" 
+											class="px-4 py-2 hover:bg-muted rounded-md transition-colors {$page.url.pathname.startsWith('/admin') ? 'font-bold' : ''}"
+										>
+											Admin Dashboard
+										</a>
+									{/if}
+									
+									<Button 
+										variant="ghost" 
+										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors"
+									>
+										Profile
+									</Button>
+									
+									<Button 
+										variant="ghost" 
+										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors"
+									>
+										Settings
+									</Button>
+									
+									<Button
+										variant="ghost"
+										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors text-destructive"
+										on:click={() => supabase.auth.signOut()}
+									>
+										Sign Out
+									</Button>
+								{:else}
+									<a 
+										href="/auth/login" 
+										class="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
+									>
+										Sign In
+									</a>
+								{/if}
+							</nav>
+						</div>
+					</Sheet.Content>
+				</Sheet.Root>
 			</div>
 		</nav>
 	</header>
