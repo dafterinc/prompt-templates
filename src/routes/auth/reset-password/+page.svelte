@@ -14,16 +14,17 @@
 	let error = '';
 	let success = false;
 	
-	onMount(() => {
-		// Check if hash fragment exists in URL (this is set by Supabase)
-		if (!window.location.hash) {
-			error = 'Invalid or expired password reset link';
+	onMount(async () => {
+		// Check if we have a session already
+		const { data } = await supabase.auth.getSession();
+		if (!data.session) {
+			error = 'Invalid or expired reset token. Please request a new password reset link.';
 		}
 	});
 	
 	async function handleResetPassword() {
-		if (!password) {
-			error = 'Please enter a new password';
+		if (!password || !confirmPassword) {
+			error = 'Please enter and confirm your new password';
 			return;
 		}
 		
@@ -52,7 +53,7 @@
 			
 			success = true;
 			
-			// Redirect to login after 3 seconds
+			// Redirect after a short delay
 			setTimeout(() => {
 				goto('/auth/login');
 			}, 3000);
@@ -67,73 +68,69 @@
 <div class="max-w-md mx-auto">
 	<Card>
 		<CardHeader>
-			<CardTitle>Reset Your Password</CardTitle>
-			<CardDescription>Create a new password for your account</CardDescription>
+			<CardTitle class="text-center">Reset Your Password</CardTitle>
+			<CardDescription class="text-center">
+				Enter a new password for your account
+			</CardDescription>
 		</CardHeader>
 		
 		<CardContent>
-			{#if success}
-				<Alert variant="default" class="bg-green-100 text-green-800">
-					<AlertDescription>
-						<p>Your password has been successfully reset!</p>
-						<p class="mt-2">You will be redirected to the login page in a few seconds...</p>
-					</AlertDescription>
+			{#if error}
+				<Alert variant="destructive" class="mb-4">
+					<AlertDescription>{error}</AlertDescription>
 				</Alert>
-			{:else if error && error === 'Invalid or expired password reset link'}
-				<Alert variant="destructive">
-					<AlertDescription>
-						<p>{error}</p>
-						<p class="mt-2">Please request a new password reset link.</p>
-					</AlertDescription>
-				</Alert>
-				
-				<div class="text-center mt-4">
-					<a href="/auth/forgot-password">
-						<Button variant="outline">Request New Link</Button>
-					</a>
-				</div>
-			{:else}
-				{#if error}
-					<Alert variant="destructive" class="mb-4">
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				{/if}
-				
-				<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
-					<div class="space-y-2">
-						<Label for="password">New Password</Label>
-						<Input
-							id="password"
-							type="password"
-							bind:value={password}
-							required
-							placeholder="••••••••"
-						/>
-						<p class="text-xs text-muted-foreground">
-							Password must be at least 6 characters
-						</p>
-					</div>
-					
-					<div class="space-y-2">
-						<Label for="confirmPassword">Confirm New Password</Label>
-						<Input
-							id="confirmPassword"
-							type="password"
-							bind:value={confirmPassword}
-							required
-							placeholder="••••••••"
-						/>
-					</div>
-					
-					<Button
-						type="submit"
-						disabled={loading}
-						class="w-full"
-					>
-						{loading ? 'Updating...' : 'Update Password'}
-					</Button>
-				</form>
 			{/if}
+			
+			{#if success}
+				<Alert class="mb-4">
+					<AlertDescription>
+						Your password has been successfully reset! You'll be redirected to the login page shortly.
+					</AlertDescription>
+				</Alert>
+			{/if}
+			
+			<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
+				<div class="space-y-2">
+					<Label for="password">New Password</Label>
+					<Input
+						id="password"
+						type="password"
+						bind:value={password}
+						required
+						placeholder="••••••••"
+						disabled={success || error.includes('Invalid or expired')}
+					/>
+					<p class="text-xs text-muted-foreground">
+						Password must be at least 6 characters
+					</p>
+				</div>
+				
+				<div class="space-y-2">
+					<Label for="confirmPassword">Confirm New Password</Label>
+					<Input
+						id="confirmPassword"
+						type="password"
+						bind:value={confirmPassword}
+						required
+						placeholder="••••••••"
+						disabled={success || error.includes('Invalid or expired')}
+					/>
+				</div>
+				
+				<Button
+					type="submit"
+					disabled={loading || success || error.includes('Invalid or expired')}
+					class="w-full"
+				>
+					{loading ? 'Resetting...' : 'Reset Password'}
+				</Button>
+			</form>
 		</CardContent>
+		
+		<CardFooter class="flex justify-center">
+			<div class="text-center text-sm">
+				Remember your password? <a href="/auth/login" class="text-primary hover:underline">Sign In</a>
+			</div>
+		</CardFooter>
 	</Card>
 </div> 

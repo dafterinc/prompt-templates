@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -8,8 +9,8 @@
 	
 	let email = '';
 	let loading = false;
-	let sent = false;
 	let error = '';
+	let success = false;
 	
 	async function handleResetPassword() {
 		if (!email) {
@@ -20,6 +21,7 @@
 		try {
 			loading = true;
 			error = '';
+			success = false;
 			
 			const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
 				redirectTo: `${window.location.origin}/auth/reset-password`
@@ -30,7 +32,7 @@
 				return;
 			}
 			
-			sent = true;
+			success = true;
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
 		} finally {
@@ -42,61 +44,53 @@
 <div class="max-w-md mx-auto">
 	<Card>
 		<CardHeader>
-			<CardTitle>Reset Password</CardTitle>
-			<CardDescription>Enter your email to receive password reset instructions</CardDescription>
+			<CardTitle class="text-center">Reset Password</CardTitle>
+			<CardDescription class="text-center">
+				Enter your email address and we'll send you a link to reset your password
+			</CardDescription>
 		</CardHeader>
 		
 		<CardContent>
-			{#if sent}
-				<Alert variant="default" class="bg-green-100 text-green-800 mb-4">
+			{#if error}
+				<Alert variant="destructive" class="mb-4">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			{/if}
+			
+			{#if success}
+				<Alert class="mb-4">
 					<AlertDescription>
-						<p>Password reset instructions have been sent to your email.</p>
-						<p class="mt-2">Please check your inbox and follow the link to reset your password.</p>
+						Password reset link sent! Please check your email for further instructions.
 					</AlertDescription>
 				</Alert>
-				
-				<div class="text-center mt-4">
-					<a href="/auth/login">
-						<Button variant="outline">Return to Login</Button>
-					</a>
-				</div>
-			{:else}
-				{#if error}
-					<Alert variant="destructive" class="mb-4">
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				{/if}
-				
-				<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
-					<div class="space-y-2">
-						<Label for="email">Email</Label>
-						<Input
-							id="email"
-							type="email"
-							bind:value={email}
-							required
-							placeholder="your@email.com"
-						/>
-						<p class="text-xs text-muted-foreground">
-							Enter the email address associated with your account
-						</p>
-					</div>
-					
-					<Button
-						type="submit"
-						disabled={loading}
-						class="w-full"
-					>
-						{loading ? 'Sending...' : 'Send Reset Instructions'}
-					</Button>
-				</form>
 			{/if}
+			
+			<form on:submit|preventDefault={handleResetPassword} class="space-y-4">
+				<div class="space-y-2">
+					<Label for="email">Email</Label>
+					<Input
+						id="email"
+						type="email"
+						bind:value={email}
+						required
+						placeholder="your@email.com"
+					/>
+				</div>
+				
+				<Button
+					type="submit"
+					disabled={loading}
+					class="w-full"
+				>
+					{loading ? 'Sending...' : 'Send Reset Link'}
+				</Button>
+			</form>
 		</CardContent>
 		
-		{#if !sent}
-			<CardFooter class="flex justify-center">
-				<a href="/auth/login" class="text-primary hover:underline">Back to Login</a>
-			</CardFooter>
-		{/if}
+		<CardFooter class="flex justify-center">
+			<div class="text-center text-sm">
+				Remember your password? <a href="/auth/login" class="text-primary hover:underline">Sign In</a>
+			</div>
+		</CardFooter>
 	</Card>
 </div> 
