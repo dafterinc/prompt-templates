@@ -142,6 +142,9 @@
 	function applyFilters() {
 		if (!searchTerm && selectedCategoryIds.size === 0) {
 			templates = [...allTemplates];
+			
+			// Reset category counts to original values
+			updateCategoryCounts(allTemplates);
 			return;
 		}
 		
@@ -159,6 +162,16 @@
 			
 			return matchesSearch && matchesCategory;
 		});
+		
+		// Update counts based on filtered templates
+		updateCategoryCounts(templates);
+	}
+	
+	function updateCategoryCounts(templatesList: Template[]) {
+		categories = categories.map(cat => {
+			const count = templatesList.filter(t => t.category_id === cat.id).length;
+			return { ...cat, count, checked: selectedCategoryIds.has(cat.id) };
+		});
 	}
 	
 	function toggleCategoryFilter(categoryId: string) {
@@ -167,12 +180,6 @@
 		} else {
 			selectedCategoryIds.add(categoryId);
 		}
-		
-		// Update the categories list for UI
-		categories = categories.map(cat => ({
-			...cat,
-			checked: selectedCategoryIds.has(cat.id)
-		}));
 		
 		applyFilters();
 	}
@@ -187,6 +194,7 @@
 		}));
 		
 		templates = [...allTemplates];
+		updateCategoryCounts(allTemplates);
 	}
 	
 	function handleCreateNew() {
