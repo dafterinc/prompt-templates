@@ -324,42 +324,37 @@
 		</Alert>
 	{:else if template}
 		<div class="flex flex-col gap-4 mb-6">
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-				<div>
-					<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
-						&larr; <span class="ml-1">Back to Templates</span>
-					</a>
+			<div>
+				<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+					&larr; <span class="ml-1">Back to Templates</span>
+				</a>
+			</div>
+			
+			<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+				<div class="w-full sm:max-w-[60%]">
+					<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
+					{#if template.description}
+						<p class="text-muted-foreground mt-1 text-sm line-clamp-2">{template.description}</p>
+					{/if}
 				</div>
-				<div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
-					<Button
-						variant="default"
-						size="sm"
-						on:click={copyToClipboard}
-						class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none"
-					>
-						{#if copySuccess}
-							<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
-							Copied!
-						{:else}
-							<Icon icon="mdi:content-copy" class="mr-2 h-4 w-4" />
-							Copy to Clipboard
-						{/if}
-					</Button>
+				
+				<!-- Desktop buttons (hidden on mobile) -->
+				<div class="hidden sm:flex flex-wrap gap-2 flex-shrink-0">
 					<Button
 						variant="outline"
 						size="sm"
 						on:click={duplicateTemplate}
 						disabled={duplicating}
-						class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none"
+						class="min-w-[120px] flex-none"
 					>
 						<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
 						{duplicating ? 'Duplicating...' : 'Duplicate'}
 					</Button>
-					<a href={`/templates/${templateId}/edit`} class="flex-1 sm:flex-none">
+					<a href={`/templates/${templateId}/edit`} class="flex-none">
 						<Button 
 							variant="secondary" 
 							size="sm"
-							class="min-w-0 sm:min-w-[120px] w-full"
+							class="min-w-[120px] w-full"
 						>
 							<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
 							Edit Template
@@ -369,17 +364,43 @@
 						variant="destructive"
 						size="sm"
 						on:click={() => deleteModalOpen = true}
-						class="min-w-0 sm:min-w-[40px] aspect-square flex-none"
+						class="min-w-[40px] aspect-square flex-none"
 					>
 						<Icon icon="mdi:delete" class="h-4 w-4" />
 					</Button>
 				</div>
 			</div>
-			<div>
-				<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
-				{#if template.description}
-					<p class="text-muted-foreground mt-1">{template.description}</p>
-				{/if}
+			
+			<!-- Mobile buttons (hidden on desktop) -->
+			<div class="flex sm:hidden flex-wrap gap-2 mt-2">
+				<Button
+					variant="outline"
+					size="sm"
+					on:click={duplicateTemplate}
+					disabled={duplicating}
+					class="flex-1"
+				>
+					<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
+					{duplicating ? 'Duplicating...' : 'Duplicate'}
+				</Button>
+				<a href={`/templates/${templateId}/edit`} class="flex-1">
+					<Button 
+						variant="secondary" 
+						size="sm"
+						class="w-full"
+					>
+						<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
+						Edit Template
+					</Button>
+				</a>
+				<Button
+					variant="destructive"
+					size="sm"
+					on:click={() => deleteModalOpen = true}
+					class="aspect-square flex-none"
+				>
+					<Icon icon="mdi:delete" class="h-4 w-4" />
+				</Button>
 			</div>
 		</div>
 		
@@ -391,7 +412,7 @@
 			</div>
 		{/if}
 		
-		<Card class="mb-8">
+		<Card class="mb-2">
 			<CardContent class="p-6">
 				<div class="text-xl leading-relaxed whitespace-pre-wrap">
 					{#each templateSegments as segment}
@@ -444,7 +465,7 @@
 			</CardContent>
 		</Card>
 		
-		<div class="text-sm text-muted-foreground">
+		<div class="text-sm text-muted-foreground mb-8">
 			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
 		
