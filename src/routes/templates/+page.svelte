@@ -8,6 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Drawer from '$lib/components/ui/drawer';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Check from "svelte-radix/Check.svelte";
@@ -44,6 +45,7 @@
 	let searchTerm = '';
 	let selectedCategoryIds: Set<string> = new Set();
 	let showSidebar = true;
+	let drawerOpen = false;
 	
 	// For new category
 	let newCategoryDialogOpen = false;
@@ -236,11 +238,15 @@
 			savingCategory = false;
 		}
 	}
+	
+	function closeDrawer() {
+		drawerOpen = false;
+	}
 </script>
 
 <div class="flex">
-	<!-- Sidebar -->
-	<aside class={`border-r bg-muted/10 w-64 flex-shrink-0 ${showSidebar ? 'block' : 'hidden'} md:block transition-all duration-300`}>
+	<!-- Desktop Sidebar -->
+	<aside class="border-r bg-muted/10 w-64 flex-shrink-0 hidden md:block">
 		<div class="p-4 sticky top-0">
 			<div class="mb-6">
 				<h2 class="text-lg font-semibold mb-2">Filters</h2>
@@ -327,31 +333,27 @@
 	<!-- Main content -->
 	<main class="flex-1 p-6">
 		<div class="max-w-6xl mx-auto">
-			<div class="flex justify-between items-center mb-6">
-				<div class="flex items-center">
-					<!-- Mobile sidebar toggle -->
-					<Button 
-						variant="ghost" 
-						class="md:hidden mr-2" 
-						size="icon"
-						on:click={() => showSidebar = !showSidebar}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							{#if showSidebar}
-								<line x1="18" y1="6" x2="6" y2="18"></line>
-								<line x1="6" y1="6" x2="18" y2="18"></line>
-							{:else}
-								<line x1="3" y1="12" x2="21" y2="12"></line>
-								<line x1="3" y1="6" x2="21" y2="6"></line>
-								<line x1="3" y1="18" x2="21" y2="18"></line>
-							{/if}
-						</svg>
-					</Button>
+			<div class="flex flex-col mb-6">
+				<div class="flex justify-between items-center mb-4">
 					<h1 class="text-2xl font-bold">My Templates</h1>
+					<Button on:click={handleCreateNew}>
+						Create New Template
+					</Button>
 				</div>
-				<Button on:click={handleCreateNew}>
-					Create New Template
-				</Button>
+				
+				<!-- Mobile filter button - on a new line -->
+				<div class="md:hidden mb-2">
+					<Button 
+						variant="outline" 
+						class="w-full"
+						on:click={() => drawerOpen = true}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+						</svg>
+						Search & Filter
+					</Button>
+				</div>
 			</div>
 			
 			{#if error}
@@ -462,3 +464,111 @@
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root> 
+
+<!-- Mobile Drawer -->
+<Drawer.Root bind:open={drawerOpen}>
+	<Drawer.Portal>
+		<Drawer.Overlay class="fixed inset-0 bg-black/40"></Drawer.Overlay>
+		<Drawer.Content class="bg-background p-4 rounded-t-[10px] mt-24 fixed bottom-0 left-0 right-0 max-h-[85vh] flex flex-col">
+			<div class="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mb-4"></div>
+			<div class="max-w-md mx-auto w-full">
+				<Drawer.Title class="font-medium mb-4 text-lg">Search & Filter</Drawer.Title>
+				
+				<!-- Search input -->
+				<div class="relative mb-4">
+					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="11" cy="11" r="8"></circle>
+							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+						</svg>
+					</div>
+					<Input 
+						type="text" 
+						bind:value={searchTerm} 
+						placeholder="Search templates..."
+						on:input={applyFilters}
+						class="pl-10"
+					/>
+				</div>
+				
+				<!-- Categories section -->
+				<div class="mb-4">
+					<div class="flex justify-between items-center mb-2">
+						<h3 class="font-medium text-sm">Categories</h3>
+						<Button 
+							variant="ghost"
+							on:click={() => {
+								closeDrawer();
+								setTimeout(() => newCategoryDialogOpen = true, 300);
+							}}
+							size="icon"
+							class="h-6 w-6"
+							title="Add New Category"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="12" y1="5" x2="12" y2="19"></line>
+								<line x1="5" y1="12" x2="19" y2="12"></line>
+							</svg>
+						</Button>
+					</div>
+					
+					{#if categories.length > 0}
+						<ul class="space-y-1 max-h-[40vh] overflow-y-auto">
+							{#each categories as category}
+								<li>
+									<button 
+										class="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors {category.checked ? 'bg-muted' : ''}"
+										on:click={() => toggleCategoryFilter(category.id)}
+									>
+										<div class="w-5 h-5 mr-2 flex items-center justify-center border rounded-sm {category.checked ? 'bg-primary border-primary' : 'border-muted-foreground/30'}">
+											{#if category.checked}
+												<Check class="h-3.5 w-3.5 text-primary-foreground" />
+											{/if}
+										</div>
+										<span class="flex-1 text-left truncate">{category.name}</span>
+										<span class="text-xs text-muted-foreground ml-1">({category.count})</span>
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<p class="text-sm text-muted-foreground">No categories available</p>
+					{/if}
+				</div>
+				
+				<!-- Active filters indicator and clear button -->
+				{#if searchTerm || selectedCategoryIds.size > 0}
+					<div class="pt-2 border-t">
+						<div class="flex justify-between items-center">
+							<span class="text-sm">Active filters: {selectedCategoryIds.size + (searchTerm ? 1 : 0)}</span>
+							<Button 
+								variant="ghost"
+								on:click={clearFilters}
+								size="sm"
+								class="h-7 px-2 text-xs"
+							>
+								Clear all
+							</Button>
+						</div>
+					</div>
+				{/if}
+				
+				<div class="mt-6 flex gap-2">
+					<Button 
+						variant="outline" 
+						class="w-full" 
+						on:click={() => closeDrawer()}
+					>
+						Close
+					</Button>
+					<Button 
+						class="w-full" 
+						on:click={() => { applyFilters(); closeDrawer(); }}
+					>
+						Apply Filters
+					</Button>
+				</div>
+			</div>
+		</Drawer.Content>
+	</Drawer.Portal>
+</Drawer.Root> 
