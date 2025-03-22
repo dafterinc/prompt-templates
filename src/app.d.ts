@@ -2,15 +2,19 @@
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
-import { SupabaseClient, Session } from '@supabase/supabase-js';
+import { SupabaseClient, Session, User } from '@supabase/supabase-js';
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user: import('@supabase/supabase-js').User | null;
+			user: User | null;
+			isAdmin: boolean;
 		}
-		// interface PageData {}
+		interface PageData {
+			user: User | null;
+			isAdmin: boolean;
+		}
 		interface PageState {
 			[key: string]: any;
 		}

@@ -12,7 +12,8 @@
 	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	import { Toaster } from 'svelte-sonner';
-	import { browser } from '$app/environment';
+	
+	export let data;
 	
 	let user: User | null = null;
 	let isAdmin = false;
@@ -27,28 +28,25 @@
 		profile_image_url: string | null;
 	}
 	
-	async function checkAdminStatus(userId: string) {
-		if (!userId || !browser) return false;
+	async function getProfileImage(userId: string) {
+		if (!userId) return null;
 		
 		try {
 			const { data, error } = await supabase
 				.from('user_profiles')
-				.select('is_admin, profile_image_url')
+				.select('profile_image_url')
 				.eq('id', userId)
 				.maybeSingle<UserProfile>();
 				
 			if (error) {
-				console.error('Error checking admin status:', error);
-				return false;
+				console.error('[Client] Error fetching profile image:', error);
+				return null;
 			}
 			
-			// Set the profile image URL if available
-			profileImageUrl = data?.profile_image_url ?? null;
-			
-			return data?.is_admin ?? false;
+			return data?.profile_image_url ?? null;
 		} catch (err) {
-			console.error('Admin check failed:', err);
-			return false;
+			console.error('[Client] Exception fetching profile image:', err);
+			return null;
 		}
 	}
 	
@@ -57,27 +55,24 @@
 		supabase.auth.getSession().then(async ({ data: sessionData }) => {
 			user = sessionData?.session?.user || null;
 			if (user) {
-				isAdmin = await checkAdminStatus(user.id);
-				console.log('User logged in, isAdmin:', isAdmin);
+				console.log('[Client] User logged in:', user.id);
+				profileImageUrl = await getProfileImage(user.id);
 			}
 		}).catch(err => {
-			console.error('Session fetch error:', err);
-			// Reset auth state on error
+			console.error('[Client] Session fetch error:', err);
 			user = null;
-			isAdmin = false;
 		});
 		
 		// Listen for auth changes
 		const { data: authListener } = supabase.auth.onAuthStateChange(
 			async (event: AuthChangeEvent, session: Session | null) => {
+				console.log('[Client] Auth state changed:', event);
 				user = session?.user || null;
 				if (user) {
-					isAdmin = await checkAdminStatus(user.id);
-					console.log('Auth state changed, isAdmin:', isAdmin);
+					profileImageUrl = await getProfileImage(user.id);
 					// Invalidate any data that depends on the session
 					await invalidate('supabase:auth');
 				} else {
-					isAdmin = false;
 					profileImageUrl = null;
 				}
 			}
@@ -87,6 +82,13 @@
 			authListener?.subscription.unsubscribe();
 		};
 	});
+
+	// Get values from server-side data
+	$: ({ isAdmin } = data);
+	$: if (data) {
+		console.log('[Client] Full server data:', data);
+		console.log('[Client] Server-provided admin status:', isAdmin === true);
+	}
 
 	// Check if we're on the homepage
 	$: isHomepage = $page.url.pathname === '/';
@@ -199,10 +201,11 @@
 										My Templates
 									</a>
 									
-									{#if isAdmin}
-										<a 
-											href="/admin" 
-											class="px-4 py-2 hover:bg-muted rounded-md transition-colors {$page.url.pathname.startsWith('/admin') ? 'font-bold' : ''}"
+									{#if isAdmin === true}
+										<a
+											href="/admin"
+											class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+											on:click={closeMenu}
 										>
 											Admin Dashboard
 										</a>
