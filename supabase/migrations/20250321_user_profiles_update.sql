@@ -8,6 +8,9 @@ ADD COLUMN IF NOT EXISTS company_website TEXT,
 ADD COLUMN IF NOT EXISTS team_size TEXT,
 ADD COLUMN IF NOT EXISTS usage_purpose TEXT;
 
+-- Enable Row Level Security on user_profiles table
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
 -- Create storage bucket for profile images if it doesn't exist
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
