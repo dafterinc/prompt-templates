@@ -17,11 +17,7 @@ const serverSupabase = createClient(
 
 // Helper function to check admin status
 async function checkAdminStatus(userId: string) {
-  console.log('[Server] ===== ADMIN CHECK START =====');
-  console.log('[Server] Checking admin status for user:', userId);
-  
   try {
-    console.log('[Server] Querying user_profiles table...');
     const { data, error } = await serverSupabase
       .from('user_profiles')
       .select('*')
@@ -30,13 +26,11 @@ async function checkAdminStatus(userId: string) {
       
     if (error) {
       console.error('[Server] Error checking admin status:', error);
-      console.error('[Server] Error details:', error.message, error.details, error.hint);
       return false;
     }
 
     // Only create admin profile for the specific admin user if it doesn't exist
     if (!data && userId === '74bcbf9c-00ea-47e3-8a96-b6d2b7e19a04') {
-      console.log('[Server] Creating admin profile for user:', userId);
       const { data: newProfile, error: createError } = await serverSupabase
         .from('user_profiles')
         .insert({
@@ -53,34 +47,22 @@ async function checkAdminStatus(userId: string) {
         return false;
       }
       
-      console.log('[Server] Created admin profile:', newProfile);
       return true;
     }
     
     // For non-admin users or existing profiles, strictly check the is_admin flag
-    console.log('[Server] Query result:', data);
     const isAdmin = data?.is_admin === true; // Strict equality check
-    console.log('[Server] Admin status result:', isAdmin);
-    console.log('[Server] ===== ADMIN CHECK END =====');
     return isAdmin;
   } catch (err) {
     console.error('[Server] Exception checking admin status:', err);
-    console.error('[Server] Stack trace:', err instanceof Error ? err.stack : 'No stack trace');
     return false;
   }
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  console.log('\n[Server] ===== REQUEST START =====');
-  console.log('[Server] Processing request:', event.url.pathname);
-  console.log('[Server] Cookies present:', Object.fromEntries(event.cookies.getAll().map(c => [c.name, 'present'])));
-  
   // Get the session from cookies
   const supabaseAuthCookie = event.cookies.get('sb-auth-token');
   const accessTokenCookie = event.cookies.get('sb-access-token');
-  
-  console.log('[Server] Auth cookie present:', !!supabaseAuthCookie);
-  console.log('[Server] Access token cookie present:', !!accessTokenCookie);
 
   let user = null;
   let isAdmin = false;
@@ -93,7 +75,6 @@ export const handle: Handle = async ({ event, resolve }) => {
         try {
           const parsed = JSON.parse(supabaseAuthCookie);
           accessToken = parsed.access_token;
-          console.log('[Server] Successfully parsed auth cookie');
         } catch (e) {
           console.error('[Server] Failed to parse auth cookie:', e);
         }
@@ -101,17 +82,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 
       if (!accessToken && accessTokenCookie) {
         accessToken = accessTokenCookie;
-        console.log('[Server] Using direct access token cookie');
       }
 
       if (accessToken) {
-        console.log('[Server] Attempting to get user with token');
         const { data: { user: authUser }, error } = await serverSupabase.auth.getUser(accessToken);
         
         if (error) {
           console.error('[Server] Auth error:', error);
         } else if (authUser) {
-          console.log('[Server] User authenticated:', authUser.id);
           user = authUser;
           isAdmin = await checkAdminStatus(authUser.id);
         }
@@ -119,14 +97,11 @@ export const handle: Handle = async ({ event, resolve }) => {
     } catch (err) {
       console.error('[Server] Exception processing auth:', err);
     }
-  } else {
-    console.log('[Server] No auth cookies found');
   }
 
   // Set locals regardless of auth outcome
   event.locals.user = user;
   event.locals.isAdmin = isAdmin;
-  console.log('[Server] Final auth state - User:', user?.id, 'Admin:', isAdmin);
 
   const requestOrigin = event.request.headers.get('origin');
   const isLocalhost = event.url.hostname === 'localhost' || event.url.hostname === '127.0.0.1';
@@ -134,8 +109,6 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Use APP_ENV setting to allow testing production mode locally
   const envMode = env.APP_ENV || process.env.NODE_ENV || 'development';
   const isDevMode = envMode === 'development';
-  
-  console.log(`[Server] Running in ${envMode} mode with security ${isDevMode ? 'disabled' : 'enabled'}`);
   
   // Force HTTPS if enabled (in production mode)
   const httpsRedirect = forceHttps(event);
@@ -170,9 +143,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   // Check for protected admin routes
   if (event.url.pathname.startsWith('/admin')) {
-    console.log('[Server] Checking admin route access');
     if (!event.locals.isAdmin) {
-      console.log('[Server] Unauthorized admin access attempt');
       return new Response('Unauthorized', { status: 403 });
     }
   }
@@ -215,6 +186,5 @@ export const handle: Handle = async ({ event, resolve }) => {
     response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
   
-  console.log('[Server] ===== REQUEST END =====\n');
   return response;
 };

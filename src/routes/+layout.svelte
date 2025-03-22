@@ -55,7 +55,6 @@
 		supabase.auth.getSession().then(async ({ data: sessionData }) => {
 			user = sessionData?.session?.user || null;
 			if (user) {
-				console.log('[Client] User logged in:', user.id);
 				profileImageUrl = await getProfileImage(user.id);
 			}
 		}).catch(err => {
@@ -66,7 +65,6 @@
 		// Listen for auth changes
 		const { data: authListener } = supabase.auth.onAuthStateChange(
 			async (event: AuthChangeEvent, session: Session | null) => {
-				console.log('[Client] Auth state changed:', event);
 				user = session?.user || null;
 				if (user) {
 					profileImageUrl = await getProfileImage(user.id);
