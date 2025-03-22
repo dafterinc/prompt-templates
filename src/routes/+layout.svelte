@@ -7,7 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 	import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '$lib/components/ui/dropdown-menu';
-	import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
+	import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
@@ -15,6 +15,7 @@
 	
 	let user: User | null = null;
 	let isAdmin = false;
+	let profileImageUrl: string | null = null;
 	
 	function closeMenu() {
 		// The sheet will close automatically with Sheet.Root
@@ -33,7 +34,7 @@
 			
 			const queryPromise = supabase
 				.from('user_profiles')
-				.select('is_admin')
+				.select('is_admin, profile_image_url')
 				.eq('id', userId)
 				.single();
 				
@@ -46,6 +47,10 @@
 			}
 			
 			console.log('Admin status check result:', data);
+			
+			// Set the profile image URL if available
+			profileImageUrl = data?.profile_image_url || null;
+			
 			return data?.is_admin || false;
 		} catch (err) {
 			console.error('Admin check failed:', err);
@@ -130,6 +135,9 @@
 					<DropdownMenu>
 						<DropdownMenuTrigger>
 							<Avatar>
+								{#if profileImageUrl}
+									<AvatarImage src={profileImageUrl} alt={user.email || 'User'} />
+								{/if}
 								<AvatarFallback>{userInitials}</AvatarFallback>
 							</Avatar>
 						</DropdownMenuTrigger>
