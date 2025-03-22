@@ -149,9 +149,8 @@
 								</DropdownMenuItem>
 							{/if}
 							<DropdownMenuItem on:click={() => goto('/profile')}>
-								Profile
+								Account Settings
 							</DropdownMenuItem>
-							<DropdownMenuItem>Settings</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem on:click={() => supabase.auth.signOut()}>
 								Sign Out
@@ -201,11 +200,10 @@
 										My Templates
 									</a>
 									
-									{#if isAdmin === true}
-										<a
-											href="/admin"
-											class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
-											on:click={closeMenu}
+									{#if isAdmin}
+										<a 
+											href="/admin" 
+											class="px-4 py-2 hover:bg-muted rounded-md transition-colors {$page.url.pathname.startsWith('/admin') ? 'font-bold' : ''}"
 										>
 											Admin Dashboard
 										</a>
@@ -216,14 +214,7 @@
 										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors"
 										on:click={() => { closeMenu(); goto('/profile'); }}
 									>
-										Profile
-									</Button>
-									
-									<Button 
-										variant="ghost" 
-										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors"
-									>
-										Settings
+										Account Settings
 									</Button>
 									
 									<Button
