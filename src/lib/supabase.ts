@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { browser } from '$app/environment';
 
 // Use environment variables for both development and production
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
