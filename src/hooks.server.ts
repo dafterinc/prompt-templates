@@ -20,7 +20,7 @@ async function checkAdminStatus(userId: string) {
   try {
     const { data, error } = await serverSupabase
       .from('user_profiles')
-      .select('*')
+      .select('is_admin')
       .eq('id', userId)
       .maybeSingle();
       
@@ -29,30 +29,25 @@ async function checkAdminStatus(userId: string) {
       return false;
     }
 
-    // Only create admin profile for the specific admin user if it doesn't exist
-    if (!data && userId === '74bcbf9c-00ea-47e3-8a96-b6d2b7e19a04') {
-      const { data: newProfile, error: createError } = await serverSupabase
+    // If no profile exists, create one with default non-admin status
+    if (!data) {
+      const { error: createError } = await serverSupabase
         .from('user_profiles')
         .insert({
           id: userId,
-          is_admin: true,
+          is_admin: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        });
         
       if (createError) {
-        console.error('[Server] Error creating admin profile:', createError);
-        return false;
+        console.error('[Server] Error creating user profile:', createError);
       }
-      
-      return true;
+      return false;
     }
     
-    // For non-admin users or existing profiles, strictly check the is_admin flag
-    const isAdmin = data?.is_admin === true; // Strict equality check
-    return isAdmin;
+    // Strictly check the is_admin flag
+    return data.is_admin === true;
   } catch (err) {
     console.error('[Server] Exception checking admin status:', err);
     return false;
