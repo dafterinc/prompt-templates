@@ -260,6 +260,11 @@
 			return;
 		}
 		
+		// Automatically set createNewCategory to true if no categories exist
+		if (userCategories.length === 0) {
+			createNewCategory = true;
+		}
+		
 		addToCollectionDialogOpen = true;
 	}
 	
@@ -272,8 +277,8 @@
 			addToCollectionSuccess = false;
 			
 			// If creating new category
-			let categoryId = selectedCategoryId;
-			if (createNewCategory && newCategoryName.trim()) {
+			let categoryId: string | null = selectedCategoryId;
+			if ((createNewCategory || userCategories.length === 0) && newCategoryName.trim()) {
 				const { data: newCategory, error: categoryError } = await supabase
 					.from('categories')
 					.insert({
@@ -289,6 +294,11 @@
 				}
 				
 				categoryId = newCategory.id;
+			}
+			
+			// Ensure we have a valid category ID or set it to null
+			if (!categoryId) {
+				categoryId = null;
 			}
 			
 			// Create a copy of the template in the user's collection
@@ -607,7 +617,7 @@
 			{#if !addToCollectionSuccess}
 				<Button 
 					type="button" 
-					disabled={addingToCollection || (createNewCategory && !newCategoryName)}
+					disabled={addingToCollection || ((createNewCategory || userCategories.length === 0) && !newCategoryName)}
 					on:click={addToCollection}
 					class="w-full sm:w-auto"
 				>
