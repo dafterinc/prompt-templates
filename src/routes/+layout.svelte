@@ -29,7 +29,7 @@
 		try {
 			// Add timeout protection to prevent stuck requests
 			const timeoutPromise = new Promise((_, reject) => {
-				setTimeout(() => reject(new Error('Admin status check timed out')), 5000);
+				setTimeout(() => reject(new Error('Admin status check timed out')), 300);
 			});
 			
 			const queryPromise = supabase
