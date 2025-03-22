@@ -11,6 +11,7 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+	import { Toaster } from 'svelte-sonner';
 	
 	let user: User | null = null;
 	let isAdmin = false;
@@ -93,6 +94,8 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
+	<Toaster richColors />
+	
 	<header class="py-4 px-6 border-b">
 		<nav class="flex justify-between items-center max-w-7xl mx-auto">
 			<a href="/" class="flex items-center gap-2">
@@ -138,7 +141,9 @@
 									Admin Dashboard
 								</DropdownMenuItem>
 							{/if}
-							<DropdownMenuItem>Profile</DropdownMenuItem>
+							<DropdownMenuItem on:click={() => goto('/profile')}>
+								Profile
+							</DropdownMenuItem>
 							<DropdownMenuItem>Settings</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem on:click={() => supabase.auth.signOut()}>
@@ -201,6 +206,7 @@
 									<Button 
 										variant="ghost" 
 										class="justify-start px-4 py-2 hover:bg-muted rounded-md transition-colors"
+										on:click={() => { closeMenu(); goto('/profile'); }}
 									>
 										Profile
 									</Button>

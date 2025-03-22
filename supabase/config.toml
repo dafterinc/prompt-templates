@@ -97,6 +97,12 @@ public = false
 file_size_limit = "2MiB"
 allowed_mime_types = ["image/png", "image/jpeg", "application/pdf", "text/plain"]
 
+# Configure profile_images bucket
+[storage.buckets.profile_images]
+public = true
+file_size_limit = "2MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+
 # Image transformation API is available to Supabase Pro plan.
 # [storage.image_transformation]
 # enabled = true
