@@ -13,6 +13,7 @@ A powerful web application for building, managing, and generating text prompts w
 - 🌓 Dark/light mode support
 - ☁️ Cloud synchronization with offline support
 - 🔒 Secure user authentication
+- 👑 Admin dashboard for managing public templates
 
 ## 🛠️ Technologies Used
 
@@ -32,15 +33,36 @@ A powerful web application for building, managing, and generating text prompts w
 
 2. Configure environment variables (IMPORTANT for security):
    - Copy `.env.example` to `.env`
-   - Add your Supabase credentials to the `.env` file
+   - Add your Supabase credentials to the `.env` file:
+     - `VITE_SUPABASE_URL`: Your Supabase project URL
+     - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+     - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (required for admin functionality)
    - NEVER commit your `.env` file to version control
 
-3. Start the development server:
+3. Set up admin user:
+   - Admin access is controlled through the `user_profiles` table in Supabase
+   - To make a user an admin:
+     1. Let the user sign up normally through the application
+     2. In your Supabase dashboard, go to the SQL editor
+     3. Run the following SQL to grant admin access (replace USER_ID with the actual user's ID):
+        ```sql
+        INSERT INTO user_profiles (id, is_admin)
+        VALUES ('USER_ID', true)
+        ON CONFLICT (id) DO UPDATE
+        SET is_admin = true;
+        ```
+   - Admin users have access to:
+     - Admin dashboard at `/admin`
+     - Public template directory management
+     - User management
+     - System settings
+
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your browser.
+5. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🏗️ Building for Production
 
