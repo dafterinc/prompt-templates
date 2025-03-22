@@ -2,21 +2,6 @@ import type { Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { applyRateLimit, forceHttps } from '$lib/server/middleware';
 
-// Parse allowed origins from environment variable
-const getAllowedOrigins = (): string[] => {
-  const originsString = env.ALLOWED_ORIGINS || '';
-  return originsString ? originsString.split(',') : [];
-};
-
-const allowedOrigins = getAllowedOrigins();
-
-// Check if the origin is allowed
-const isOriginAllowed = (origin: string | null): boolean => {
-  if (!origin) return false;
-  if (allowedOrigins.length === 0) return true; // No restrictions if no origins specified
-  return allowedOrigins.includes(origin);
-};
-
 export const handle: Handle = async ({ event, resolve }) => {
   const requestOrigin = event.request.headers.get('origin');
   const isLocalhost = event.url.hostname === 'localhost' || event.url.hostname === '127.0.0.1';
@@ -36,19 +21,11 @@ export const handle: Handle = async ({ event, resolve }) => {
   
   // For CORS preflight requests
   if (event.request.method === 'OPTIONS') {
-    // In development, allow all origins
-    const corsOrigin = isDevMode ? '*' : (isOriginAllowed(requestOrigin) ? requestOrigin : null);
-    
-    if (!corsOrigin) {
-      return new Response(null, { status: 403 }); // Forbidden if origin not allowed
-    }
-    
     return new Response(null, {
       headers: {
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-        'Access-Control-Allow-Origin': corsOrigin,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '3600'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
       }
     });
   }
@@ -104,11 +81,15 @@ export const handle: Handle = async ({ event, resolve }) => {
     if (isDevMode) {
       // More permissive in development
       response.headers.set('Access-Control-Allow-Origin', '*');
-    } else if (isOriginAllowed(requestOrigin)) {
+    } else {
       // Only set specific origins in production
-      response.headers.set('Access-Control-Allow-Origin', requestOrigin);
+      const allowedOrigins = (env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
+      if (allowedOrigins.includes(requestOrigin)) {
+        response.headers.set('Access-Control-Allow-Origin', requestOrigin);
+      }
     }
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
   
   return response;
-}; 
+};

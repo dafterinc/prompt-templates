@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { ThemeToggle } from '$lib/components/ui/theme-toggle';
 	import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '$lib/components/ui/dropdown-menu';
@@ -12,6 +12,7 @@
 	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	import { Toaster } from 'svelte-sonner';
+	import { browser } from '$app/environment';
 	
 	let user: User | null = null;
 	let isAdmin = false;
@@ -21,40 +22,33 @@
 		// The sheet will close automatically with Sheet.Root
 	}
 	
+	interface UserProfile {
+		is_admin: boolean;
+		profile_image_url: string | null;
+	}
+	
 	async function checkAdminStatus(userId: string) {
-		if (!userId) return false;
-		
-		console.log('Checking admin status for user:', userId);
+		if (!userId || !browser) return false;
 		
 		try {
-			// Add timeout protection to prevent stuck requests
-			const timeoutPromise = new Promise((_, reject) => {
-				setTimeout(() => reject(new Error('Admin status check timed out')), 300);
-			});
-			
-			const queryPromise = supabase
+			const { data, error } = await supabase
 				.from('user_profiles')
 				.select('is_admin, profile_image_url')
 				.eq('id', userId)
-				.single();
-				
-			// Race between the query and timeout
-			const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+				.maybeSingle<UserProfile>();
 				
 			if (error) {
 				console.error('Error checking admin status:', error);
 				return false;
 			}
 			
-			console.log('Admin status check result:', data);
-			
 			// Set the profile image URL if available
-			profileImageUrl = data?.profile_image_url || null;
+			profileImageUrl = data?.profile_image_url ?? null;
 			
-			return data?.is_admin || false;
+			return data?.is_admin ?? false;
 		} catch (err) {
 			console.error('Admin check failed:', err);
-			return false; // Default to non-admin on error
+			return false;
 		}
 	}
 	
@@ -80,8 +74,11 @@
 				if (user) {
 					isAdmin = await checkAdminStatus(user.id);
 					console.log('Auth state changed, isAdmin:', isAdmin);
+					// Invalidate any data that depends on the session
+					await invalidate('supabase:auth');
 				} else {
 					isAdmin = false;
+					profileImageUrl = null;
 				}
 			}
 		);
