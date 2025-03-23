@@ -258,9 +258,9 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="space-y-4">
+	<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 		<h1 class="text-3xl font-bold tracking-tight">My Templates</h1>
-		<div class="space-y-2">
+		<div class="flex flex-col sm:flex-row gap-2">
 			<Button variant="outline" class="w-full" on:click={() => goto('/categories')}>
 				Manage Categories
 			</Button>
