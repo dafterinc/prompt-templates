@@ -339,8 +339,8 @@
 	</aside>
 	
 	<!-- Main content -->
-	<main class="flex-1 p-6">
-		<div class="max-w-6xl mx-auto">
+	<main class="flex-1 p-2 sm:p-4 md:p-6">
+		<div class="mx-auto">
 			<div class="flex flex-col mb-6">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
 					<h1 class="text-2xl font-bold">My Templates</h1>
@@ -399,7 +399,7 @@
 					</div>
 				</div>
 			{:else}
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
 					{#each templates as template}
 						<Card>
 							<a href={`/templates/${template.id}`} class="block">
