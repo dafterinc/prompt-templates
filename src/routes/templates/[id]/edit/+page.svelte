@@ -12,6 +12,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import Icon from '@iconify/svelte';
 	
 	interface Template {
 		id: string;
@@ -286,39 +287,42 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-6 max-w-4xl">
+<svelte:head>
+	<title>{template?.title ? `Edit ${template.title} | Prompt Templates` : 'Edit Template | Prompt Templates'}</title>
+</svelte:head>
+
+<div class="space-y-6">
 	{#if loading}
-		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+		<div class="flex items-center justify-center p-8">
+			<div class="animate-spin mr-2">
+				<Icon icon="heroicons:arrow-path" width="24" height="24" />
+			</div>
+			<span>Loading template...</span>
 		</div>
-	{:else if error}
-		<Alert variant="destructive" class="mb-4">
+	{:else if error && !template}
+		<Alert variant="destructive">
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
+		<div>
+			<a href={`/templates/${templateId}`} class="text-muted-foreground hover:text-foreground inline-flex items-center">
+				&larr; <span class="ml-1">Back to Template</span>
+			</a>
+		</div>
+		
+		<div>
+			<h1 class="text-3xl font-bold tracking-tight">Edit Template</h1>
+		</div>
+		
+		{#if error}
+			<Alert variant="destructive">
+				<AlertDescription>{error}</AlertDescription>
+			</Alert>
+		{/if}
+		
 		<Card>
-			<CardHeader>
-				<div class="flex flex-col gap-4">
-					<div>
-						<a href={`/templates/${templateId}`} class="text-muted-foreground hover:text-foreground inline-flex items-center">
-							&larr; <span class="ml-1">Back to Template</span>
-						</a>
-					</div>
-					<div class="flex justify-between items-center">
-						<CardTitle class="text-xl sm:text-2xl">Edit Template</CardTitle>
-						<Button 
-							variant="destructive"
-							on:click={() => deleteModalOpen = true}
-							class="hidden sm:inline-flex"
-						>
-							Delete Template
-						</Button>
-					</div>
-				</div>
-			</CardHeader>
-			
-			<CardContent>
-				<form on:submit|preventDefault={handleSubmit} class="space-y-6 max-w-2xl">
+			<CardContent class="pt-6">
+				<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 					<div class="space-y-2">
 						<Label for="title">Title *</Label>
 						<Input
@@ -347,6 +351,7 @@
 								variant="outline" 
 								size="sm" 
 								on:click={() => newCategoryDialogOpen = true}
+								class="sm:w-auto w-full"
 							>
 								+ New Category
 							</Button>
@@ -381,21 +386,21 @@
 						/>
 					</div>
 					
-					<div class="flex flex-col sm:flex-row justify-end gap-3">
+					<div class="flex flex-col sm:flex-row sm:justify-between gap-3">
 						<Button
-							type="submit"
-							disabled={saving}
-							class="w-full sm:w-auto"
-						>
-							{saving ? 'Saving...' : 'Save Changes'}
-						</Button>
-						<Button 
 							variant="destructive"
 							type="button"
 							on:click={() => deleteModalOpen = true}
-							class="w-full sm:w-auto sm:hidden"
+							class="w-full sm:w-auto order-2 sm:order-1"
 						>
 							Delete Template
+						</Button>
+						<Button
+							type="submit"
+							disabled={saving}
+							class="w-full sm:w-auto order-1 sm:order-2"
+						>
+							{saving ? 'Saving...' : 'Save Changes'}
 						</Button>
 					</div>
 				</form>

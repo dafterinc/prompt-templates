@@ -313,48 +313,50 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-8 max-w-4xl">
+<svelte:head>
+	<title>{template?.title ? `${template.title} | Prompt Templates` : 'Template | Prompt Templates'}</title>
+</svelte:head>
+
+<div class="space-y-6">
 	{#if loading}
-		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+		<div class="flex items-center justify-center p-8">
+			<div class="animate-spin mr-2">
+				<Icon icon="heroicons:arrow-path" width="24" height="24" />
+			</div>
+			<span>Loading template...</span>
 		</div>
 	{:else if error}
-		<Alert variant="destructive" class="mb-4">
+		<Alert variant="destructive">
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div class="flex flex-col gap-4 mb-6">
+		<div class="space-y-4">
 			<div>
 				<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
 					&larr; <span class="ml-1">Back to Templates</span>
 				</a>
 			</div>
 			
-			<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-				<div class="w-full sm:max-w-[60%]">
-					<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
-					{#if template.description}
-						<p class="text-muted-foreground mt-1 text-sm line-clamp-2">{template.description}</p>
-					{/if}
-				</div>
+			<div class="space-y-3">
+				<h1 class="text-3xl font-bold tracking-tight">{template.title}</h1>
+				{#if template.description}
+					<p class="text-muted-foreground">{template.description}</p>
+				{/if}
 				
-				<!-- Desktop buttons (hidden on mobile) -->
-				<div class="hidden sm:flex flex-wrap gap-2 flex-shrink-0">
+				<div class="space-y-2">
 					<Button
 						variant="outline"
-						size="sm"
+						class="w-full"
 						on:click={duplicateTemplate}
 						disabled={duplicating}
-						class="min-w-[120px] flex-none"
 					>
 						<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
 						{duplicating ? 'Duplicating...' : 'Duplicate'}
 					</Button>
-					<a href={`/templates/${templateId}/edit`} class="flex-none">
+					<a href={`/templates/${templateId}/edit`} class="block w-full">
 						<Button 
 							variant="secondary" 
-							size="sm"
-							class="min-w-[120px] w-full"
+							class="w-full"
 						>
 							<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
 							Edit Template
@@ -362,57 +364,25 @@
 					</a>
 					<Button
 						variant="destructive"
-						size="sm"
+						class="w-full"
 						on:click={() => deleteModalOpen = true}
-						class="min-w-[40px] aspect-square flex-none"
 					>
-						<Icon icon="mdi:delete" class="h-4 w-4" />
+						<Icon icon="mdi:delete" class="mr-2 h-4 w-4" />
+						Delete Template
 					</Button>
 				</div>
-			</div>
-			
-			<!-- Mobile buttons (hidden on desktop) -->
-			<div class="flex sm:hidden flex-wrap gap-2 mt-2">
-				<Button
-					variant="outline"
-					size="sm"
-					on:click={duplicateTemplate}
-					disabled={duplicating}
-					class="flex-1"
-				>
-					<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
-					{duplicating ? 'Duplicating...' : 'Duplicate'}
-				</Button>
-				<a href={`/templates/${templateId}/edit`} class="flex-1">
-					<Button 
-						variant="secondary" 
-						size="sm"
-						class="w-full"
-					>
-						<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
-						Edit Template
-					</Button>
-				</a>
-				<Button
-					variant="destructive"
-					size="sm"
-					on:click={() => deleteModalOpen = true}
-					class="aspect-square flex-none"
-				>
-					<Icon icon="mdi:delete" class="h-4 w-4" />
-				</Button>
 			</div>
 		</div>
 		
 		{#if template.category}
-			<div class="mb-4">
+			<div>
 				<Badge variant="secondary">
 					{template.category.name}
 				</Badge>
 			</div>
 		{/if}
 		
-		<Card class="mb-2">
+		<Card>
 			<CardContent class="p-6">
 				<div class="text-xl leading-relaxed whitespace-pre-wrap">
 					{#each templateSegments as segment}
@@ -465,7 +435,7 @@
 			</CardContent>
 		</Card>
 		
-		<div class="text-sm text-muted-foreground mb-8">
+		<div class="text-sm text-muted-foreground">
 			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
 		

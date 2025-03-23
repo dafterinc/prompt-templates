@@ -177,103 +177,105 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-6 max-w-4xl">
-	<Card>
-		<CardHeader>
-			<div class="flex flex-col gap-4">
-				<div>
-					<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
-						&larr; <span class="ml-1">Back to Templates</span>
-					</a>
-				</div>
-				<div class="flex justify-between items-center">
-					<h1 class="text-xl sm:text-2xl font-bold">Create New Template</h1>
-				</div>
-			</div>
-		</CardHeader>
+<svelte:head>
+	<title>Create New Template | Prompt Templates</title>
+</svelte:head>
+
+<div class="space-y-6">
+	<div>
+		<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+			&larr; <span class="ml-1">Back to Templates</span>
+		</a>
+	</div>
+	
+	<div>
+		<h1 class="text-3xl font-bold tracking-tight mb-6">Create New Template</h1>
 		
-		<CardContent>
-			{#if error}
-				<Alert variant="destructive" class="mb-4">
-					<AlertDescription>{error}</AlertDescription>
-				</Alert>
-			{/if}
-			
-			<form on:submit|preventDefault={handleSubmit} class="space-y-6 max-w-2xl">
-				<div class="space-y-2">
-					<Label for="title">Title *</Label>
-					<Input
-						id="title"
-						type="text"
-						bind:value={title}
-						required
-						placeholder="Enter template title"
-					/>
-				</div>
-				
-				<div class="space-y-2">
-					<Label for="description">Description</Label>
-					<Textarea
-						id="description"
-						bind:value={description}
-						placeholder="Enter optional description"
-					/>
-				</div>
-				
-				<div class="space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-						<Label for="category">Category</Label>
-						<Button 
-							type="button" 
-							variant="outline" 
-							size="sm" 
-							on:click={() => newCategoryDialogOpen = true}
+		{#if error}
+			<Alert variant="destructive" class="mb-6">
+				<AlertDescription>{error}</AlertDescription>
+			</Alert>
+		{/if}
+		
+		<Card>
+			<CardContent class="pt-6">
+				<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+					<div class="space-y-2">
+						<Label for="title">Title *</Label>
+						<Input
+							id="title"
+							type="text"
+							bind:value={title}
+							required
+							placeholder="Enter template title"
+						/>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="description">Description</Label>
+						<Textarea
+							id="description"
+							bind:value={description}
+							placeholder="Enter optional description"
+						/>
+					</div>
+					
+					<div class="space-y-2">
+						<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+							<Label for="category">Category</Label>
+							<Button 
+								type="button" 
+								variant="outline" 
+								size="sm" 
+								on:click={() => newCategoryDialogOpen = true}
+								class="sm:w-auto w-full"
+							>
+								+ New Category
+							</Button>
+						</div>
+						<div class="w-full p-0 border rounded-md bg-background text-foreground">
+							<select
+								id="category"
+								bind:value={categoryId}
+								class="w-full p-2 bg-transparent border-0 outline-none focus:ring-0"
+							>
+								<option value="" class="bg-background text-foreground">No Category</option>
+								{#each categories as category}
+									<option value={category.id} class="bg-background text-foreground">{category.name}</option>
+								{/each}
+							</select>
+						</div>
+					</div>
+					
+					<div class="space-y-2">
+						<Label for="content">
+							Content *
+							<span class="text-xs font-normal text-muted-foreground">
+								(Use double curly braces syntax to define variables)
+							</span>
+						</Label>
+						<Textarea
+							id="content"
+							bind:value={content}
+							required
+							class="font-mono min-h-[200px]"
+							placeholder="Enter template content with variables enclosed in double curly braces"
+						/>
+					</div>
+					
+					<div>
+						<Button
+							type="submit"
+							disabled={loading}
+							class="w-full"
 						>
-							+ New Category
+							{loading ? 'Creating...' : 'Create Template'}
 						</Button>
 					</div>
-					<div class="w-full p-0 border rounded-md bg-background text-foreground">
-						<select
-							id="category"
-							bind:value={categoryId}
-							class="w-full p-2 bg-transparent border-0 outline-none focus:ring-0"
-						>
-							<option value="" class="bg-background text-foreground">No Category</option>
-							{#each categories as category}
-								<option value={category.id} class="bg-background text-foreground">{category.name}</option>
-							{/each}
-						</select>
-					</div>
-				</div>
-				
-				<div class="space-y-2">
-					<Label for="content">
-						Content *
-						<span class="text-xs font-normal text-muted-foreground">
-							(Use double curly braces syntax to define variables)
-						</span>
-					</Label>
-					<Textarea
-						id="content"
-						bind:value={content}
-						required
-						class="font-mono min-h-[200px]"
-						placeholder="Enter template content with variables enclosed in double curly braces"
-					/>
-				</div>
-				
-				<div>
-					<Button
-						type="submit"
-						disabled={loading}
-						class="w-full sm:w-auto"
-					>
-						{loading ? 'Creating...' : 'Create Template'}
-					</Button>
-				</div>
-			</form>
-		</CardContent>
-	</Card>
+				</form>
+			</CardContent>
+		</Card>
+	</div>
 </div>
 
 <!-- New Category Dialog -->
