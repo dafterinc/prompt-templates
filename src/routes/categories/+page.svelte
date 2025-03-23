@@ -198,187 +198,185 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-6 max-w-6xl">
-	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-		<h1 class="text-xl sm:text-2xl font-bold">Categories</h1>
-		<div>
-			<a href="/templates" class="inline-flex items-center text-muted-foreground hover:text-foreground">
-				&larr; <span class="ml-1">Back to Templates</span>
+<svelte:head>
+	<title>Categories | Prompt Templates</title>
+</svelte:head>
+
+<div class="space-y-6">
+	<div class="flex justify-between items-center">
+		<h1 class="text-3xl font-bold tracking-tight">Categories</h1>
+		<div class="flex items-center gap-2">
+			<a href="/templates">
+				<Button variant="outline" size="sm">
+					<Icon icon="heroicons:arrow-left" class="h-4 w-4 mr-2" />
+					Back to Templates
+				</Button>
 			</a>
 		</div>
 	</div>
 	
-	{#if error}
-		<Alert variant="destructive" class="mb-4">
+	{#if loading}
+		<div class="flex items-center justify-center p-8">
+			<div class="animate-spin mr-2">
+				<Icon icon="heroicons:arrow-path" width="24" height="24" />
+			</div>
+			<span>Loading categories...</span>
+		</div>
+	{:else if error}
+		<Alert variant="destructive">
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
-	{/if}
-	
-	<div class="flex flex-col lg:flex-row gap-6">
-		<div class="w-full lg:w-1/3">
+	{:else}
+		<div class="grid grid-cols-1 gap-6">
+			<!-- Create new category form -->
 			<Card>
 				<CardHeader>
 					<CardTitle>Add New Category</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form on:submit|preventDefault={handleCreateCategory} class="space-y-4">
-						<div>
-							<label for="name" class="block text-sm font-medium mb-1">Name *</label>
-							<input
-								id="name"
-								type="text"
-								bind:value={newCategory.name}
-								required
-								class="w-full p-2 border rounded-md bg-background text-foreground"
-								placeholder="Enter category name"
-							/>
-						</div>
-						
-						<div class="flex justify-end">
-							<Button
-								type="submit"
-								disabled={saving || !newCategory.name.trim()}
-							>
-								{saving ? 'Creating...' : 'Create Category'}
-							</Button>
+					<form class="space-y-4" on:submit|preventDefault={handleCreateCategory}>
+						<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+							<div class="md:col-span-4">
+								<input
+									type="text"
+									placeholder="Enter category name"
+									class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+									bind:value={newCategory.name}
+									disabled={saving}
+								/>
+							</div>
+							<div class="md:col-span-1">
+								<Button type="submit" class="w-full" disabled={saving || !newCategory.name.trim()}>
+									{saving ? 'Creating...' : 'Create Category'}
+								</Button>
+							</div>
 						</div>
 					</form>
 				</CardContent>
 			</Card>
-		</div>
-		
-		<div class="w-full lg:w-2/3">
-			{#if loading}
-				<div class="flex justify-center py-12">
-					<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-				</div>
-			{:else if categories.length === 0}
-				<Card>
-					<CardContent class="p-8 text-center">
-						<p class="text-muted-foreground">No categories found. Create your first category to get started.</p>
-					</CardContent>
-				</Card>
-			{:else}
-				<Card>
-					<CardContent class="p-0">
-						<div class="overflow-hidden">
-							<table class="w-full divide-y divide-border">
-								<thead class="bg-muted/50">
+			
+			<!-- Categories list -->
+			<Card>
+				<CardHeader>
+					<CardTitle>Manage Categories</CardTitle>
+				</CardHeader>
+				<CardContent>
+					{#if categories.length === 0}
+						<div class="text-center py-8">
+							<p class="text-muted-foreground">No categories found. Create your first category above.</p>
+						</div>
+					{:else}
+						<div class="border rounded-md overflow-hidden">
+							<table class="w-full">
+								<thead class="bg-muted">
 									<tr>
-										<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-											Name
-										</th>
-										<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-											Templates
-										</th>
-										<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-											Actions
-										</th>
+										<th class="px-4 py-3 text-left font-medium">Name</th>
+										<th class="px-4 py-3 text-center font-medium">Templates</th>
+										<th class="px-4 py-3 text-right font-medium">Actions</th>
 									</tr>
 								</thead>
-								<tbody class="bg-background divide-y divide-border">
+								<tbody class="divide-y">
 									{#each categories as category}
-										<tr>
-											{#if editingCategory && editingCategory.id === category.id}
-												<td colspan="2" class="px-6 py-4">
-													<form on:submit|preventDefault={handleUpdateCategory}>
-														<input
-															type="text"
-															bind:value={editingCategory.name}
-															required
-															class="w-full p-2 border rounded-md bg-background text-foreground"
-														/>
-													</form>
-												</td>
-												<td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-													<Button
-														variant="outline"
-														size="icon"
-														on:click={cancelEdit}
-														title="Cancel"
-													>
-														<Icon icon="mdi:close" class="h-4 w-4" />
-														<span class="sr-only">Cancel</span>
-													</Button>
-													<Button
-														variant="default"
-														size="icon"
-														on:click={handleUpdateCategory}
-														disabled={saving || !editingCategory.name.trim()}
-														title="Save"
-													>
-														<Icon icon="mdi:check" class="h-4 w-4" />
-														<span class="sr-only">Save</span>
-													</Button>
-												</td>
-											{:else}
-												<td class="px-6 py-4 whitespace-nowrap">
-													<div class="text-sm font-medium">{category.name}</div>
-												</td>
-												<td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-													{category.template_count || 0}
-												</td>
-												<td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-													<Button
-														variant="ghost"
-														size="icon"
-														on:click={() => startEdit(category)}
-														title="Edit"
-													>
-														<Icon icon="mdi:pencil" class="h-4 w-4" />
-														<span class="sr-only">Edit</span>
-													</Button>
-													<Button
-														variant="ghost"
-														size="icon"
-														on:click={() => confirmDelete(category)}
-														disabled={(category.template_count || 0) > 0}
-														class="text-destructive hover:text-destructive"
-														title="Delete"
-													>
-														<Icon icon="mdi:delete" class="h-4 w-4" />
-														<span class="sr-only">Delete</span>
-													</Button>
-												</td>
-											{/if}
+										<tr class="hover:bg-muted/30">
+											<td class="px-4 py-3">
+												{#if editingCategory && editingCategory.id === category.id}
+													<input
+														type="text"
+														class="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+														bind:value={editingCategory.name}
+														on:keydown={(e) => {
+															if (e instanceof KeyboardEvent && e.key === 'Enter') {
+																handleUpdateCategory();
+															}
+														}}
+													/>
+												{:else}
+													{category.name}
+												{/if}
+											</td>
+											<td class="px-4 py-3 text-center">{category.template_count}</td>
+											<td class="px-4 py-3 text-right">
+												<div class="flex justify-end gap-1">
+													{#if editingCategory && editingCategory.id === category.id}
+														<Button 
+															variant="ghost" 
+															size="sm"
+															class="h-8 w-8 p-0"
+															title="Save"
+															on:click={handleUpdateCategory}
+														>
+															<Icon icon="heroicons:check" class="h-4 w-4 text-green-500" />
+														</Button>
+														<Button 
+															variant="ghost" 
+															size="sm"
+															class="h-8 w-8 p-0"
+															title="Cancel"
+															on:click={() => editingCategory = null}
+														>
+															<Icon icon="heroicons:x-mark" class="h-4 w-4 text-red-500" />
+														</Button>
+													{:else}
+														<Button 
+															variant="ghost" 
+															size="sm"
+															class="h-8 w-8 p-0"
+															title="Edit"
+															on:click={() => editingCategory = { ...category }}
+														>
+															<Icon icon="heroicons:pencil-square" class="h-4 w-4" />
+														</Button>
+														<Button 
+															variant="ghost" 
+															size="sm"
+															class="h-8 w-8 p-0"
+															title="Delete"
+															on:click={() => confirmDelete(category)}
+														>
+															<Icon icon="heroicons:trash" class="h-4 w-4 text-red-500" />
+														</Button>
+													{/if}
+												</div>
+											</td>
 										</tr>
 									{/each}
 								</tbody>
 							</table>
 						</div>
-					</CardContent>
-				</Card>
-			{/if}
-		</div>
-	</div>
-	
-	{#if deleteModalOpen && categoryToDelete}
-		<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-			<Card class="max-w-md w-full">
-				<CardHeader>
-					<CardTitle>Delete Category</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<p>Are you sure you want to delete the category "{categoryToDelete.name}"? This action cannot be undone.</p>
+					{/if}
 				</CardContent>
-				<CardFooter class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
-					<Button 
-						variant="outline" 
-						on:click={() => { deleteModalOpen = false; categoryToDelete = null; }}
-						class="sm:mr-2 w-full sm:w-auto"
-					>
-						Cancel
-					</Button>
-					<Button 
-						variant="destructive"
-						on:click={handleDeleteCategory}
-						disabled={saving}
-						class="w-full sm:w-auto"
-					>
-						{saving ? 'Deleting...' : 'Delete Category'}
-					</Button>
-				</CardFooter>
 			</Card>
 		</div>
 	{/if}
-</div> 
+</div>
+
+<!-- Delete Modal -->
+{#if deleteModalOpen && categoryToDelete}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+		<div class="bg-background rounded-lg shadow-lg p-6 max-w-md w-full">
+			<h3 class="text-xl font-semibold mb-4">Delete Category</h3>
+			<p class="mb-6">
+				Are you sure you want to delete "{categoryToDelete.name}"? This action cannot be undone.
+				{#if categoryToDelete.template_count && categoryToDelete.template_count > 0}
+					<span class="block mt-2 text-red-500">
+						This category contains {categoryToDelete.template_count} templates. Deleting it will remove the category from these templates.
+					</span>
+				{/if}
+			</p>
+			<div class="flex justify-end gap-2">
+				<Button 
+					variant="outline" 
+					on:click={() => { deleteModalOpen = false; categoryToDelete = null; }}
+				>
+					Cancel
+				</Button>
+				<Button 
+					variant="destructive" 
+					on:click={handleDeleteCategory}
+				>
+					Delete
+				</Button>
+			</div>
+		</div>
+	</div>
+{/if} 

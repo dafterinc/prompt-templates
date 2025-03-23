@@ -205,172 +205,170 @@
 	}
 </script>
 
-<div class="flex">
-	<!-- Desktop Sidebar -->
-	<aside class="border-r bg-muted/10 w-64 flex-shrink-0 hidden md:block">
-		<div class="p-4 sticky top-0">
-			<div class="mb-6">
-				<h2 class="text-lg font-semibold mb-2">Filters</h2>
-				
-				<!-- Search input -->
-				<div class="relative mb-4">
-					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<circle cx="11" cy="11" r="8"></circle>
-							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-						</svg>
-					</div>
-					<Input 
-						type="text" 
-						bind:value={searchTerm} 
-						placeholder="Search templates..."
-						on:input={applyFilters}
-						class="pl-10"
-					/>
-				</div>
-				
-				<!-- Categories section -->
-				<div class="mb-4">
-					<div class="flex justify-between items-center mb-2">
-						<h3 class="font-medium text-sm">Categories</h3>
-					</div>
-					
-					{#if categories.length > 0}
-						<ul class="space-y-1">
-							{#each categories as category}
-								<li>
-									<button 
-										class="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors {category.checked ? 'bg-muted' : ''}"
-										on:click={() => toggleCategoryFilter(category.id)}
-									>
-										<div class="w-5 h-5 mr-2 flex items-center justify-center border rounded-sm {category.checked ? 'bg-primary border-primary' : 'border-muted-foreground/30'}">
-											{#if category.checked}
-												<Check class="h-3.5 w-3.5 text-primary-foreground" />
-											{/if}
-										</div>
-										<span class="flex-1 text-left truncate">{category.name}</span>
-										<span class="text-xs text-muted-foreground ml-1">({category.count})</span>
-									</button>
-								</li>
-							{/each}
-						</ul>
-					{:else}
-						<p class="text-sm text-muted-foreground">No categories available</p>
-					{/if}
-				</div>
-				
-				<!-- Active filters indicator and clear button -->
-				{#if searchTerm || selectedCategoryIds.size > 0}
-					<div class="pt-2 border-t">
-						<div class="flex justify-between items-center">
-							<span class="text-sm">Active filters: {selectedCategoryIds.size + (searchTerm ? 1 : 0)}</span>
-							<Button 
-								variant="ghost"
-								on:click={clearFilters}
-								size="sm"
-								class="h-7 px-2 text-xs"
-							>
-								Clear all
-							</Button>
+<svelte:head>
+	<title>Template Directory | Prompt Templates</title>
+</svelte:head>
+
+<div class="space-y-6">
+	<div class="flex justify-between items-center">
+		<h1 class="text-3xl font-bold tracking-tight">Template Directory</h1>
+		<div class="flex items-center gap-2">
+			{#if isAuthenticated}
+				<Button size="sm" on:click={() => goto('/templates')}>
+					My Templates
+				</Button>
+			{:else}
+				<Button size="sm" on:click={() => goto('/auth/login')}>
+					Sign In
+				</Button>
+			{/if}
+		</div>
+	</div>
+	
+	<!-- Mobile filter button -->
+	<div class="md:hidden">
+		<Button 
+			variant="outline" 
+			class="w-full"
+			on:click={() => drawerOpen = true}
+		>
+			<Icon icon="heroicons:funnel" class="h-4 w-4 mr-2" />
+			Search & Filter
+		</Button>
+	</div>
+	
+	{#if loading}
+		<div class="flex items-center justify-center p-8">
+			<div class="animate-spin mr-2">
+				<Icon icon="heroicons:arrow-path" width="24" height="24" />
+			</div>
+			<span>Loading templates...</span>
+		</div>
+	{:else if error}
+		<Alert variant="destructive">
+			<AlertDescription>{error}</AlertDescription>
+		</Alert>
+	{:else}
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+			<!-- Sidebar for categories - desktop -->
+			<div class="hidden md:block space-y-4">
+				<Card>
+					<CardHeader class="pb-3">
+						<CardTitle class="text-xl">Filter Templates</CardTitle>
+					</CardHeader>
+					<CardContent class="space-y-2">
+						<!-- Search input -->
+						<div class="relative mb-4">
+							<Icon icon="heroicons:magnifying-glass" class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+							<Input 
+								type="search" 
+								bind:value={searchTerm} 
+								placeholder="Search templates..."
+								on:input={applyFilters}
+								class="pl-10"
+							/>
 						</div>
+						
+						<!-- Categories section -->
+						<div class="space-y-2 max-h-[400px] overflow-y-auto">
+							<h3 class="font-medium text-sm">Categories</h3>
+							
+							{#if categories.length > 0}
+								<ul class="space-y-1">
+									{#each categories as category}
+										<li>
+											<button 
+												class="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors {category.checked ? 'bg-muted' : ''}"
+												on:click={() => toggleCategoryFilter(category.id)}
+											>
+												<div class="w-5 h-5 mr-2 flex items-center justify-center border rounded-sm {category.checked ? 'bg-primary border-primary' : 'border-muted-foreground/30'}">
+													{#if category.checked}
+														<Check class="h-3.5 w-3.5 text-primary-foreground" />
+													{/if}
+												</div>
+												<span class="flex-1 text-left truncate">{category.name}</span>
+												<span class="text-xs text-muted-foreground ml-1">({category.count})</span>
+											</button>
+										</li>
+									{/each}
+								</ul>
+							{:else}
+								<p class="text-sm text-muted-foreground">No categories available</p>
+							{/if}
+						</div>
+						
+						<!-- Active filters indicator and clear button -->
+						{#if searchTerm || selectedCategoryIds.size > 0}
+							<div class="pt-2 border-t mt-4">
+								<div class="flex justify-between items-center">
+									<span class="text-sm">Active filters: {selectedCategoryIds.size + (searchTerm ? 1 : 0)}</span>
+									<Button 
+										variant="ghost"
+										on:click={clearFilters}
+										size="sm"
+										class="h-7 px-2 text-xs"
+									>
+										Clear all
+									</Button>
+								</div>
+							</div>
+						{/if}
+					</CardContent>
+				</Card>
+			</div>
+			
+			<!-- Templates grid -->
+			<div class="md:col-span-3 space-y-4">
+				{#if templates.length === 0}
+					<div class="w-full p-8 text-center border rounded-lg">
+						<div class="text-muted-foreground">
+							{searchTerm || selectedCategoryIds.size > 0 
+								? 'No templates found matching your filters.'
+								: 'No templates are available in the directory yet.'}
+						</div>
+						{#if searchTerm || selectedCategoryIds.size > 0}
+							<Button variant="outline" class="mt-4" on:click={clearFilters}>
+								Clear Filters
+							</Button>
+						{/if}
+					</div>
+				{:else}
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+						{#each templates as template}
+							<Card>
+								<a href={`/directory/${template.id}`} class="block">
+									<CardHeader>
+										{#if template.featured}
+											<div class="flex mb-1">
+												<span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Featured</span>
+											</div>
+										{/if}
+										<CardTitle class="truncate">{template.title}</CardTitle>
+										{#if template.description}
+											<CardDescription class="line-clamp-2">{template.description}</CardDescription>
+										{:else}
+											<CardDescription class="italic">No description</CardDescription>
+										{/if}
+									</CardHeader>
+									<CardFooter>
+										<div class="flex justify-between w-full text-xs text-muted-foreground">
+											<div class="flex gap-2">
+												<span>{template.variables_count} variables</span>
+												{#if template.category_name}
+													<span>• {template.category_name}</span>
+												{/if}
+											</div>
+											<span>Updated {formatDate(template.updated_at)}</span>
+										</div>
+									</CardFooter>
+								</a>
+							</Card>
+						{/each}
 					</div>
 				{/if}
 			</div>
 		</div>
-	</aside>
-	
-	<!-- Main content -->
-	<main class="flex-1 p-6">
-		<div class="max-w-6xl mx-auto">
-			<div class="flex flex-col mb-6">
-				<div class="flex justify-between items-center mb-4">
-					<h1 class="text-2xl font-bold">Template Directory</h1>
-					{#if isAuthenticated}
-						<Button on:click={() => goto('/templates')}>
-							My Templates
-						</Button>
-					{:else}
-						<Button on:click={() => goto('/auth/login')}>
-							Sign In
-						</Button>
-					{/if}
-				</div>
-				
-				<!-- Mobile filter button - on a new line -->
-				<div class="md:hidden mb-2">
-					<Button 
-						variant="outline" 
-						class="w-full"
-						on:click={() => drawerOpen = true}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-						</svg>
-						Search & Filter
-					</Button>
-				</div>
-			</div>
-			
-			{#if error}
-				<Alert variant="destructive" class="mb-4">
-					<AlertDescription>{error}</AlertDescription>
-				</Alert>
-			{/if}
-			
-			{#if loading}
-				<div class="flex justify-center py-12">
-					<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-				</div>
-			{:else if templates.length === 0}
-				<div class="text-center py-12 border rounded-md bg-muted/20">
-					<h2 class="text-xl font-medium mb-2">No templates found</h2>
-					<p class="text-muted-foreground mb-4">
-						{searchTerm || selectedCategoryIds.size > 0 
-							? 'Try adjusting your filters to find more templates'
-							: 'No templates are available in the directory yet'}
-					</p>
-					{#if searchTerm || selectedCategoryIds.size > 0}
-						<Button variant="outline" on:click={clearFilters}>
-							Clear Filters
-						</Button>
-					{/if}
-				</div>
-			{:else}
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{#each templates as template}
-						<Card>
-							<a href={`/directory/${template.id}`} class="block">
-								<CardHeader>
-									{#if template.featured}
-										<div class="flex mb-1">
-											<span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Featured</span>
-										</div>
-									{/if}
-									<CardTitle class="truncate">{template.title}</CardTitle>
-									{#if template.description}
-										<CardDescription class="line-clamp-2">{template.description}</CardDescription>
-									{:else}
-										<CardDescription class="italic">No description</CardDescription>
-									{/if}
-								</CardHeader>
-								<CardFooter>
-									<div class="flex justify-between w-full text-xs text-muted-foreground">
-										<div class="flex gap-2">
-											<span>{template.variables_count} variables</span>
-											{#if template.category_name}
-												<span>• {template.category_name}</span>
-											{/if}
-										</div>
-										<span>Updated {formatDate(template.updated_at)}</span>
-									</div>
-								</CardFooter>
-							</a>
-						</Card>
-					{/each}
-				</div>
-			{/if}
-		</div>
-	</main>
+	{/if}
 </div>
 
 <!-- Mobile Drawer -->
@@ -384,17 +382,11 @@
 				
 				<!-- Search input -->
 				<div class="relative mb-4">
-					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<circle cx="11" cy="11" r="8"></circle>
-							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-						</svg>
-					</div>
+					<Icon icon="heroicons:magnifying-glass" class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 					<Input 
-						type="text" 
+						type="search" 
 						bind:value={searchTerm} 
 						placeholder="Search templates..."
-						on:input={applyFilters}
 						class="pl-10"
 					/>
 				</div>

@@ -113,7 +113,10 @@
 		}
 	];
 </script>
-
+<svelte:head>
+	<title>Prompt Templates - Create and organize your AI prompts</title>
+	<meta name="description" content="Create, organize, and share your AI prompt templates with customizable variables." />
+</svelte:head>
 <!-- Hero Section -->
 <section class="w-full py-24 bg-background relative overflow-hidden">
 	<!-- Solid decorative elements instead of translucent ones -->

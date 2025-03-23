@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import Icon from '@iconify/svelte';
 
   let loading = true;
   let error = '';
@@ -44,20 +45,22 @@
   }
 </script>
 
-<div class="container mx-auto py-8">
+<div class="space-y-6">
   {#if loading}
-    <div class="flex justify-center">
-      <div class="animate-spin h-8 w-8 border-t-2 border-b-2 border-primary rounded-full"></div>
+    <div class="flex items-center justify-center p-8">
+      <div class="animate-spin mr-2">
+        <Icon icon="heroicons:arrow-path" width="24" height="24" />
+      </div>
+      <span>Loading admin dashboard...</span>
     </div>
   {:else if error}
     <Alert variant="destructive">
       <AlertDescription>{error}</AlertDescription>
     </Alert>
   {:else if isAdmin}
-    <header class="mb-8">
-      <h1 class="text-3xl font-bold">Admin Dashboard</h1>
-      <p class="text-muted-foreground">Manage your site content and settings</p>
-    </header>
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+    </div>
     
     <main>
       <slot />

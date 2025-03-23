@@ -238,7 +238,7 @@
 		</nav>
 	</header>
 	
-	<main class="flex-1 {isHomepage ? '' : 'p-6'}">
+	<main class="flex-1 {isHomepage ? '' : 'p-4 sm:p-6'}">
 		{#if isHomepage}
 			<slot />
 		{:else}
