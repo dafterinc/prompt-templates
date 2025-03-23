@@ -344,11 +344,11 @@
 			<div class="flex flex-col mb-6">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
 					<h1 class="text-2xl font-bold">My Templates</h1>
-					<div class="flex gap-2">
-						<Button variant="outline" on:click={() => goto('/categories')}>
+					<div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:gap-2 w-full sm:w-auto">
+						<Button variant="outline" on:click={() => goto('/categories')} class="w-full sm:w-auto">
 							Manage Categories
 						</Button>
-						<Button on:click={handleCreateNew}>
+						<Button on:click={handleCreateNew} class="w-full sm:w-auto">
 							Create New Template
 						</Button>
 					</div>
