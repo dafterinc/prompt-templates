@@ -342,11 +342,16 @@
 	<main class="flex-1 p-6">
 		<div class="max-w-6xl mx-auto">
 			<div class="flex flex-col mb-6">
-				<div class="flex justify-between items-center mb-4">
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
 					<h1 class="text-2xl font-bold">My Templates</h1>
-					<Button on:click={handleCreateNew}>
-						Create New Template
-					</Button>
+					<div class="flex gap-2">
+						<Button variant="outline" on:click={() => goto('/categories')}>
+							Manage Categories
+						</Button>
+						<Button on:click={handleCreateNew}>
+							Create New Template
+						</Button>
+					</div>
 				</div>
 				
 				<!-- Mobile filter button - on a new line -->
