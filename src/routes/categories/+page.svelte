@@ -26,6 +26,7 @@
 	let editingCategory: Category | null = null;
 	let deleteModalOpen = false;
 	let categoryToDelete: Category | null = null;
+	let userId = '';
 	
 	onMount(() => {
 		checkAuth();
@@ -37,6 +38,8 @@
 		
 		if (!session) {
 			goto('/auth/login');
+		} else {
+			userId = session.user.id;
 		}
 	}
 	
@@ -92,7 +95,8 @@
 			const { error: insertError } = await supabase
 				.from('categories')
 				.insert({
-					name: newCategory.name.trim()
+					name: newCategory.name.trim(),
+					user_id: userId
 				});
 			
 			if (insertError) {
