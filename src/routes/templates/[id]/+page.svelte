@@ -337,40 +337,11 @@
 				</a>
 			</div>
 			
-			<div class="space-y-3">
+			<div>
 				<h1 class="text-3xl font-bold tracking-tight">{template.title}</h1>
 				{#if template.description}
 					<p class="text-muted-foreground">{template.description}</p>
 				{/if}
-				
-				<div class="space-y-2">
-					<Button
-						variant="outline"
-						class="w-full"
-						on:click={duplicateTemplate}
-						disabled={duplicating}
-					>
-						<Icon icon="mdi:content-duplicate" class="mr-2 h-4 w-4" />
-						{duplicating ? 'Duplicating...' : 'Duplicate'}
-					</Button>
-					<a href={`/templates/${templateId}/edit`} class="block w-full">
-						<Button 
-							variant="secondary" 
-							class="w-full"
-						>
-							<Icon icon="mdi:pencil" class="mr-2 h-4 w-4" />
-							Edit Template
-						</Button>
-					</a>
-					<Button
-						variant="destructive"
-						class="w-full"
-						on:click={() => deleteModalOpen = true}
-					>
-						<Icon icon="mdi:delete" class="mr-2 h-4 w-4" />
-						Delete Template
-					</Button>
-				</div>
 			</div>
 		</div>
 		
@@ -439,21 +410,52 @@
 			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
 		
-		<div class="sticky bottom-8 flex justify-center z-10">
-			<Button
-				variant="default"
-				size="lg"
-				class="shadow-lg px-4 sm:px-8 py-6"
-				on:click={copyToClipboard}
-			>
-				{#if copySuccess}
-					<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
-					Copied to Clipboard! ✓
-				{:else}
-					<Icon icon="mdi:content-copy" class="mr-2 h-5 w-5" />
-					Copy to Clipboard
-				{/if}
-			</Button>
+		<div class="space-y-6 ">
+			<div>
+				<Button
+					variant="default"
+					size="lg"
+					class="w-full sm:w-auto px-4 sm:px-8 py-6"
+					on:click={copyToClipboard}
+				>
+					{#if copySuccess}
+						<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
+						Copied to Clipboard! ✓
+					{:else}
+						<Icon icon="mdi:content-copy" class="mr-2 h-5 w-5" />
+						Copy to Clipboard
+					{/if}
+				</Button>
+			</div>
+			
+			<div class="flex gap-2 sm:justify-center">
+				<Button
+					variant="outline"
+					on:click={duplicateTemplate}
+					disabled={duplicating}
+					class="flex-1 sm:flex-none"
+				>
+					<Icon icon="mdi:content-duplicate" class="h-5 w-5 sm:mr-2" />
+					<span class="hidden sm:inline">{duplicating ? 'Duplicating...' : 'Duplicate'}</span>
+				</Button>
+				<a href={`/templates/${templateId}/edit`} class="flex-1 sm:flex-none">
+					<Button 
+						variant="secondary" 
+						class="w-full"
+					>
+						<Icon icon="mdi:pencil" class="h-5 w-5 sm:mr-2" />
+						<span class="hidden sm:inline">Edit Template</span>
+					</Button>
+				</a>
+				<Button
+					variant="destructive"
+					on:click={() => deleteModalOpen = true}
+					class="flex-1 sm:flex-none"
+				>
+					<Icon icon="mdi:delete" class="h-5 w-5 sm:mr-2" />
+					<span class="hidden sm:inline">Delete Template</span>
+				</Button>
+			</div>
 		</div>
 	{/if}
 	
