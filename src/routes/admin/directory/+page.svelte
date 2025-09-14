@@ -43,9 +43,13 @@
 	// For dialogs
 	let newTemplateDialogOpen = false;
 	let newCategoryDialogOpen = false;
+	let editCategoryDialogOpen = false;
 	let deleteTemplateDialogOpen = false;
+	let deleteCategoryDialogOpen = false;
 	let deleteTemplateName = '';
 	let deleteTemplateId = '';
+	let deleteCategoryName = '';
+	let deleteCategoryId = '';
 	
 	// For new template
 	let newTemplateTitle = '';
@@ -61,6 +65,13 @@
 	let newCategoryDescription = '';
 	let savingCategory = false;
 	let categoryError = '';
+	
+	// For edit category
+	let editCategoryId = '';
+	let editCategoryName = '';
+	let editCategoryDescription = '';
+	let savingEditCategory = false;
+	let editCategoryError = '';
 	
 	// For import/export
 	let importExportDialogOpen = false;
@@ -167,6 +178,52 @@
 		}
 	}
 	
+	function openEditCategory(category: Category) {
+		editCategoryId = category.id;
+		editCategoryName = category.name;
+		editCategoryDescription = category.description || '';
+		editCategoryError = '';
+		editCategoryDialogOpen = true;
+	}
+	
+	async function updateCategory() {
+		if (!editCategoryName.trim()) {
+			editCategoryError = 'Category name is required';
+			return;
+		}
+		
+		try {
+			savingEditCategory = true;
+			editCategoryError = '';
+			
+			const { error: updateError } = await supabase
+				.from('directory_categories')
+				.update({
+					name: editCategoryName.trim(),
+					description: editCategoryDescription?.trim() || null
+				})
+				.eq('id', editCategoryId);
+			
+			if (updateError) {
+				editCategoryError = getUserFriendlyErrorMessage(updateError);
+				return;
+			}
+			
+			// Close dialog and reset values
+			editCategoryDialogOpen = false;
+			editCategoryId = '';
+			editCategoryName = '';
+			editCategoryDescription = '';
+			
+			// Refresh categories list
+			await fetchCategories();
+		} catch (e: any) {
+			editCategoryError = getUserFriendlyErrorMessage(e);
+		} finally {
+			savingEditCategory = false;
+		}
+	}
+	
 	async function createTemplate() {
 		try {
 			savingTemplate = true;
@@ -241,6 +298,12 @@
 		deleteTemplateDialogOpen = true;
 	}
 	
+	function confirmDeleteCategory(category: Category) {
+		deleteCategoryId = category.id;
+		deleteCategoryName = category.name;
+		deleteCategoryDialogOpen = true;
+	}
+	
 	async function deleteTemplate() {
 		try {
 			// Delete the template (variables will cascade delete due to FK constraint)
@@ -259,6 +322,43 @@
 			await fetchTemplates();
 		} catch (e: any) {
 			error = e.message || 'Failed to delete template';
+		}
+	}
+	
+	async function deleteCategory() {
+		try {
+			// First check if there are any templates using this category
+			const { data: templatesUsingCategory, error: checkError } = await supabase
+				.from('directory_templates')
+				.select('id, title')
+				.eq('category_id', deleteCategoryId);
+			
+			if (checkError) {
+				error = checkError.message;
+				return;
+			}
+			
+			if (templatesUsingCategory && templatesUsingCategory.length > 0) {
+				error = `Cannot delete category "${deleteCategoryName}" because it contains ${templatesUsingCategory.length} template(s). Please move or delete the templates first.`;
+				return;
+			}
+			
+			// Delete the category
+			const { error: deleteError } = await supabase
+				.from('directory_categories')
+				.delete()
+				.eq('id', deleteCategoryId);
+				
+			if (deleteError) {
+				error = deleteError.message;
+				return;
+			}
+			
+			// Close dialog and refresh
+			deleteCategoryDialogOpen = false;
+			await fetchCategories();
+		} catch (e: any) {
+			error = e.message || 'Failed to delete category';
 		}
 	}
 	
@@ -747,7 +847,7 @@
 					{:else}
 						<div class="grid gap-4">
 							{#each categories as category}
-								<Card>
+								<Card class="hover:shadow-md transition-shadow duration-200">
 									<CardHeader>
 										<div class="flex justify-between items-start">
 											<div>
@@ -755,6 +855,14 @@
 												{#if category.description}
 													<CardDescription>{category.description}</CardDescription>
 												{/if}
+											</div>
+											<div class="flex gap-1">
+												<Button size="icon" variant="outline" title="Edit" on:click={() => openEditCategory(category)}>
+													<Icon icon="mdi:pencil" class="h-4 w-4" />
+												</Button>
+												<Button size="icon" variant="destructive" title="Delete" on:click={() => confirmDeleteCategory(category)}>
+													<Icon icon="mdi:delete" class="h-4 w-4" />
+												</Button>
 											</div>
 										</div>
 									</CardHeader>
@@ -928,6 +1036,61 @@
 	</Dialog.Content>
 </Dialog.Root>
 
+<!-- Edit Category Dialog -->
+<Dialog.Root bind:open={editCategoryDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Edit Category</Dialog.Title>
+			<Dialog.Description>
+				Update the category name and description
+			</Dialog.Description>
+		</Dialog.Header>
+		
+		{#if editCategoryError}
+			<Alert variant="destructive" class="mb-4">
+				<AlertDescription>{editCategoryError}</AlertDescription>
+			</Alert>
+		{/if}
+		
+		<div class="space-y-4 py-4">
+			<div class="space-y-2">
+				<Label for="edit-category-name">Name *</Label>
+				<Input
+					id="edit-category-name"
+					type="text"
+					bind:value={editCategoryName}
+					placeholder="Enter category name"
+				/>
+			</div>
+			
+			<div class="space-y-2">
+				<Label for="edit-category-description">Description</Label>
+				<Textarea
+					id="edit-category-description"
+					bind:value={editCategoryDescription}
+					placeholder="Enter category description (optional)"
+				/>
+			</div>
+		</div>
+		
+		<Dialog.Footer>
+			<Button 
+				variant="outline" 
+				on:click={() => editCategoryDialogOpen = false}
+			>
+				Cancel
+			</Button>
+			<Button 
+				type="button" 
+				disabled={savingEditCategory || !editCategoryName.trim()}
+				on:click={updateCategory}
+			>
+				{savingEditCategory ? 'Updating...' : 'Update Category'}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
 <!-- Delete Template Confirmation Dialog -->
 <Dialog.Root bind:open={deleteTemplateDialogOpen}>
 	<Dialog.Content>
@@ -952,6 +1115,40 @@
 			<Button 
 				variant="destructive"
 				on:click={deleteTemplate}
+			>
+				Delete
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete Category Confirmation Dialog -->
+<Dialog.Root bind:open={deleteCategoryDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Delete Category</Dialog.Title>
+			<Dialog.Description>
+				Are you sure you want to delete this category? This action cannot be undone.
+			</Dialog.Description>
+		</Dialog.Header>
+		
+		<div class="py-4">
+			<p>You are about to delete: <strong>{deleteCategoryName}</strong></p>
+			<p class="text-sm text-muted-foreground mt-2">
+				Note: Categories that contain templates cannot be deleted. You must first move or delete the templates.
+			</p>
+		</div>
+		
+		<Dialog.Footer>
+			<Button 
+				variant="outline" 
+				on:click={() => deleteCategoryDialogOpen = false}
+			>
+				Cancel
+			</Button>
+			<Button 
+				variant="destructive"
+				on:click={deleteCategory}
 			>
 				Delete
 			</Button>
