@@ -60,5 +60,8 @@
 		"svelte-radix": "^2.0.1",
 		"svelte-sonner": "^0.3.28",
 		"tailwindcss": "^3.4.1"
+	},
+	"overrides": {
+		"cookie": "^1.0.2"
 	}
 }
