@@ -55,25 +55,5 @@
 			</CardFooter>
 		</Card>
 
-		<Card class="hover:shadow-md transition-shadow cursor-pointer" on:click={() => goto('/admin/settings')}>
-			<CardHeader>
-				<div class="flex items-center justify-between">
-					<CardTitle>Site Settings</CardTitle>
-					<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-						<Icon icon="mdi:cog" class="h-5 w-5 text-primary" />
-					</div>
-				</div>
-				<CardDescription>Configure application settings</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<p>Update site configuration and global parameters.</p>
-			</CardContent>
-			<CardFooter>
-				<Button variant="outline" class="w-full" on:click={() => goto('/admin/settings')}>
-					<Icon icon="mdi:arrow-right" class="mr-2 h-4 w-4" />
-					Site Settings
-				</Button>
-			</CardFooter>
-		</Card>
 	</div>
 </div> 
