@@ -2,6 +2,7 @@
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -16,12 +17,22 @@
 	let error = '';
 	let activeTab = 'sign-in';
 	
-	// Initialize activeTab from URL params
-	$: {
+	// Initialize activeTab from URL params on mount and watch for changes
+	onMount(() => {
 		const tabParam = $page.url.searchParams.get('tab');
 		if (tabParam === 'sign-up') {
 			activeTab = 'sign-up';
 		} else {
+			activeTab = 'sign-in';
+		}
+	});
+	
+	// Watch for URL changes and update activeTab accordingly
+	$: {
+		const tabParam = $page.url.searchParams.get('tab');
+		if (tabParam === 'sign-up' && activeTab !== 'sign-up') {
+			activeTab = 'sign-up';
+		} else if (tabParam !== 'sign-up' && activeTab !== 'sign-in') {
 			activeTab = 'sign-in';
 		}
 	}
@@ -33,11 +44,13 @@
 	
 	// Handle tab change
 	function handleTabChange(value: string | undefined) {
-		activeTab = value || 'sign-in';
-		// Update URL to reflect the current tab
-		const url = new URL($page.url);
-		url.searchParams.set('tab', activeTab);
-		goto(url.toString(), { replaceState: true });
+		if (value) {
+			activeTab = value;
+			// Update URL to reflect the current tab
+			const url = new URL($page.url);
+			url.searchParams.set('tab', activeTab);
+			goto(url.toString(), { replaceState: true });
+		}
 	}
 	
 	async function handleLogin() {
@@ -117,7 +130,7 @@
 		</CardHeader>
 		
 		<CardContent>
-			<Tabs value={activeTab} onValueChange={(value) => handleTabChange(value)} class="w-full">
+			<Tabs value={activeTab} onValueChange={handleTabChange} class="w-full">
 				<TabsList class="grid w-full grid-cols-2">
 					<TabsTrigger value="sign-in">Sign In</TabsTrigger>
 					<TabsTrigger value="sign-up">Sign Up</TabsTrigger>
