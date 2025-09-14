@@ -459,23 +459,34 @@
 						}
 					}
 					
-					// Parse variables from JSON
+					// Parse variables from JSON or extract from content
 					let variables: any[] = [];
+					
+					// Try to parse variables from JSON first
 					if (rowData['Variables (JSON)']?.trim()) {
 						try {
 							variables = JSON.parse(rowData['Variables (JSON)']);
 						} catch (parseError) {
-							// If JSON parsing fails, try to extract variables from content
-							const variableMatches = [...rowData['Content'].matchAll(/\{\{([^}]+)\}\}/g)];
-							variables = variableMatches.map(match => ({
-								name: match[1].trim(),
-								description: '',
-								type: 'text',
-								default_value: '',
-								is_required: false
-							}));
+							// If JSON parsing fails, extract from content
+							variables = [];
 						}
 					}
+					
+					// Always extract variables from content to ensure we don't miss any
+					const variableMatches = [...rowData['Content'].matchAll(/\{\{([^}]+)\}\}/g)];
+					const contentVariables = variableMatches.map(match => ({
+						name: match[1].trim(),
+						description: '',
+						type: 'text',
+						default_value: '',
+						is_required: false
+					}));
+					
+					// Merge variables from JSON with content variables
+					// Use JSON variables as base and fill in missing ones from content
+					const variableNames = new Set(variables.map(v => v.name));
+					const missingVariables = contentVariables.filter(v => !variableNames.has(v.name));
+					variables = [...variables, ...missingVariables];
 					
 					// Create template
 					const { data: template, error: templateError } = await supabase
