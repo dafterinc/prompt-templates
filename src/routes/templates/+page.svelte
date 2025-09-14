@@ -56,6 +56,13 @@
 	let savingCategory = false;
 	let categoryError = '';
 	
+	// For import/export
+	let importExportDialogOpen = false;
+	let importFile: File | null = null;
+	let importError = '';
+	let importSuccess = '';
+	let importing = false;
+	
 	onMount(() => {
 		loadTemplates();
 	});
@@ -252,6 +259,300 @@
 	function closeDrawer() {
 		drawerOpen = false;
 	}
+	
+	async function exportToCSV() {
+		try {
+			// Fetch all templates with their categories and variables
+			const { data: templatesData, error: templatesError } = await supabase
+				.from('templates')
+				.select(`
+					*,
+					categories(name),
+					variables(name, description, type, default_value, is_required)
+				`)
+				.order('title');
+			
+			if (templatesError) {
+				error = templatesError.message;
+				return;
+			}
+			
+			if (!templatesData || templatesData.length === 0) {
+				error = 'No templates to export';
+				return;
+			}
+			
+			// Create CSV headers
+			const headers = [
+				'Title',
+				'Description', 
+				'Content',
+				'Category Name',
+				'Variables (JSON)',
+				'Created At',
+				'Updated At'
+			];
+			
+			// Convert data to CSV rows
+			const csvRows = templatesData.map(template => {
+				// Convert variables to JSON string
+				const variablesJson = JSON.stringify(template.variables || []);
+				
+				// Escape CSV values (handle commas, quotes, newlines)
+				const escapeCSV = (value: any) => {
+					if (value === null || value === undefined) return '';
+					const str = String(value);
+					if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+						return `"${str.replace(/"/g, '""')}"`;
+					}
+					return str;
+				};
+				
+				return [
+					escapeCSV(template.title),
+					escapeCSV(template.description),
+					escapeCSV(template.content),
+					escapeCSV(template.categories?.name || ''),
+					escapeCSV(variablesJson),
+					escapeCSV(template.created_at),
+					escapeCSV(template.updated_at)
+				].join(',');
+			});
+			
+			// Combine headers and rows
+			const csvContent = [headers.join(','), ...csvRows].join('\n');
+			
+			// Create and download file
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+			const link = document.createElement('a');
+			const url = URL.createObjectURL(blob);
+			link.setAttribute('href', url);
+			link.setAttribute('download', `my-templates-${new Date().toISOString().split('T')[0]}.csv`);
+			link.style.visibility = 'hidden';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			
+		} catch (e: any) {
+			error = e.message || 'Failed to export templates';
+		}
+	}
+	
+	async function importFromCSV() {
+		if (!importFile) {
+			importError = 'Please select a CSV file to import';
+			return;
+		}
+		
+		try {
+			importing = true;
+			importError = '';
+			importSuccess = '';
+			
+			// Read file content
+			const fileContent = await importFile.text();
+			
+			// Parse CSV
+			const lines = fileContent.split('\n').filter(line => line.trim());
+			if (lines.length < 2) {
+				importError = 'CSV file must have at least a header row and one data row';
+				return;
+			}
+			
+			const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+			const dataRows = lines.slice(1);
+			
+			// Validate headers
+			const requiredHeaders = ['Title', 'Description', 'Content', 'Category Name'];
+			const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+			if (missingHeaders.length > 0) {
+				importError = `Missing required headers: ${missingHeaders.join(', ')}`;
+				return;
+			}
+			
+			let successCount = 0;
+			let errorCount = 0;
+			const errors: string[] = [];
+			
+			// Process each row
+			for (let i = 0; i < dataRows.length; i++) {
+				try {
+					const row = dataRows[i];
+					const values = parseCSVRow(row);
+					
+					if (values.length !== headers.length) {
+						errors.push(`Row ${i + 2}: Column count mismatch`);
+						errorCount++;
+						continue;
+					}
+					
+					// Create row object
+					const rowData: Record<string, string> = {};
+					headers.forEach((header, index) => {
+						rowData[header] = values[index] || '';
+					});
+					
+					// Validate required fields
+					if (!rowData['Title']?.trim() || !rowData['Content']?.trim()) {
+						errors.push(`Row ${i + 2}: Title and Content are required`);
+						errorCount++;
+						continue;
+					}
+					
+					// Find or create category
+					let categoryId = null;
+					if (rowData['Category Name']?.trim()) {
+						const categoryName = rowData['Category Name'].trim();
+						
+						// Check if category exists
+						const existingCategory = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+						
+						if (existingCategory) {
+							categoryId = existingCategory.id;
+						} else {
+							// Create new category
+							const { data: newCategory, error: categoryError } = await supabase
+								.from('categories')
+								.insert({
+									name: categoryName,
+									user_id: userId
+								})
+								.select()
+								.single();
+							
+							if (categoryError) {
+								errors.push(`Row ${i + 2}: Failed to create category "${categoryName}": ${categoryError.message}`);
+								errorCount++;
+								continue;
+							}
+							
+							categoryId = newCategory.id;
+							// Add to local categories array
+							categories.push({ ...newCategory, checked: false, count: 0 });
+						}
+					}
+					
+					// Parse variables from JSON
+					let variables: any[] = [];
+					if (rowData['Variables (JSON)']?.trim()) {
+						try {
+							variables = JSON.parse(rowData['Variables (JSON)']);
+						} catch (parseError) {
+							// If JSON parsing fails, try to extract variables from content
+							const variableMatches = [...rowData['Content'].matchAll(/\{\{([^}]+)\}\}/g)];
+							variables = variableMatches.map(match => ({
+								name: match[1].trim(),
+								description: '',
+								type: 'text',
+								default_value: '',
+								is_required: false
+							}));
+						}
+					}
+					
+					// Create template
+					const { data: template, error: templateError } = await supabase
+						.from('templates')
+						.insert({
+							title: rowData['Title'].trim(),
+							description: rowData['Description']?.trim() || null,
+							content: rowData['Content'].trim(),
+							category_id: categoryId,
+							user_id: userId
+						})
+						.select()
+						.single();
+					
+					if (templateError) {
+						errors.push(`Row ${i + 2}: Failed to create template: ${templateError.message}`);
+						errorCount++;
+						continue;
+					}
+					
+					// Create variables if any
+					if (variables.length > 0) {
+						const variableInserts = variables.map(variable => ({
+							template_id: template.id,
+							name: variable.name,
+							description: variable.description || '',
+							type: variable.type || 'text',
+							default_value: variable.default_value || '',
+							is_required: variable.is_required || false
+						}));
+						
+						const { error: variablesError } = await supabase
+							.from('variables')
+							.insert(variableInserts);
+						
+						if (variablesError) {
+							errors.push(`Row ${i + 2}: Template created but failed to create variables: ${variablesError.message}`);
+						}
+					}
+					
+					successCount++;
+					
+				} catch (rowError: any) {
+					errors.push(`Row ${i + 2}: ${rowError.message}`);
+					errorCount++;
+				}
+			}
+			
+			// Set success/error messages
+			if (successCount > 0) {
+				importSuccess = `Successfully imported ${successCount} template(s)`;
+				// Refresh data
+				await loadTemplates();
+			}
+			
+			if (errorCount > 0) {
+				importError = `Failed to import ${errorCount} template(s):\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more errors` : ''}`;
+			}
+			
+		} catch (e: any) {
+			importError = e.message || 'Failed to import templates';
+		} finally {
+			importing = false;
+		}
+	}
+	
+	function parseCSVRow(row: string): string[] {
+		const result: string[] = [];
+		let current = '';
+		let inQuotes = false;
+		
+		for (let i = 0; i < row.length; i++) {
+			const char = row[i];
+			
+			if (char === '"') {
+				if (inQuotes && row[i + 1] === '"') {
+					// Escaped quote
+					current += '"';
+					i++; // Skip next quote
+				} else {
+					// Toggle quote state
+					inQuotes = !inQuotes;
+				}
+			} else if (char === ',' && !inQuotes) {
+				// End of field
+				result.push(current.trim());
+				current = '';
+			} else {
+				current += char;
+			}
+		}
+		
+		// Add last field
+		result.push(current.trim());
+		
+		return result;
+	}
+	
+	function handleFileSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			importFile = target.files[0];
+		}
+	}
 </script>
 
 <svelte:head>
@@ -262,6 +563,10 @@
 	<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 		<h1 class="text-3xl font-bold tracking-tight">My Templates</h1>
 		<div class="flex flex-col sm:flex-row gap-2">
+			<Button variant="outline" class="w-full" on:click={() => importExportDialogOpen = true}>
+				<Icon icon="mdi:import" class="mr-2 h-4 w-4" />
+				Import/Export
+			</Button>
 			<Button variant="outline" class="w-full" on:click={() => goto('/categories')}>
 				Manage Categories
 			</Button>
@@ -574,4 +879,99 @@
 			</div>
 		</Drawer.Content>
 	</Drawer.Portal>
-</Drawer.Root> 
+</Drawer.Root>
+
+<!-- Import/Export Dialog -->
+<Dialog.Root bind:open={importExportDialogOpen}>
+	<Dialog.Content class="max-w-2xl">
+		<Dialog.Header>
+			<Dialog.Title>Import/Export Templates</Dialog.Title>
+			<Dialog.Description>
+				Import templates from CSV or export your templates to CSV format
+			</Dialog.Description>
+		</Dialog.Header>
+		
+		<div class="space-y-6 py-4">
+			<!-- Export Section -->
+			<div class="space-y-3">
+				<h3 class="text-lg font-semibold">Export Templates</h3>
+				<p class="text-sm text-muted-foreground">
+					Download all your templates as a CSV file including categories and variables.
+				</p>
+				<Button on:click={exportToCSV} class="w-full">
+					<Icon icon="mdi:download" class="mr-2 h-4 w-4" />
+					Export to CSV
+				</Button>
+			</div>
+			
+			<div class="border-t pt-6">
+				<!-- Import Section -->
+				<div class="space-y-3">
+					<h3 class="text-lg font-semibold">Import Templates</h3>
+					<p class="text-sm text-muted-foreground">
+						Upload a CSV file to import templates. Categories will be created automatically if they don't exist.
+					</p>
+					
+					{#if importError}
+						<Alert variant="destructive">
+							<AlertDescription class="whitespace-pre-line">{importError}</AlertDescription>
+						</Alert>
+					{/if}
+					
+					{#if importSuccess}
+						<Alert>
+							<AlertDescription>{importSuccess}</AlertDescription>
+						</Alert>
+					{/if}
+					
+					<div class="space-y-2">
+						<Label for="csv-file">CSV File</Label>
+						<Input
+							id="csv-file"
+							type="file"
+							accept=".csv"
+							on:change={handleFileSelect}
+							class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+						/>
+						{#if importFile}
+							<p class="text-sm text-muted-foreground">Selected: {importFile.name}</p>
+						{/if}
+					</div>
+					
+					<div class="bg-muted p-4 rounded-md">
+						<h4 class="font-medium mb-2">CSV Format Requirements:</h4>
+						<ul class="text-sm space-y-1 text-muted-foreground">
+							<li>• <strong>Required columns:</strong> Title, Description, Content, Category Name</li>
+							<li>• <strong>Optional columns:</strong> Variables (JSON)</li>
+							<li>• Categories will be created automatically if they don't exist</li>
+							<li>• Variables can be included as JSON or will be extracted from template content</li>
+						</ul>
+					</div>
+					
+					<Button 
+						on:click={importFromCSV} 
+						disabled={!importFile || importing}
+						class="w-full"
+					>
+						<Icon icon="mdi:upload" class="mr-2 h-4 w-4" />
+						{importing ? 'Importing...' : 'Import Templates'}
+					</Button>
+				</div>
+			</div>
+		</div>
+		
+		<Dialog.Footer>
+			<Button 
+				variant="outline" 
+				on:click={() => {
+					importExportDialogOpen = false;
+					importFile = null;
+					importError = '';
+					importSuccess = '';
+				}}
+			>
+				Close
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root> 
