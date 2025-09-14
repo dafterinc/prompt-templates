@@ -114,11 +114,128 @@
 	];
 </script>
 <svelte:head>
+	<!-- Primary Meta Tags -->
 	<title>Prompt Templates - Create and organize your AI prompts</title>
-	<meta name="description" content="Create, organize, and share your AI prompt templates with customizable variables." />
+	<meta name="title" content="Prompt Templates - Create and organize your AI prompts" />
+	<meta name="description" content="Create, organize, and share your AI prompt templates with customizable variables. Streamline your repetitive text workflows and boost productivity with our powerful template management system." />
+	<meta name="keywords" content="AI prompts, prompt templates, text templates, workflow automation, productivity tools, customizable variables, template management, AI tools, prompt engineering" />
+	<meta name="author" content="Prompt Templates" />
+	<meta name="robots" content="index, follow" />
+	<meta name="language" content="English" />
+	<meta name="revisit-after" content="7 days" />
+	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://prompts.dft4.me/" />
+	<meta property="og:title" content="Prompt Templates - Create and organize your AI prompts" />
+	<meta property="og:description" content="Create, organize, and share your AI prompt templates with customizable variables. Streamline your repetitive text workflows and boost productivity." />
+	<meta property="og:image" content="https://prompts.dft4.me/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:site_name" content="Prompt Templates" />
+	<meta property="og:locale" content="en_US" />
+	
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image" />
+	<meta property="twitter:url" content="https://prompts.dft4.me/" />
+	<meta property="twitter:title" content="Prompt Templates - Create and organize your AI prompts" />
+	<meta property="twitter:description" content="Create, organize, and share your AI prompt templates with customizable variables. Streamline your repetitive text workflows and boost productivity." />
+	<meta property="twitter:image" content="https://prompts.dft4.me/og-image.png" />
+	<meta property="twitter:creator" content="@prompttemplates" />
+	<meta property="twitter:site" content="@prompttemplates" />
+	
+	<!-- Additional SEO Meta Tags -->
+	<meta name="theme-color" content="#2D8A6D" />
+	<meta name="msapplication-TileColor" content="#2D8A6D" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="apple-mobile-web-app-title" content="Prompt Templates" />
+	
+	<!-- Canonical URL -->
+	<link rel="canonical" href="https://prompts.dft4.me/" />
+	
+	<!-- Structured Data - JSON-LD -->
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "WebApplication",
+		"name": "Prompt Templates",
+		"description": "Create, organize, and share your AI prompt templates with customizable variables. Streamline your repetitive text workflows and boost productivity.",
+		"url": "https://prompts.dft4.me/",
+		"applicationCategory": "ProductivityApplication",
+		"operatingSystem": "Web Browser",
+		"offers": {
+			"@type": "Offer",
+			"price": "0",
+			"priceCurrency": "USD"
+		},
+		"creator": {
+			"@type": "Organization",
+			"name": "Prompt Templates",
+			"url": "https://prompts.dft4.me/"
+		},
+		"featureList": [
+			"Customizable Variables",
+			"Offline First",
+			"Secure Cloud Sync",
+			"Rich Text Formatting",
+			"Template Organization",
+			"Self-Hostable"
+		],
+		"softwareVersion": "1.0.0",
+		"browserRequirements": "Requires JavaScript. Requires HTML5.",
+		"permissions": "browser",
+		"isAccessibleForFree": true,
+		"potentialAction": {
+			"@type": "UseAction",
+			"target": "https://prompts.dft4.me/auth/login",
+			"name": "Get Started"
+		}
+	}
+	</script>
+	
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "Organization",
+		"name": "Prompt Templates",
+		"url": "https://prompts.dft4.me/",
+		"logo": "https://prompts.dft4.me/logo.png",
+		"description": "A powerful tool for creating and managing AI prompt templates with customizable variables.",
+		"sameAs": [
+			"https://github.com/dafterinc/prompt-templates"
+		],
+		"contactPoint": {
+			"@type": "ContactPoint",
+			"contactType": "customer service",
+			"url": "https://dafterinc.com/contact-us/"
+		}
+	}
+	</script>
+	
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "SoftwareApplication",
+		"name": "Prompt Templates",
+		"description": "Create, organize, and share your AI prompt templates with customizable variables.",
+		"url": "https://prompts.dft4.me/",
+		"applicationCategory": "ProductivityApplication",
+		"operatingSystem": "Web Browser",
+		"offers": {
+			"@type": "Offer",
+			"price": "0",
+			"priceCurrency": "USD"
+		},
+		"softwareVersion": "1.0.0",
+		"datePublished": "2025-09-14",
+		"dateModified": "2025-09-14"
+	}
+	</script>
 </svelte:head>
 <!-- Hero Section -->
-<section class="w-full py-24 bg-background relative overflow-hidden">
+<main>
+<section class="w-full py-24 bg-background relative overflow-hidden" role="banner" aria-labelledby="hero-heading">
 	<!-- Solid decorative elements instead of translucent ones -->
 	<div class="absolute top-0 left-0 w-full h-full z-0">
 		<div class="absolute top-10 left-10 w-64 h-64 rounded-full bg-accent"></div>
@@ -129,25 +246,25 @@
 	<div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
 		<div class="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
 			<div class="flex flex-col gap-6 animate-slide-right">
-				<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-primary">
+				<h1 id="hero-heading" class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-primary">
 					Prompt Templates for Everyday Workflows
 				</h1>
-				<p class="text-lg md:text-xl text-muted-foreground max-w-[600px]">
+				<p id="hero-description" class="text-lg md:text-xl text-muted-foreground max-w-[600px]">
 					Build, manage, and generate text prompts with customizable variables. Streamline your repetitive 
 					text workflows and boost your productivity.
 				</p>
-				<div class="flex flex-col md:flex-row gap-4 mt-4">
-					<Button size="lg" class="w-full md:w-auto hover:scale-105 transition-transform" on:click={handleGetStarted}>
+				<div class="flex flex-col md:flex-row gap-4 mt-4" role="group" aria-label="Action buttons">
+					<Button size="lg" class="w-full md:w-auto hover:scale-105 transition-transform" on:click={handleGetStarted} aria-describedby="hero-description">
 						Get Started
 					</Button>
-					<Button size="lg" variant="outline" class="w-full md:w-auto hover:scale-105 transition-transform" on:click={handleGitHubView}>
-						<Icon icon="mdi:github" class="mr-2 h-5 w-5" />
+					<Button size="lg" variant="outline" class="w-full md:w-auto hover:scale-105 transition-transform" on:click={handleGitHubView} aria-label="View Prompt Templates on GitHub">
+						<Icon icon="mdi:github" class="mr-2 h-5 w-5" aria-hidden="true" />
 						View on GitHub
 					</Button>
 				</div>
 			</div>
 			<div class="relative w-full p-4 flex items-center justify-center animate-slide-left">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" class="w-full max-w-[500px] drop-shadow-xl">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" class="w-full max-w-[500px] drop-shadow-xl" role="img" aria-label="Illustration showing a person working with prompt templates on a laptop">
 					<!-- Person -->
 					<g transform="translate(320, 300)">
 						<!-- Head -->
@@ -219,7 +336,7 @@
 </section>
 
 <!-- Features Section -->
-<section class="w-full py-20 bg-muted relative overflow-hidden">
+<section class="w-full py-20 bg-muted relative overflow-hidden" aria-labelledby="features-heading">
 	<!-- Solid background instead of gradient -->
 	<div class="absolute top-0 left-0 w-full h-20 bg-accent"></div>
 
@@ -228,19 +345,19 @@
 			<div class="inline-block px-6 py-2 bg-primary rounded-full mb-4">
 				<h2 class="text-sm font-semibold text-primary-foreground">Why Choose Us?</h2>
 			</div>
-			<h2 class="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
+			<h2 id="features-heading" class="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
 			<p class="text-lg text-muted-foreground max-w-[800px]">
 				Everything you need to create and manage your prompt templates efficiently.
 			</p>
 		</div>
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list" aria-label="Features list">
 			{#each features as feature, i}
-				<Card class="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary animate-slide-up animate-delay-{i * 100 % 500}">
+				<Card class="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary animate-slide-up animate-delay-{i * 100 % 500}" role="listitem">
 					<CardHeader>
-						<div class="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 group-hover:bg-primary/80 transition-colors">
+						<div class="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 group-hover:bg-primary/80 transition-colors" aria-hidden="true">
 							<Icon icon={feature.icon} class="h-6 w-6 text-primary-foreground" />
 						</div>
-						<CardTitle>{feature.title}</CardTitle>
+						<CardTitle class="text-xl">{feature.title}</CardTitle>
 						<CardDescription>{feature.description}</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -253,7 +370,7 @@
 </section>
 
 <!-- Use Cases Section -->
-<section class="w-full py-20 bg-accent relative overflow-hidden">
+<section class="w-full py-20 bg-accent relative overflow-hidden" aria-labelledby="use-cases-heading">
 	<!-- Solid background element instead of gradient -->
 	<div class="absolute top-0 right-0 w-1/3 h-full bg-secondary/20"></div>
 
@@ -262,15 +379,15 @@
 			<div class="inline-block px-6 py-2 bg-primary rounded-full mb-4">
 				<h2 class="text-sm font-semibold text-primary-foreground">Use Cases</h2>
 			</div>
-			<h2 class="text-3xl md:text-4xl font-bold mb-4">Perfect For</h2>
+			<h2 id="use-cases-heading" class="text-3xl md:text-4xl font-bold mb-4">Perfect For</h2>
 			<p class="text-lg text-muted-foreground max-w-[800px]">
 				Streamline your workflow in these common scenarios and more.
 			</p>
 		</div>
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list" aria-label="Use cases list">
 			{#each useCases as useCase, i}
-				<div class="flex flex-col items-center text-center p-6 bg-background rounded-xl shadow-sm hover:shadow-md hover:scale-105 transition-all animate-slide-up animate-delay-{i * 100 % 500}">
-					<div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4 hover:bg-primary/80 transition-colors">
+				<div class="flex flex-col items-center text-center p-6 bg-background rounded-xl shadow-sm hover:shadow-md hover:scale-105 transition-all animate-slide-up animate-delay-{i * 100 % 500}" role="listitem">
+					<div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4 hover:bg-primary/80 transition-colors" aria-hidden="true">
 						<Icon icon={useCase.icon} class="h-8 w-8 text-primary-foreground" />
 					</div>
 					<h3 class="text-xl font-semibold mb-2">{useCase.title}</h3>
@@ -282,7 +399,7 @@
 </section>
 
 <!-- CTA Section -->
-<section class="w-full py-24 bg-primary text-primary-foreground relative overflow-hidden">
+<section class="w-full py-24 bg-primary text-primary-foreground relative overflow-hidden" aria-labelledby="cta-heading">
 	<!-- Solid background elements instead of gradients -->
 	<div class="absolute top-0 left-0 w-full h-full">
 		<div class="absolute top-0 right-0 w-1/3 h-full bg-primary-foreground/5"></div>
@@ -294,17 +411,17 @@
 			<div class="inline-block px-6 py-2 bg-secondary rounded-full mb-6">
 				<h2 class="text-sm font-semibold text-secondary-foreground">Get Started Today</h2>
 			</div>
-			<h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to streamline your workflow?</h2>
-			<p class="text-lg mb-8">
+			<h2 id="cta-heading" class="text-3xl md:text-4xl font-bold mb-4">Ready to streamline your workflow?</h2>
+			<p id="cta-description" class="text-lg mb-8">
 				Start creating your templates today and save time on repetitive text tasks.
 			</p>
-			<div class="flex flex-col sm:flex-row gap-4">
-				<Button size="lg" variant="secondary" class="w-full sm:w-auto hover:scale-105 transition-transform animate-bounce-subtle" on:click={handleGetStarted}>
-					<Icon icon="mdi:rocket-launch-outline" class="mr-2 h-5 w-5" />
+			<div class="flex flex-col sm:flex-row gap-4" role="group" aria-label="Call to action buttons">
+				<Button size="lg" variant="secondary" class="w-full sm:w-auto hover:scale-105 transition-transform animate-bounce-subtle" on:click={handleGetStarted} aria-describedby="cta-description">
+					<Icon icon="mdi:rocket-launch-outline" class="mr-2 h-5 w-5" aria-hidden="true" />
 					Get Started - It's Free
 				</Button>
-				<Button size="lg" variant="outline" class="bg-transparent border-primary-foreground w-full sm:w-auto hover:scale-105 transition-transform" on:click={handleGitHubView}>
-					<Icon icon="mdi:github" class="mr-2 h-5 w-5" />
+				<Button size="lg" variant="outline" class="bg-transparent border-primary-foreground w-full sm:w-auto hover:scale-105 transition-transform" on:click={handleGitHubView} aria-label="View Prompt Templates on GitHub">
+					<Icon icon="mdi:github" class="mr-2 h-5 w-5" aria-hidden="true" />
 					View on GitHub
 				</Button>
 			</div>
@@ -314,3 +431,4 @@
 		</div>
 	</div>
 </section>
+</main>
