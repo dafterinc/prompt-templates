@@ -9,7 +9,7 @@
 	<title>Admin Dashboard | Prompt Templates</title>
 </svelte:head>
 
-<div class="space-y-4 px-4 py-4 sm:px-6 sm:py-6">
+<div class="space-y-4">
 	<p class="text-muted-foreground">Manage your site content and settings</p>
 
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
