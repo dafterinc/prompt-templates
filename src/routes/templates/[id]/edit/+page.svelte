@@ -292,7 +292,7 @@
 	<title>{template?.title ? `Edit ${template.title} | Prompt Templates` : 'Edit Template | Prompt Templates'}</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-4">
 	{#if loading}
 		<div class="flex items-center justify-center p-8">
 			<div class="animate-spin mr-2">
@@ -305,14 +305,16 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div>
-			<a href={`/templates/${templateId}`} class="text-muted-foreground hover:text-foreground inline-flex items-center">
-				&larr; <span class="ml-1">Back to Template</span>
-			</a>
-		</div>
-		
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Edit Template</h1>
+		<div class="space-y-3">
+			<div>
+				<a href={`/templates/${templateId}`} class="text-muted-foreground hover:text-foreground inline-flex items-center">
+					&larr; <span class="ml-1">Back to Template</span>
+				</a>
+			</div>
+			
+			<div>
+				<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Edit Template</h1>
+			</div>
 		</div>
 		
 		{#if error}
@@ -322,8 +324,8 @@
 		{/if}
 		
 		<Card>
-			<CardContent class="pt-6">
-				<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+			<CardContent class="p-4 sm:p-6">
+				<form on:submit|preventDefault={handleSubmit} class="space-y-4 sm:space-y-6">
 					<div class="space-y-2">
 						<Label for="title">Title *</Label>
 						<Input

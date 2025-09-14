@@ -594,22 +594,22 @@
 </script>
 
 <div>
-	<div class="flex justify-between items-center mb-6">
-		<h1 class="text-3xl font-bold">Template Directory Admin</h1>
-		<div class="flex gap-2">
-			<Button on:click={() => goto('/admin')} variant="outline">
+	<div class="flex flex-col gap-4 mb-4">
+		<h1 class="text-2xl sm:text-3xl font-bold">Template Directory Admin</h1>
+		<div class="flex flex-col md:flex-row gap-2 w-full sm:justify-end">
+			<Button on:click={() => goto('/admin')} variant="outline" class="w-full sm:w-auto">
 				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
 				Back to Dashboard
 			</Button>
-			<Button on:click={() => importExportDialogOpen = true} variant="outline">
+			<Button on:click={() => importExportDialogOpen = true} variant="outline" class="w-full sm:w-auto">
 				<Icon icon="mdi:import" class="mr-2 h-4 w-4" />
 				Import/Export
 			</Button>
-			<Button on:click={() => newCategoryDialogOpen = true} variant="outline">
+			<Button on:click={() => newCategoryDialogOpen = true} variant="outline" class="w-full sm:w-auto">
 				<Icon icon="mdi:folder-plus" class="mr-2 h-4 w-4" />
 				New Category
 			</Button>
-			<Button on:click={() => newTemplateDialogOpen = true}>
+			<Button on:click={() => newTemplateDialogOpen = true} class="w-full sm:w-auto">
 				<Icon icon="mdi:file-plus" class="mr-2 h-4 w-4" />
 				New Template
 			</Button>

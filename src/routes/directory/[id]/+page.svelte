@@ -361,7 +361,7 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-8 max-w-4xl">
+<div class="space-y-4 px-4 py-4 sm:px-6 sm:py-6 max-w-4xl mx-auto">
 	{#if loading}
 		<div class="flex justify-center py-12">
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -371,7 +371,7 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div class="flex flex-col gap-4 mb-6">
+		<div class="space-y-3">
 			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div>
 					<a href="/directory" class="text-muted-foreground hover:text-foreground inline-flex items-center">

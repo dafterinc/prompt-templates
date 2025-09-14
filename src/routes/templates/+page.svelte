@@ -570,9 +570,9 @@
 	<title>My Templates | Prompt Templates</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-		<h1 class="text-3xl font-bold tracking-tight">My Templates</h1>
+<div>
+	<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+		<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">My Templates</h1>
 		<div class="flex flex-col sm:flex-row gap-2">
 			<Button variant="outline" class="w-full" on:click={() => importExportDialogOpen = true}>
 				<Icon icon="mdi:import" class="mr-2 h-4 w-4" />
@@ -588,7 +588,7 @@
 	</div>
 	
 	<!-- Mobile filter button -->
-	<div class="md:hidden">
+	<div class="md:hidden mb-4">
 		<Button 
 			variant="outline" 
 			class="w-full"
@@ -613,14 +613,14 @@
 			<span>Loading templates...</span>
 		</div>
 	{:else}
-		<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
 			<!-- Sidebar for categories - desktop -->
 			<div class="hidden md:block space-y-4">
 				<Card>
 					<CardHeader class="pb-3">
-						<CardTitle class="text-xl">Filter Templates</CardTitle>
+						<CardTitle class="text-lg sm:text-xl">Filter Templates</CardTitle>
 					</CardHeader>
-					<CardContent class="space-y-2">
+					<CardContent class="space-y-2 p-4 sm:p-6">
 						<!-- Search input -->
 						<div class="relative mb-4">
 							<Icon icon="heroicons:magnifying-glass" class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -695,25 +695,25 @@
 			<!-- Templates grid -->
 			<div class="md:col-span-3 space-y-4">
 				{#if templates.length === 0}
-					<div class="w-full p-8 text-center border rounded-lg">
+					<div class="w-full p-6 sm:p-8 text-center border rounded-lg">
 						<div class="text-muted-foreground">
 							{searchTerm || selectedCategoryIds.size > 0 
 								? 'No templates found matching your filters.'
 								: 'Create your first template to get started'}
 						</div>
-						<div class="flex gap-2 justify-center mt-4">
+						<div class="flex flex-col sm:flex-row gap-2 justify-center mt-4">
 							{#if searchTerm || selectedCategoryIds.size > 0}
-								<Button variant="outline" on:click={clearFilters}>
+								<Button variant="outline" on:click={clearFilters} class="w-full sm:w-auto">
 									Clear Filters
 								</Button>
 							{/if}
-							<Button on:click={handleCreateNew}>
+							<Button on:click={handleCreateNew} class="w-full sm:w-auto">
 								Create New Template
 							</Button>
 						</div>
 					</div>
 				{:else}
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 						{#each templates as template}
 							<Card>
 								<a href={`/templates/${template.id}`} class="block">

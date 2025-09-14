@@ -182,25 +182,28 @@
 	<title>Create New Template | Prompt Templates</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<div>
-		<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
-			&larr; <span class="ml-1">Back to Templates</span>
-		</a>
+<div class="space-y-4">
+	<div class="space-y-3">
+		<div>
+			<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+				&larr; <span class="ml-1">Back to Templates</span>
+			</a>
+		</div>
+		
+		<div>
+			<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Create New Template</h1>
+		</div>
 	</div>
+		
+	{#if error}
+		<Alert variant="destructive" class="mb-4">
+			<AlertDescription>{error}</AlertDescription>
+		</Alert>
+	{/if}
 	
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight mb-6">Create New Template</h1>
-		
-		{#if error}
-			<Alert variant="destructive" class="mb-6">
-				<AlertDescription>{error}</AlertDescription>
-			</Alert>
-		{/if}
-		
-		<Card>
-			<CardContent class="pt-6">
-				<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+	<Card>
+		<CardContent class="p-4 sm:p-6">
+			<form on:submit|preventDefault={handleSubmit} class="space-y-4 sm:space-y-6">
 					<div class="space-y-2">
 						<Label for="title">Title *</Label>
 						<Input
@@ -273,10 +276,9 @@
 							{loading ? 'Creating...' : 'Create Template'}
 						</Button>
 					</div>
-				</form>
-			</CardContent>
-		</Card>
-	</div>
+			</form>
+		</CardContent>
+	</Card>
 </div>
 
 <!-- New Category Dialog -->

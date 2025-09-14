@@ -318,7 +318,7 @@
 	<title>{template?.title ? `${template.title} | Prompt Templates` : 'Template | Prompt Templates'}</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-4">
 	{#if loading}
 		<div class="flex items-center justify-center p-8">
 			<div class="animate-spin mr-2">
@@ -331,7 +331,7 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else if template}
-		<div class="space-y-4">
+		<div class="space-y-3">
 			<div>
 				<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
 					&larr; <span class="ml-1">Back to Templates</span>
@@ -339,9 +339,9 @@
 			</div>
 			
 			<div>
-				<h1 class="text-3xl font-bold tracking-tight">{template.title}</h1>
+				<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{template.title}</h1>
 				{#if template.description}
-					<p class="text-muted-foreground">{template.description}</p>
+					<p class="text-muted-foreground mt-1">{template.description}</p>
 				{/if}
 			</div>
 		</div>
@@ -355,8 +355,8 @@
 		{/if}
 		
 		<Card>
-			<CardContent class="p-6">
-				<div class="text-xl leading-relaxed whitespace-pre-wrap">
+			<CardContent class="p-4 sm:p-6">
+				<div class="text-lg sm:text-xl leading-relaxed whitespace-pre-wrap">
 					{#each templateSegments as segment}
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
@@ -411,22 +411,24 @@
 			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
 		
-		<div class="space-y-6 ">
+		<div class="space-y-4">
 			<div>
-				<Button
-					variant="default"
-					size="lg"
-					class="w-full sm:w-auto px-4 sm:px-8 py-6"
-					on:click={copyToClipboard}
-				>
-					{#if copySuccess}
-						<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
-						Copied to Clipboard! ✓
-					{:else}
-						<Icon icon="mdi:content-copy" class="mr-2 h-5 w-5" />
-						Copy to Clipboard
-					{/if}
-				</Button>
+				<div class="text-center">
+					<Button
+						variant="default"
+						size="lg"
+						class="w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-6"
+						on:click={copyToClipboard}
+					>
+						{#if copySuccess}
+							<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
+							Copied to Clipboard! ✓
+						{:else}
+							<Icon icon="mdi:content-copy" class="mr-2 h-5 w-5" />
+							Copy to Clipboard
+						{/if}
+					</Button>
+				</div>
 			</div>
 			
 			<div class="flex gap-2 sm:justify-center">

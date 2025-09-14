@@ -210,16 +210,16 @@
 	<title>Template Directory | Prompt Templates</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<div class="flex justify-between items-center">
-		<h1 class="text-3xl font-bold tracking-tight">Template Directory</h1>
+<div>
+	<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+		<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Template Directory</h1>
 		<div class="flex items-center gap-2">
 			{#if isAuthenticated}
-				<Button size="sm" on:click={() => goto('/templates')}>
+				<Button size="sm" on:click={() => goto('/templates')} class="w-full sm:w-auto">
 					My Templates
 				</Button>
 			{:else}
-				<Button size="sm" on:click={() => goto('/auth/login')}>
+				<Button size="sm" on:click={() => goto('/auth/login')} class="w-full sm:w-auto">
 					Sign In
 				</Button>
 			{/if}
@@ -227,9 +227,10 @@
 	</div>
 	
 	<!-- Mobile filter button -->
-	<div class="md:hidden">
+	<div class="md:hidden mb-4">
 		<Button 
 			variant="outline" 
+			size="sm"
 			class="w-full"
 			on:click={() => drawerOpen = true}
 		>
@@ -250,14 +251,14 @@
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{:else}
-		<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
 			<!-- Sidebar for categories - desktop -->
 			<div class="hidden md:block space-y-4">
 				<Card>
 					<CardHeader class="pb-3">
-						<CardTitle class="text-xl">Filter Templates</CardTitle>
+						<CardTitle class="text-lg sm:text-xl">Filter Templates</CardTitle>
 					</CardHeader>
-					<CardContent class="space-y-2">
+					<CardContent class="space-y-2 p-4 sm:p-6">
 						<!-- Search input -->
 						<div class="relative mb-4">
 							<Icon icon="heroicons:magnifying-glass" class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -321,20 +322,20 @@
 			<!-- Templates grid -->
 			<div class="md:col-span-3 space-y-4">
 				{#if templates.length === 0}
-					<div class="w-full p-8 text-center border rounded-lg">
+					<div class="w-full p-6 sm:p-8 text-center border rounded-lg">
 						<div class="text-muted-foreground">
 							{searchTerm || selectedCategoryIds.size > 0 
 								? 'No templates found matching your filters.'
 								: 'No templates are available in the directory yet.'}
 						</div>
 						{#if searchTerm || selectedCategoryIds.size > 0}
-							<Button variant="outline" class="mt-4" on:click={clearFilters}>
+							<Button variant="outline" class="mt-4 w-full sm:w-auto" on:click={clearFilters}>
 								Clear Filters
 							</Button>
 						{/if}
 					</div>
 				{:else}
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 						{#each templates as template}
 							<Card>
 								<a href={`/directory/${template.id}`} class="block">

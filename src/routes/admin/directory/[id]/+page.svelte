@@ -339,18 +339,18 @@
 	}
 </script>
 
-<div class="container mx-auto py-8">
-	<div class="flex justify-between items-center mb-6">
-		<div>
-			<Button variant="outline" on:click={() => goto('/admin/directory')} class="mb-2">
+<div>
+	<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+		<div class="space-y-2">
+			<Button variant="outline" on:click={() => goto('/admin/directory')} class="w-full sm:w-auto mb-2">
 				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
 				Back to Directory
 			</Button>
-			<h1 class="text-3xl font-bold">Edit Template</h1>
+			<h1 class="text-2xl sm:text-3xl font-bold">Edit Template</h1>
 		</div>
 		
-		<div class="flex gap-2">
-			<Button on:click={saveTemplate} disabled={saving}>
+		<div class="flex gap-2 lg:self-end md:self-end">
+			<Button on:click={saveTemplate} disabled={saving} class="w-full sm:w-auto">
 				{#if saving}
 					<Icon icon="mdi:loading" class="mr-2 h-4 w-4 animate-spin" />
 					Saving...
@@ -379,14 +379,14 @@
 			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
 		</div>
 	{:else if template}
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
 			<div class="lg:col-span-2">
 				<Card>
 					<CardHeader>
 						<CardTitle>Template Details</CardTitle>
 						<CardDescription>Basic information about the template</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent class="p-4 sm:p-6">
 						<div class="space-y-4">
 							<div class="space-y-2">
 								<Label for="title">Title *</Label>
@@ -462,16 +462,16 @@
 			<div>
 				<Card>
 					<CardHeader>
-						<div class="flex justify-between items-center">
+						<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
 							<CardTitle>Variables</CardTitle>
-							<Button size="sm" variant="outline" on:click={() => openVariableDialog()}>
+							<Button size="sm" variant="outline" on:click={() => openVariableDialog()} class="w-full sm:w-auto">
 								<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
 								Add Variable
 							</Button>
 						</div>
 						<CardDescription>Variables extracted from template content</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent class="p-4 sm:p-6">
 						{#if variables.length === 0}
 							<div class="text-center py-4 text-muted-foreground">
 								No variables found. Add variables using &#123;&#123;variable_name&#125;&#125; syntax in your template content.
