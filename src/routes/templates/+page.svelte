@@ -11,6 +11,7 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Badge } from '$lib/components/ui/badge';
 	import Check from "svelte-radix/Check.svelte";
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
@@ -715,9 +716,9 @@
 				{:else}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 						{#each templates as template}
-							<Card>
+							<Card class="hover:shadow-md transition-shadow duration-200">
 								<a href={`/templates/${template.id}`} class="block">
-									<CardHeader>
+									<CardHeader class="mb-2">
 										<CardTitle class="truncate">{template.title}</CardTitle>
 										{#if template.description}
 											<CardDescription class="line-clamp-2">{template.description}</CardDescription>
@@ -726,15 +727,9 @@
 										{/if}
 									</CardHeader>
 									<CardFooter>
-										<div class="flex justify-between w-full text-xs text-muted-foreground">
-											<div class="flex gap-2">
-												<span>{template.variables_count} variables</span>
-												{#if template.category_name}
-													<span>• {template.category_name}</span>
-												{/if}
-											</div>
-											<span>Updated {formatDate(template.updated_at)}</span>
-										</div>
+										{#if template.category_name}
+											<Badge variant="secondary">{template.category_name}</Badge>
+										{/if}
 									</CardFooter>
 								</a>
 							</Card>

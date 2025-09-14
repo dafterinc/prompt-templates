@@ -68,6 +68,10 @@
 	let importError = '';
 	let importSuccess = '';
 	let importing = false;
+	let importProgress = 0;
+	let importTotalRows = 0;
+	let importCurrentRow = 0;
+	let importTimeout: NodeJS.Timeout | null = null;
 	
 	onMount(() => {
 		loadData();
@@ -375,6 +379,19 @@
 			importing = true;
 			importError = '';
 			importSuccess = '';
+			importProgress = 0;
+			importCurrentRow = 0;
+			
+			// Set up timeout (5 minutes)
+			importTimeout = setTimeout(() => {
+				if (importing) {
+					importing = false;
+					importError = 'Import timed out after 5 minutes. Please try with a smaller file or check your connection.';
+					importProgress = 0;
+					importCurrentRow = 0;
+					importTotalRows = 0;
+				}
+			}, 5 * 60 * 1000);
 			
 			// Read file content
 			const fileContent = await importFile.text();
@@ -388,6 +405,7 @@
 			
 			const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
 			const dataRows = lines.slice(1);
+			importTotalRows = dataRows.length;
 			
 			// Validate headers
 			const requiredHeaders = ['Title', 'Description', 'Content', 'Category Name'];
@@ -401,8 +419,16 @@
 			let errorCount = 0;
 			const errors: string[] = [];
 			
-			// Process each row
+			// Process each row with progress tracking
 			for (let i = 0; i < dataRows.length; i++) {
+				// Check if import was cancelled due to timeout
+				if (!importing) {
+					break;
+				}
+				
+				importCurrentRow = i + 1;
+				importProgress = Math.round((importCurrentRow / importTotalRows) * 100);
+				
 				try {
 					const row = dataRows[i];
 					const values = parseCSVRow(row);
@@ -550,6 +576,13 @@
 			importError = e.message || 'Failed to import templates';
 		} finally {
 			importing = false;
+			importProgress = 0;
+			importCurrentRow = 0;
+			importTotalRows = 0;
+			if (importTimeout) {
+				clearTimeout(importTimeout);
+				importTimeout = null;
+			}
 		}
 	}
 	
@@ -590,6 +623,18 @@
 		if (target.files && target.files.length > 0) {
 			importFile = target.files[0];
 		}
+	}
+	
+	function cancelImport() {
+		importing = false;
+		importProgress = 0;
+		importCurrentRow = 0;
+		importTotalRows = 0;
+		if (importTimeout) {
+			clearTimeout(importTimeout);
+			importTimeout = null;
+		}
+		importError = 'Import cancelled by user';
 	}
 </script>
 
@@ -649,7 +694,7 @@
 					{:else}
 						<div class="grid gap-4">
 							{#each templates as template}
-								<Card>
+								<Card class="hover:shadow-md transition-shadow duration-200">
 									<CardHeader>
 										<div class="flex justify-between items-start">
 											<div>
@@ -672,16 +717,13 @@
 										</div>
 									</CardHeader>
 									<CardFooter>
-										<div class="flex justify-between w-full text-sm">
-											<div class="flex gap-2 items-center">
-												{#if template.category_name}
-													<Badge variant="secondary">{template.category_name}</Badge>
-												{/if}
-												{#if template.featured}
-													<Badge variant="default">Featured</Badge>
-												{/if}
-											</div>
-											<span class="text-muted-foreground text-xs">Updated {formatDate(template.updated_at)}</span>
+										<div class="flex gap-2 items-center">
+											{#if template.category_name}
+												<Badge variant="secondary">{template.category_name}</Badge>
+											{/if}
+											{#if template.featured}
+												<Badge variant="default">Featured</Badge>
+											{/if}
 										</div>
 									</CardFooter>
 								</Card>
@@ -984,14 +1026,39 @@
 						</ul>
 					</div>
 					
-					<Button 
-						on:click={importFromCSV} 
-						disabled={!importFile || importing}
-						class="w-full"
-					>
-						<Icon icon="mdi:upload" class="mr-2 h-4 w-4" />
-						{importing ? 'Importing...' : 'Import Templates'}
-					</Button>
+					{#if importing}
+						<div class="space-y-3">
+							<div class="flex justify-between items-center">
+								<span class="text-sm font-medium">Importing templates...</span>
+								<span class="text-sm text-muted-foreground">{importCurrentRow} / {importTotalRows}</span>
+							</div>
+							<div class="w-full bg-secondary rounded-full h-2">
+								<div 
+									class="bg-primary h-2 rounded-full transition-all duration-300 ease-out" 
+									style="width: {importProgress}%"
+								></div>
+							</div>
+							<div class="flex justify-center">
+								<Button 
+									variant="outline" 
+									size="sm"
+									on:click={cancelImport}
+								>
+									<Icon icon="mdi:cancel" class="mr-2 h-4 w-4" />
+									Cancel Import
+								</Button>
+							</div>
+						</div>
+					{:else}
+						<Button 
+							on:click={importFromCSV} 
+							disabled={!importFile}
+							class="w-full"
+						>
+							<Icon icon="mdi:upload" class="mr-2 h-4 w-4" />
+							Import Templates
+						</Button>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -1004,6 +1071,13 @@
 					importFile = null;
 					importError = '';
 					importSuccess = '';
+					importProgress = 0;
+					importCurrentRow = 0;
+					importTotalRows = 0;
+					if (importTimeout) {
+						clearTimeout(importTimeout);
+						importTimeout = null;
+					}
 				}}
 			>
 				Close
