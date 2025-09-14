@@ -110,12 +110,15 @@ CREATE POLICY "Users can insert their own profile"
     FOR INSERT
     WITH CHECK (auth.uid() = id);
 
--- Replace the recursive policy with a simpler one
-CREATE POLICY "Super admins can view all profiles"
+-- Only allow admins to view all profiles
+CREATE POLICY "Admins can view all profiles"
     ON user_profiles
     FOR SELECT
     TO authenticated
-    USING (pg_has_role(auth.uid(), 'authenticated', 'member'));
+    USING (EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE user_profiles.id = auth.uid() AND user_profiles.is_admin = true
+    ));
 
 -- Replace auth.users is_admin references in RLS policies
 

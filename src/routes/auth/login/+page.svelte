@@ -14,11 +14,30 @@
 	let confirmPassword = '';
 	let loading = false;
 	let error = '';
-	let activeTab = ($page.url.searchParams.get('tab') || 'sign-in') as string;
+	let activeTab = 'sign-in';
+	
+	// Initialize activeTab from URL params
+	$: {
+		const tabParam = $page.url.searchParams.get('tab');
+		if (tabParam === 'sign-up') {
+			activeTab = 'sign-up';
+		} else {
+			activeTab = 'sign-in';
+		}
+	}
 	
 	// Check for registered param
 	$: if ($page.url.searchParams.get('registered') === 'true' && !error) {
 		error = 'Registration successful! Please check your email to verify your account before logging in.';
+	}
+	
+	// Handle tab change
+	function handleTabChange(value: string | undefined) {
+		activeTab = value || 'sign-in';
+		// Update URL to reflect the current tab
+		const url = new URL($page.url);
+		url.searchParams.set('tab', activeTab);
+		goto(url.toString(), { replaceState: true });
 	}
 	
 	async function handleLogin() {
@@ -81,8 +100,7 @@
 			}
 			
 			// Update URL to show registered message
-			activeTab = 'sign-in';
-			goto('/auth/login?registered=true');
+			goto('/auth/login?registered=true&tab=sign-in');
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
 		} finally {
@@ -99,7 +117,7 @@
 		</CardHeader>
 		
 		<CardContent>
-			<Tabs value={activeTab === 'sign-up' ? 'sign-up' : 'sign-in'} onValueChange={(value) => activeTab = value || 'sign-in'} class="w-full">
+			<Tabs value={activeTab} onValueChange={(value) => handleTabChange(value)} class="w-full">
 				<TabsList class="grid w-full grid-cols-2">
 					<TabsTrigger value="sign-in">Sign In</TabsTrigger>
 					<TabsTrigger value="sign-up">Sign Up</TabsTrigger>
