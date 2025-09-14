@@ -12,6 +12,7 @@
 	import Icon from '@iconify/svelte';
 	import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 	import { Toaster } from 'svelte-sonner';
+	import { logger } from '$lib/utils/logger';
 	
 	export let data;
 	
@@ -39,13 +40,13 @@
 				.maybeSingle<UserProfile>();
 				
 			if (error) {
-				console.error('[Client] Error fetching profile image:', error);
+				logger.error('Error fetching profile image', error, 'client');
 				return null;
 			}
 			
 			return data?.profile_image_url ?? null;
 		} catch (err) {
-			console.error('[Client] Exception fetching profile image:', err);
+			logger.error('Exception fetching profile image', err, 'client');
 			return null;
 		}
 	}
@@ -58,7 +59,7 @@
 				profileImageUrl = await getProfileImage(user.id);
 			}
 		}).catch(err => {
-			console.error('[Client] Session fetch error:', err);
+			logger.error('Session fetch error', err, 'client');
 			user = null;
 		});
 		
@@ -84,8 +85,8 @@
 	// Get values from server-side data
 	$: ({ isAdmin } = data);
 	$: if (data) {
-		console.log('[Client] Full server data:', data);
-		console.log('[Client] Server-provided admin status:', isAdmin === true);
+		logger.debug('Full server data', data, 'client');
+		logger.debug('Server-provided admin status', { isAdmin: isAdmin === true }, 'client');
 	}
 
 	// Check if we're on the homepage

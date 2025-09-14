@@ -13,6 +13,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { logger } from '$lib/utils/logger';
 	
 	interface Template {
 		id: string;
@@ -105,7 +106,7 @@
 			.order('name');
 		
 		if (fetchError) {
-			console.error('Error fetching categories:', fetchError);
+			logger.error('Error fetching categories:', fetchError, 'admin');
 			return;
 		}
 		

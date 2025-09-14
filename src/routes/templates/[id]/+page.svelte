@@ -14,6 +14,7 @@
 	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
 	// Import Iconify
 	import Icon from '@iconify/svelte';
+	import { logger } from '$lib/utils/logger';
 	
 	interface Template {
 		id: string;
@@ -166,7 +167,7 @@
 					.insert(newVariables);
 				
 				if (variablesError) {
-					console.error('Error duplicating variables:', variablesError);
+					logger.error('Error duplicating variables:', variablesError, 'templates');
 				}
 			}
 			
@@ -297,7 +298,7 @@
 				copySuccess = false;
 			}, 2000);
 		} catch (err) {
-			console.error('Failed to copy: ', err);
+			logger.error('Failed to copy: ', err, 'templates');
 		}
 	}
 	

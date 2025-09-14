@@ -12,6 +12,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { logger } from '$lib/utils/logger';
 	import Icon from '@iconify/svelte';
 	
 	interface Template {
@@ -110,7 +111,7 @@
 			.order('name');
 		
 		if (fetchError) {
-			console.error('Error fetching categories:', fetchError);
+			logger.error('Error fetching categories:', fetchError, 'templates');
 			return;
 		}
 		
@@ -185,7 +186,7 @@
 							.insert(variables);
 						
 						if (variablesError) {
-							console.error('Error creating variables:', variablesError);
+							logger.error('Error creating variables:', variablesError, 'templates');
 						}
 					}
 					
@@ -201,7 +202,7 @@
 								.eq('name', name);
 							
 							if (deleteError) {
-								console.error(`Error deleting variable ${name}:`, deleteError);
+								logger.error(`Error deleting variable ${name}:`, deleteError, 'templates');
 							}
 						}
 					}

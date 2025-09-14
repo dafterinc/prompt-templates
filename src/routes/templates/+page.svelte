@@ -13,6 +13,7 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Check from "svelte-radix/Check.svelte";
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { logger } from '$lib/utils/logger';
 	import Icon from '@iconify/svelte';
 	
 	interface Template {
@@ -119,7 +120,7 @@
 			.order('name');
 		
 		if (fetchError) {
-			console.error('Error fetching categories:', fetchError);
+			logger.error('Error fetching categories', fetchError, 'templates');
 			return;
 		}
 		

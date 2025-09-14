@@ -11,6 +11,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { logger } from '$lib/utils/logger';
 	
 	interface Category {
 		id: string;
@@ -118,7 +119,7 @@
 						.insert(variables);
 					
 					if (variablesError) {
-						console.error('Error creating variables:', variablesError);
+						logger.error('Error creating variables:', variablesError, 'templates');
 					}
 				}
 			}

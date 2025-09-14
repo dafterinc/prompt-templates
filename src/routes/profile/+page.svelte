@@ -11,6 +11,7 @@
 	import Icon from '@iconify/svelte';
 	import type { User } from '@supabase/supabase-js';
 	import { toast } from 'svelte-sonner';
+	import { logger } from '$lib/utils/logger';
 	
 	let user: User | null = null;
 	let userProfile: any = null;
@@ -87,7 +88,7 @@
 				
 				if (error) {
 					if (import.meta.env.DEV) {
-						console.error('Error fetching user profile:', error);
+						logger.error('Error fetching user profile:', error, 'profile');
 					}
 					
 					// If no rows returned, create a new profile
@@ -106,7 +107,7 @@
 							.single();
 						
 						if (createError) {
-							console.error('Error creating user profile:', createError);
+							logger.error('Error creating user profile:', createError, 'profile');
 							updateError = 'Failed to create user profile';
 						} else {
 							userProfile = newProfile;
@@ -126,7 +127,7 @@
 				}
 			}
 		} catch (err) {
-			console.error('Failed to fetch profile:', err);
+			logger.error('Failed to fetch profile:', err, 'profile');
 			updateError = 'An unexpected error occurred while loading profile';
 		} finally {
 			loading = false;
@@ -172,12 +173,12 @@
 							.remove([oldPath]);
 						
 						if (removeError && import.meta.env.DEV) {
-							console.error('Error removing old image (non-critical):', removeError);
+							logger.error('Error removing old image (non-critical)', removeError, 'profile');
 						}
 					}
 				} catch (e) {
 					if (import.meta.env.DEV) {
-						console.error('Failed to parse previous image URL (non-critical):', e);
+						logger.error('Failed to parse previous image URL (non-critical)', e, 'profile');
 					}
 				}
 			}
@@ -193,7 +194,7 @@
 			if (uploadError) {
 				updateError = 'Error uploading image: ' + uploadError.message;
 				toast.error('Error uploading image');
-				console.error('Error uploading image:', uploadError);
+				logger.error('Error uploading image:', uploadError, 'profile');
 				return;
 			}
 			
@@ -216,14 +217,14 @@
 			if (updateProfileError) {
 				updateError = 'Error updating profile: ' + updateProfileError.message;
 				toast.error('Error updating profile image');
-				console.error('Error updating profile:', updateProfileError);
+				logger.error('Error updating profile:', updateProfileError, 'profile');
 			} else {
 				toast.success('Profile image updated successfully');
 			}
 		} catch (err: any) {
 			updateError = 'An unexpected error occurred during upload';
 			toast.error('An unexpected error occurred during upload');
-			console.error('Failed to upload image:', err);
+			logger.error('Failed to upload image:', err, 'profile');
 		} finally {
 			uploading = false;
 		}
@@ -276,7 +277,7 @@
 			if (error) {
 				updateError = 'Failed to update profile: ' + error.message;
 				toast.error('Failed to update profile');
-				console.error('Error updating profile:', error);
+				logger.error('Error updating profile:', error, 'profile');
 			} else {
 				updateSuccess = true;
 				toast.success('Profile updated successfully');
@@ -284,7 +285,7 @@
 		} catch (err: any) {
 			updateError = 'An unexpected error occurred';
 			toast.error('An unexpected error occurred');
-			console.error('Failed to update profile:', err);
+			logger.error('Failed to update profile:', err, 'profile');
 		} finally {
 			saving = false;
 		}

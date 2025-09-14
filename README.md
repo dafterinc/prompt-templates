@@ -37,7 +37,6 @@ A powerful web application for building, managing, and generating text prompts w
      - `VITE_SUPABASE_URL`: Your Supabase project URL
      - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
      - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (required for admin functionality)
-   - NEVER commit your `.env` file to version control
 
 3. Set up admin user:
    - Admin access is controlled through the `user_profiles` table in Supabase

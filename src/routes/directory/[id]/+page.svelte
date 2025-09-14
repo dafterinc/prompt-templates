@@ -17,6 +17,7 @@
 	// Import Iconify
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { logger } from '$lib/utils/logger';
 	
 	interface Template {
 		id: string;
@@ -149,7 +150,7 @@
 			.order('name');
 		
 		if (fetchError) {
-			console.error('Error fetching user categories:', fetchError);
+			logger.error('Error fetching user categories:', fetchError, 'directory');
 			return;
 		}
 		
@@ -239,7 +240,7 @@
 				copySuccess = false;
 			}, 2000);
 		} catch (err) {
-			console.error('Failed to copy: ', err);
+			logger.error('Failed to copy: ', err, 'directory');
 		}
 	}
 	
@@ -335,7 +336,7 @@
 					.insert(newVariables);
 				
 				if (variablesError) {
-					console.error('Error copying variables:', variablesError);
+					logger.error('Error copying variables:', variablesError, 'directory');
 					addToCollectionError = 'Failed to copy all variables. Template may be incomplete.';
 					return;
 				}

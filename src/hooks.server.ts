@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { applyRateLimit, forceHttps } from '$lib/server/middleware';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '$lib/utils/logger';
 
 // Create a server-side only Supabase client with service role key
 const serverSupabase = createClient(
@@ -25,7 +26,7 @@ async function checkAdminStatus(userId: string) {
       .maybeSingle();
       
     if (error) {
-      console.error('[Server] Error checking admin status:', error);
+      logger.error('Error checking admin status', error, 'server');
       return false;
     }
 
@@ -41,7 +42,7 @@ async function checkAdminStatus(userId: string) {
         });
         
       if (createError) {
-        console.error('[Server] Error creating user profile:', createError);
+        logger.error('Error creating user profile', createError, 'server');
       }
       return false;
     }
@@ -49,7 +50,7 @@ async function checkAdminStatus(userId: string) {
     // Strictly check the is_admin flag
     return data.is_admin === true;
   } catch (err) {
-    console.error('[Server] Exception checking admin status:', err);
+    logger.error('Exception checking admin status', err, 'server');
     return false;
   }
 }
@@ -71,7 +72,7 @@ export const handle: Handle = async ({ event, resolve }) => {
           const parsed = JSON.parse(supabaseAuthCookie);
           accessToken = parsed.access_token;
         } catch (e) {
-          console.error('[Server] Failed to parse auth cookie:', e);
+          logger.error('Failed to parse auth cookie', e, 'server');
         }
       }
 
@@ -83,14 +84,14 @@ export const handle: Handle = async ({ event, resolve }) => {
         const { data: { user: authUser }, error } = await serverSupabase.auth.getUser(accessToken);
         
         if (error) {
-          console.error('[Server] Auth error:', error);
+          logger.error('Auth error', error, 'server');
         } else if (authUser) {
           user = authUser;
           isAdmin = await checkAdminStatus(authUser.id);
         }
       }
     } catch (err) {
-      console.error('[Server] Exception processing auth:', err);
+      logger.error('Exception processing auth', err, 'server');
     }
   }
 

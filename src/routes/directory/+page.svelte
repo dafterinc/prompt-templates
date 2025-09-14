@@ -11,6 +11,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import * as Drawer from '$lib/components/ui/drawer';
+	import { logger } from '$lib/utils/logger';
 	
 	interface Template {
 		id: string;
@@ -113,7 +114,7 @@
 			.order('name');
 		
 		if (fetchError) {
-			console.error('Error fetching categories:', fetchError);
+			logger.error('Error fetching categories:', fetchError, 'directory');
 			return;
 		}
 		
