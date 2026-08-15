@@ -1,186 +1,38 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
-	import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { enhance } from '$app/forms';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Icon from '@iconify/svelte';
-	
-	interface Category {
-		id: string;
-		name: string;
-		created_at: string;
-		updated_at: string;
-		template_count?: number;
-	}
-	
-	let categories: Category[] = [];
-	let loading = true;
-	let error = '';
-	let newCategory = {
-		name: ''
-	};
-	let saving = false;
-	let editingCategory: Category | null = null;
+	import type { PageData, ActionData } from './$types';
+
+	export let data: PageData;
+	export let form: ActionData;
+
+	$: categories = data.categories;
+
+	let newName = '';
+	let submitting = false;
+
+	// Inline edit state
+	let editingId: string | null = null;
+	let editingName = '';
+
+	// Delete confirmation
 	let deleteModalOpen = false;
-	let categoryToDelete: Category | null = null;
-	let userId = '';
-	
-	onMount(() => {
-		checkAuth();
-		fetchCategories();
-	});
-	
-	async function checkAuth() {
-		const { data: { session } } = await supabase.auth.getSession();
-		
-		if (!session) {
-			goto('/auth/login');
-		} else {
-			userId = session.user.id;
-		}
-	}
-	
-	async function fetchCategories() {
-		try {
-			loading = true;
-			error = '';
-			
-			// Fetch categories with their template counts in a single query.
-			const { data, error: fetchError } = await supabase
-				.from('categories')
-				.select('*, templates(count)')
-				.order('name');
+	let categoryToDelete: { id: string; name: string; template_count: number } | null = null;
 
-			if (fetchError) {
-				error = fetchError.message;
-				return;
-			}
+	function startEdit(category: { id: string; name: string }) {
+		editingId = category.id;
+		editingName = category.name;
+	}
 
-			categories = (data || []).map((category: any) => ({
-				...category,
-				template_count: category.templates?.[0]?.count ?? 0
-			}));
-		} catch (e: any) {
-			error = e.message;
-		} finally {
-			loading = false;
-		}
-	}
-	
-	async function handleCreateCategory() {
-		if (!newCategory.name.trim()) {
-			error = 'Category name is required';
-			return;
-		}
-		
-		try {
-			saving = true;
-			error = '';
-			
-			const { error: insertError } = await supabase
-				.from('categories')
-				.insert({
-					name: newCategory.name.trim(),
-					user_id: userId
-				});
-			
-			if (insertError) {
-				error = getUserFriendlyErrorMessage(insertError);
-				return;
-			}
-			
-			// Reset form and refresh categories
-			newCategory.name = '';
-			await fetchCategories();
-		} catch (e: any) {
-			error = getUserFriendlyErrorMessage(e);
-		} finally {
-			saving = false;
-		}
-	}
-	
-	async function handleUpdateCategory() {
-		if (!editingCategory || !editingCategory.name.trim()) {
-			return;
-		}
-		
-		try {
-			saving = true;
-			error = '';
-			
-			const { error: updateError } = await supabase
-				.from('categories')
-				.update({
-					name: editingCategory.name.trim(),
-					updated_at: new Date().toISOString()
-				})
-				.eq('id', editingCategory.id);
-			
-			if (updateError) {
-				error = getUserFriendlyErrorMessage(updateError);
-				return;
-			}
-			
-			// Reset edit mode and refresh categories
-			editingCategory = null;
-			await fetchCategories();
-		} catch (e: any) {
-			error = getUserFriendlyErrorMessage(e);
-		} finally {
-			saving = false;
-		}
-	}
-	
-	async function handleDeleteCategory() {
-		if (!categoryToDelete) return;
-		
-		try {
-			saving = true;
-			error = '';
-			
-			// Check if category has templates
-			if ((categoryToDelete.template_count || 0) > 0) {
-				error = 'Cannot delete a category that has templates. Please reassign or delete the templates first.';
-				deleteModalOpen = false;
-				categoryToDelete = null;
-				return;
-			}
-			
-			const { error: deleteError } = await supabase
-				.from('categories')
-				.delete()
-				.eq('id', categoryToDelete.id);
-			
-			if (deleteError) {
-				error = deleteError.message;
-				return;
-			}
-			
-			// Close modal and refresh categories
-			deleteModalOpen = false;
-			categoryToDelete = null;
-			await fetchCategories();
-		} catch (e: any) {
-			error = e.message;
-		} finally {
-			saving = false;
-		}
-	}
-	
 	function cancelEdit() {
-		editingCategory = null;
-		error = '';
+		editingId = null;
+		editingName = '';
 	}
-	
-	function startEdit(category: Category) {
-		// Create a copy to avoid directly modifying the list item
-		editingCategory = { ...category };
-	}
-	
-	function confirmDelete(category: Category) {
+
+	function confirmDelete(category: { id: string; name: string; template_count: number }) {
 		categoryToDelete = category;
 		deleteModalOpen = true;
 	}
@@ -202,140 +54,159 @@
 			</a>
 		</div>
 	</div>
-	
-	{#if loading}
-		<div class="flex items-center justify-center p-8">
-			<div class="animate-spin mr-2">
-				<Icon icon="heroicons:arrow-path" width="24" height="24" />
-			</div>
-			<span>Loading categories...</span>
-		</div>
-	{:else if error}
+
+	{#if form?.error}
 		<Alert variant="destructive">
-			<AlertDescription>{error}</AlertDescription>
+			<AlertDescription>{form.error}</AlertDescription>
 		</Alert>
-	{:else}
-		<div class="grid grid-cols-1 gap-6">
-			<!-- Create new category form -->
-			<Card>
-				<CardHeader>
-					<CardTitle>Add New Category</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form class="space-y-4" on:submit|preventDefault={handleCreateCategory}>
-						<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-							<div class="md:col-span-4">
-								<input
-									type="text"
-									placeholder="Enter category name"
-									class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
-									bind:value={newCategory.name}
-									disabled={saving}
-								/>
-							</div>
-							<div class="md:col-span-1">
-								<Button type="submit" class="w-full" disabled={saving || !newCategory.name.trim()}>
-									{saving ? 'Creating...' : 'Create Category'}
-								</Button>
-							</div>
+	{/if}
+
+	<div class="grid grid-cols-1 gap-6">
+		<!-- Create new category form -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Add New Category</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<form
+					method="POST"
+					action="?/create"
+					class="space-y-4"
+					use:enhance={() => {
+						submitting = true;
+						return async ({ result, update }) => {
+							await update({ reset: false });
+							if (result.type === 'success') newName = '';
+							submitting = false;
+						};
+					}}
+				>
+					<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+						<div class="md:col-span-4">
+							<input
+								type="text"
+								name="name"
+								placeholder="Enter category name"
+								class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+								bind:value={newName}
+								disabled={submitting}
+							/>
 						</div>
-					</form>
-				</CardContent>
-			</Card>
-			
-			<!-- Categories list -->
-			<Card>
-				<CardHeader>
-					<CardTitle>Manage Categories</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{#if categories.length === 0}
-						<div class="text-center py-8">
-							<p class="text-muted-foreground">No categories found. Create your first category above.</p>
+						<div class="md:col-span-1">
+							<Button type="submit" class="w-full" disabled={submitting || !newName.trim()}>
+								{submitting ? 'Creating...' : 'Create Category'}
+							</Button>
 						</div>
-					{:else}
-						<div class="border rounded-md overflow-hidden">
-							<table class="w-full">
-								<thead class="bg-muted">
-									<tr>
-										<th class="px-4 py-3 text-left font-medium">Name</th>
-										<th class="px-4 py-3 text-center font-medium">Templates</th>
-										<th class="px-4 py-3 text-right font-medium">Actions</th>
-									</tr>
-								</thead>
-								<tbody class="divide-y">
-									{#each categories as category}
-										<tr class="hover:bg-muted/30">
-											<td class="px-4 py-3">
-												{#if editingCategory && editingCategory.id === category.id}
+					</div>
+				</form>
+			</CardContent>
+		</Card>
+
+		<!-- Categories list -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Manage Categories</CardTitle>
+			</CardHeader>
+			<CardContent>
+				{#if categories.length === 0}
+					<div class="text-center py-8">
+						<p class="text-muted-foreground">No categories found. Create your first category above.</p>
+					</div>
+				{:else}
+					<div class="border rounded-md overflow-hidden">
+						<table class="w-full">
+							<thead class="bg-muted">
+								<tr>
+									<th class="px-4 py-3 text-left font-medium">Name</th>
+									<th class="px-4 py-3 text-center font-medium">Templates</th>
+									<th class="px-4 py-3 text-right font-medium">Actions</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y">
+								{#each categories as category (category.id)}
+									<tr class="hover:bg-muted/30">
+										<td class="px-4 py-3">
+											{#if editingId === category.id}
+												<form
+													id={`edit-${category.id}`}
+													method="POST"
+													action="?/update"
+													use:enhance={() => {
+														submitting = true;
+														return async ({ result, update }) => {
+															await update({ reset: false });
+															if (result.type === 'success') cancelEdit();
+															submitting = false;
+														};
+													}}
+												>
+													<input type="hidden" name="id" value={category.id} />
 													<input
 														type="text"
+														name="name"
 														class="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
-														bind:value={editingCategory.name}
-														on:keydown={(e) => {
-															if (e instanceof KeyboardEvent && e.key === 'Enter') {
-																handleUpdateCategory();
-															}
-														}}
+														bind:value={editingName}
 													/>
+												</form>
+											{:else}
+												{category.name}
+											{/if}
+										</td>
+										<td class="px-4 py-3 text-center">{category.template_count}</td>
+										<td class="px-4 py-3 text-right">
+											<div class="flex justify-end gap-1">
+												{#if editingId === category.id}
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-8 w-8 p-0"
+														title="Save"
+														type="submit"
+														form={`edit-${category.id}`}
+														disabled={submitting || !editingName.trim()}
+													>
+														<Icon icon="heroicons:check" class="h-4 w-4 text-green-500" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-8 w-8 p-0"
+														title="Cancel"
+														on:click={cancelEdit}
+													>
+														<Icon icon="heroicons:x-mark" class="h-4 w-4 text-red-500" />
+													</Button>
 												{:else}
-													{category.name}
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-8 w-8 p-0"
+														title="Edit"
+														on:click={() => startEdit(category)}
+													>
+														<Icon icon="heroicons:pencil-square" class="h-4 w-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														class="h-8 w-8 p-0"
+														title="Delete"
+														on:click={() => confirmDelete(category)}
+													>
+														<Icon icon="heroicons:trash" class="h-4 w-4 text-red-500" />
+													</Button>
 												{/if}
-											</td>
-											<td class="px-4 py-3 text-center">{category.template_count}</td>
-											<td class="px-4 py-3 text-right">
-												<div class="flex justify-end gap-1">
-													{#if editingCategory && editingCategory.id === category.id}
-														<Button 
-															variant="ghost" 
-															size="sm"
-															class="h-8 w-8 p-0"
-															title="Save"
-															on:click={handleUpdateCategory}
-														>
-															<Icon icon="heroicons:check" class="h-4 w-4 text-green-500" />
-														</Button>
-														<Button 
-															variant="ghost" 
-															size="sm"
-															class="h-8 w-8 p-0"
-															title="Cancel"
-															on:click={() => editingCategory = null}
-														>
-															<Icon icon="heroicons:x-mark" class="h-4 w-4 text-red-500" />
-														</Button>
-													{:else}
-														<Button 
-															variant="ghost" 
-															size="sm"
-															class="h-8 w-8 p-0"
-															title="Edit"
-															on:click={() => editingCategory = { ...category }}
-														>
-															<Icon icon="heroicons:pencil-square" class="h-4 w-4" />
-														</Button>
-														<Button 
-															variant="ghost" 
-															size="sm"
-															class="h-8 w-8 p-0"
-															title="Delete"
-															on:click={() => confirmDelete(category)}
-														>
-															<Icon icon="heroicons:trash" class="h-4 w-4 text-red-500" />
-														</Button>
-													{/if}
-												</div>
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-					{/if}
-				</CardContent>
-			</Card>
-		</div>
-	{/if}
+											</div>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+	</div>
 </div>
 
 <!-- Delete Modal -->
@@ -345,26 +216,39 @@
 			<h3 class="text-xl font-semibold mb-4">Delete Category</h3>
 			<p class="mb-6">
 				Are you sure you want to delete "{categoryToDelete.name}"? This action cannot be undone.
-				{#if categoryToDelete.template_count && categoryToDelete.template_count > 0}
+				{#if categoryToDelete.template_count > 0}
 					<span class="block mt-2 text-red-500">
-						This category contains {categoryToDelete.template_count} templates. Deleting it will remove the category from these templates.
+						This category contains {categoryToDelete.template_count} template(s); it cannot be deleted until they are reassigned or removed.
 					</span>
 				{/if}
 			</p>
 			<div class="flex justify-end gap-2">
-				<Button 
-					variant="outline" 
-					on:click={() => { deleteModalOpen = false; categoryToDelete = null; }}
+				<Button
+					variant="outline"
+					on:click={() => {
+						deleteModalOpen = false;
+						categoryToDelete = null;
+					}}
 				>
 					Cancel
 				</Button>
-				<Button 
-					variant="destructive" 
-					on:click={handleDeleteCategory}
+				<form
+					method="POST"
+					action="?/delete"
+					use:enhance={() => {
+						submitting = true;
+						return async ({ update }) => {
+							await update({ reset: false });
+							deleteModalOpen = false;
+							categoryToDelete = null;
+							submitting = false;
+						};
+					}}
 				>
-					Delete
-				</Button>
+					<input type="hidden" name="id" value={categoryToDelete.id} />
+					<Button variant="destructive" type="submit" disabled={submitting}>Delete</Button>
+				</form>
 			</div>
 		</div>
 	</div>
-{/if} 
+{/if}
