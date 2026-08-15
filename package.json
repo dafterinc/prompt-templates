@@ -26,6 +26,7 @@
 		"@tailwindcss/forms": "^0.5.7",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/svelte": "^5.2.7",
+		"@types/pg": "^8.21.0",
 		"bits-ui": "^0.22.0",
 		"clsx": "^2.1.1",
 		"eslint": "^9.18.0",
@@ -50,7 +51,10 @@
 	"dependencies": {
 		"@iconify/svelte": "^4.2.0",
 		"@supabase/supabase-js": "^2.49.1",
+		"@vercel/blob": "^2.8.0",
 		"autoprefixer": "^10.4.19",
+		"better-auth": "^1.6.29",
+		"pg": "^8.23.0",
 		"postcss": "^8.4.35",
 		"postgres": "^3.4.9",
 		"svelte-radix": "^2.0.1",
