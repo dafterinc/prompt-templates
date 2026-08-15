@@ -1,7 +1,7 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { cubicOut } from "svelte/easing";
-import type { TransitionConfig } from "svelte/transition";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { cubicOut } from 'svelte/easing';
+import type { TransitionConfig } from 'svelte/transition';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -19,13 +19,9 @@ export const flyAndScale = (
 	params: FlyAndScaleParams = { y: -8, x: 0, start: 0.95, duration: 150 }
 ): TransitionConfig => {
 	const style = getComputedStyle(node);
-	const transform = style.transform === "none" ? "" : style.transform;
+	const transform = style.transform === 'none' ? '' : style.transform;
 
-	const scaleConversion = (
-		valueA: number,
-		scaleA: [number, number],
-		scaleB: [number, number]
-	) => {
+	const scaleConversion = (valueA: number, scaleA: [number, number], scaleB: [number, number]) => {
 		const [minA, maxA] = scaleA;
 		const [minB, maxB] = scaleB;
 
@@ -35,13 +31,11 @@ export const flyAndScale = (
 		return valueB;
 	};
 
-	const styleToString = (
-		style: Record<string, number | string | undefined>
-	): string => {
+	const styleToString = (style: Record<string, number | string | undefined>): string => {
 		return Object.keys(style).reduce((str, key) => {
 			if (style[key] === undefined) return str;
 			return str + `${key}:${style[key]};`;
-		}, "");
+		}, '');
 	};
 
 	return {
@@ -62,22 +56,48 @@ export const flyAndScale = (
 };
 
 /**
+ * Extracts a message from an unknown thrown value.
+ *
+ * Use this in `catch` blocks instead of typing the caught value as `any`. It handles real
+ * `Error` instances, plain strings, and the `{ message }` shaped objects that Supabase returns.
+ */
+export function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred'): string {
+	if (error instanceof Error) return error.message;
+	if (typeof error === 'string') return error;
+	if (
+		error &&
+		typeof error === 'object' &&
+		'message' in error &&
+		typeof (error as { message: unknown }).message === 'string'
+	) {
+		return (error as { message: string }).message;
+	}
+	return fallback;
+}
+
+/**
  * Provides user-friendly messages for database errors
  */
-export function getUserFriendlyErrorMessage(error: Error | string): string {
-	const message = typeof error === 'string' ? error : error.message;
-	
+export function getUserFriendlyErrorMessage(error: unknown): string {
+	const message = getErrorMessage(error);
+
 	// Handle specific error types
-	if (message.includes('duplicate key value violates unique constraint "categories_name_user_id_key"')) {
+	if (
+		message.includes('duplicate key value violates unique constraint "categories_name_user_id_key"')
+	) {
 		return 'A category with this name already exists. Please use a different name.';
 	}
-	
-	if (message.includes('duplicate key value violates unique constraint "directory_categories_name_key"')) {
+
+	if (
+		message.includes(
+			'duplicate key value violates unique constraint "directory_categories_name_key"'
+		)
+	) {
 		return 'A directory category with this name already exists. Please use a different name.';
 	}
-	
+
 	// Add more error mappings as needed
-	
+
 	// Return original message if no specific mapping exists
 	return message;
 }

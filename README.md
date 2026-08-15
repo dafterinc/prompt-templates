@@ -8,6 +8,7 @@ anyone who retypes the same structured text.
 ## 🚀 Features
 
 ### Templates
+
 - ✏️ Create, edit, duplicate, and delete prompt templates
 - 🔄 `{{variable}}` placeholders with description, type, default value, and required flag
 - 🎯 Fill-in-the-blank interface that renders the finished text live
@@ -17,6 +18,7 @@ anyone who retypes the same structured text.
 - 📥 CSV import / export of your template library
 
 ### Public directory
+
 - 🌐 Browse a shared, publicly readable directory of templates — no account required
 - ⭐ Featured templates surfaced first
 - 📄 Use any directory template directly, or save a copy into your own library
@@ -24,12 +26,14 @@ anyone who retypes the same structured text.
 - 📊 Bulk CSV import / export for the directory, with per-row progress and error reporting
 
 ### Accounts and admin
+
 - 🔒 Email/password authentication via Supabase Auth
 - 👤 User profiles with avatar upload, company, industry, team size, and usage purpose
 - 👑 Admin dashboard: manage the directory, list users, and delete users with their content
 - 🔐 Row Level Security enforced at the database level
 
 ### Experience
+
 - 🌓 Dark / light mode with persisted preference
 - 📱 Responsive layout for desktop, tablet, and mobile
 - 🎨 Clean UI built on shadcn-svelte components
@@ -37,6 +41,7 @@ anyone who retypes the same structured text.
 ## 🛠️ Technology stack
 
 ### Frontend
+
 - **[SvelteKit 2](https://kit.svelte.dev/)** with **[Svelte 5](https://svelte.dev/)** (legacy syntax)
 - **[TypeScript](https://www.typescriptlang.org/)**
 - **[TailwindCSS 3](https://tailwindcss.com/)**
@@ -44,11 +49,13 @@ anyone who retypes the same structured text.
 - **[Iconify](https://iconify.design/)** for icons, **[svelte-sonner](https://svelte-sonner.vercel.app/)** for toasts
 
 ### Backend
+
 - **[Supabase](https://supabase.com/)** — Auth, Postgres, Storage
 - **[PostgreSQL](https://postgresql.org/)** with [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
 - **[Vite 6](https://vitejs.dev/)**
 
 ### Tooling
+
 - **[ESLint](https://eslint.org/)** + **[Prettier](https://prettier.io/)**
 - **[Vitest](https://vitest.dev/)** (unit) and **[Playwright](https://playwright.dev/)** (e2e)
 
@@ -97,6 +104,7 @@ Agent-facing engineering notes live in [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`
 ## 💻 Quick start
 
 ### Prerequisites
+
 - **Node.js** 18+ and npm
 - A **Supabase** project (the free tier is enough)
 - **Git**
@@ -142,7 +150,7 @@ Supabase dashboard:
 4. `20250323_fix_user_profiles_policies.sql` — `is_admin_user()` and non-recursive policies
 
 > ⚠️ **Upgrading an existing deployment:** `20250317_template_directory.sql` was previously named
-> `template_directory.sql`, which sorted *after* the timestamped files and broke fresh installs.
+> `template_directory.sql`, which sorted _after_ the timestamped files and broke fresh installs.
 > If your database already applied it under the old name, update the matching row in
 > `supabase_migrations.schema_migrations` instead of re-running the migration.
 
@@ -185,6 +193,7 @@ import adapter from '@sveltejs/adapter-node';
 `npm run build` then emits a Node server at `build/index.js`, run with `node build`.
 
 ### Option 1: Vercel / Netlify / Cloudflare
+
 1. Connect the repository
 2. Set the environment variables in the dashboard
 3. Deploy — `adapter-auto` detects the platform
@@ -246,6 +255,7 @@ Security headers, CSP, CORS allowlisting, and rate limiting are **only active wh
 `APP_ENV` is not `development`**. Set `APP_ENV=production` locally to test them before shipping.
 
 ### Security notes
+
 - ✅ HTTPS enforced via `FORCE_HTTPS` (skipped on localhost)
 - ✅ CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` set in production mode
 - ✅ CORS restricted to `ALLOWED_ORIGINS` in production; wide open in development
@@ -296,15 +306,15 @@ segments, rendered as a form, and recombined.
 
 ### Database schema
 
-| Table | Purpose |
-|---|---|
-| `categories` | Personal template categories (unique per user) |
-| `templates` | User-owned templates |
-| `variables` | Placeholder definitions for a template |
-| `directory_categories` | Public directory categories |
-| `directory_templates` | Public directory templates, with a `featured` flag |
-| `directory_variables` | Placeholder definitions for directory templates |
-| `user_profiles` | Profile fields and the `is_admin` flag |
+| Table                  | Purpose                                            |
+| ---------------------- | -------------------------------------------------- |
+| `categories`           | Personal template categories (unique per user)     |
+| `templates`            | User-owned templates                               |
+| `variables`            | Placeholder definitions for a template             |
+| `directory_categories` | Public directory categories                        |
+| `directory_templates`  | Public directory templates, with a `featured` flag |
+| `directory_variables`  | Placeholder definitions for directory templates    |
+| `user_profiles`        | Profile fields and the `is_admin` flag             |
 
 Plus the `profile_images` storage bucket (public read, 2 MB limit, owner-scoped writes) and the
 `is_admin_user(uuid)` helper function.
@@ -313,24 +323,25 @@ Plus the `profile_images` storage bucket (public read, 2 MB limit, owner-scoped 
 
 ### Environment variables
 
-| Variable | Description | Required | Default |
-|---|---|---|---|
-| `VITE_SUPABASE_URL` | Supabase project URL | Yes | — |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes | — |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-side admin operations) | Yes | falls back to anon key |
-| `APP_ENV` | `development` or `production` — gates security features | No | `NODE_ENV`, else `development` |
-| `FORCE_HTTPS` | Redirect HTTP → HTTPS (skipped on localhost) | No | `false` |
-| `ALLOWED_ORIGINS` | Comma-separated CORS allowlist (production only) | No | none |
-| `RATE_LIMIT_MAX_REQUESTS` | Requests per window per IP, `/api/*` only | No | `100` |
-| `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds | No | `60000` |
-| `PUBLIC_ENABLE_LOGGING` | Emit logs to the console outside development | No | `false` |
-| `MAX_FILE_SIZE_MB` | Documented upload ceiling (bucket limit is set in SQL) | No | `2` |
-| `ALLOWED_MIME_TYPES` | Documented upload allowlist (bucket list is set in SQL) | No | see `.env.example` |
+| Variable                    | Description                                             | Required | Default                        |
+| --------------------------- | ------------------------------------------------------- | -------- | ------------------------------ |
+| `VITE_SUPABASE_URL`         | Supabase project URL                                    | Yes      | —                              |
+| `VITE_SUPABASE_ANON_KEY`    | Supabase anonymous key                                  | Yes      | —                              |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-side admin operations)         | Yes      | falls back to anon key         |
+| `APP_ENV`                   | `development` or `production` — gates security features | No       | `NODE_ENV`, else `development` |
+| `FORCE_HTTPS`               | Redirect HTTP → HTTPS (skipped on localhost)            | No       | `false`                        |
+| `ALLOWED_ORIGINS`           | Comma-separated CORS allowlist (production only)        | No       | none                           |
+| `RATE_LIMIT_MAX_REQUESTS`   | Requests per window per IP, `/api/*` only               | No       | `100`                          |
+| `RATE_LIMIT_WINDOW_MS`      | Rate limit window in milliseconds                       | No       | `60000`                        |
+| `PUBLIC_ENABLE_LOGGING`     | Emit logs to the console outside development            | No       | `false`                        |
+| `MAX_FILE_SIZE_MB`          | Documented upload ceiling (bucket limit is set in SQL)  | No       | `2`                            |
+| `ALLOWED_MIME_TYPES`        | Documented upload allowlist (bucket list is set in SQL) | No       | see `.env.example`             |
 
 > `MAX_FILE_SIZE_MB` and `ALLOWED_MIME_TYPES` are declarative today — the effective limits are
 > the ones on the `profile_images` bucket in `20250322_user_profiles_update.sql`.
 
 ### Customization
+
 - **Theme tokens**: `src/app.css` and `src/variables.css`
 - **Components**: `src/lib/components/ui/` (configured by `components.json`)
 - **Pages**: `src/routes/`

@@ -4,16 +4,21 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Badge } from '$lib/components/ui/badge';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
-	
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
+
 	interface Template {
 		id: string;
 		title: string;
@@ -24,13 +29,13 @@
 		category_id: string | null;
 		featured: boolean;
 	}
-	
+
 	interface Category {
 		id: string;
 		name: string;
 		description?: string | null;
 	}
-	
+
 	interface Variable {
 		id: string;
 		template_id: string;
@@ -40,7 +45,7 @@
 		default_value: string | null;
 		is_required: boolean;
 	}
-	
+
 	let template: Template | null = null;
 	let categories: Category[] = [];
 	let variables: Variable[] = [];
@@ -48,14 +53,14 @@
 	let error = '';
 	let saving = false;
 	let saveSuccess = false;
-	
+
 	// For template editing
 	let title = '';
 	let description = '';
 	let content = '';
 	let categoryId = '';
 	let featured = false;
-	
+
 	// For variable management
 	let newVariableName = '';
 	let newVariableDescription = '';
@@ -64,91 +69,91 @@
 	let variableDialogOpen = false;
 	let deleteVariableDialogOpen = false;
 	let deleteVariableId = '';
-	
+
 	// For new category
 	let newCategoryDialogOpen = false;
 	let newCategoryName = '';
 	let newCategoryDescription = '';
 	let savingCategory = false;
 	let categoryError = '';
-	
+
 	const templateId = $page.params.id;
-	
+
 	onMount(() => {
 		loadData();
 	});
-	
+
 	async function loadData() {
 		try {
 			loading = true;
-			
+
 			// Fetch the template
 			const { data: templateData, error: templateError } = await supabase
 				.from('directory_templates')
 				.select('*')
 				.eq('id', templateId)
 				.single();
-			
+
 			if (templateError) {
 				error = templateError.message;
 				return;
 			}
-			
+
 			template = templateData;
 			title = template!.title;
 			description = template!.description || '';
 			content = template!.content;
 			categoryId = template!.category_id || '';
 			featured = template!.featured;
-			
+
 			// Fetch categories
 			await fetchCategories();
-			
+
 			// Fetch variables
 			const { data: variablesData, error: variablesError } = await supabase
 				.from('directory_variables')
 				.select('*')
 				.eq('template_id', templateId)
 				.order('name');
-			
+
 			if (variablesError) {
 				error = variablesError.message;
 				return;
 			}
-			
+
 			variables = variablesData || [];
-		} catch (e: any) {
-			error = e.message || 'Failed to load template data';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load template data');
 		} finally {
 			loading = false;
 		}
 	}
-	
+
 	async function fetchCategories() {
 		const { data, error: fetchError } = await supabase
 			.from('directory_categories')
 			.select('*')
 			.order('name');
-		
+
 		if (fetchError) {
 			error = fetchError.message;
 			return;
 		}
-		
+
 		categories = data || [];
 	}
-	
+
 	async function saveTemplate() {
 		try {
 			saving = true;
 			saveSuccess = false;
-			
+
 			// Validate form
 			if (!title.trim() || !content.trim()) {
 				error = 'Title and content are required';
 				return;
 			}
-			
+
 			// Update the template
 			const { error: updateError } = await supabase
 				.from('directory_templates')
@@ -160,25 +165,25 @@
 					featured: featured
 				})
 				.eq('id', templateId);
-			
+
 			if (updateError) {
 				error = updateError.message;
 				return;
 			}
-			
+
 			// Find new variables in the content
 			const variableMatches = [...content.matchAll(/\{\{([^}]+)\}\}/g)];
-			const extractedVariables = variableMatches.map(match => match[1].trim());
+			const extractedVariables = variableMatches.map((match) => match[1].trim());
 			const uniqueVariables = [...new Set(extractedVariables)];
-			
+
 			// Check for new variables that don't exist yet
-			const newVariables = uniqueVariables.filter(varName => 
-				!variables.some(v => v.name === varName)
+			const newVariables = uniqueVariables.filter(
+				(varName) => !variables.some((v) => v.name === varName)
 			);
-			
+
 			// Add new variables
 			if (newVariables.length > 0) {
-				const variableInserts = newVariables.map(variable_name => ({
+				const variableInserts = newVariables.map((variable_name) => ({
 					template_id: templateId,
 					name: variable_name,
 					description: '',
@@ -186,29 +191,29 @@
 					default_value: '',
 					is_required: false
 				}));
-				
+
 				const { error: variablesError } = await supabase
 					.from('directory_variables')
 					.insert(variableInserts);
-				
+
 				if (variablesError) {
 					error = variablesError.message;
 					return;
 				}
 			}
-			
+
 			saveSuccess = true;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to save template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to save template');
 		} finally {
 			saving = false;
 		}
 	}
-	
+
 	function openVariableDialog(variable: Variable | null = null) {
 		editingVariable = variable;
-		
+
 		if (variable) {
 			newVariableName = variable.name;
 			newVariableDescription = variable.description || '';
@@ -218,17 +223,17 @@
 			newVariableDescription = '';
 			newVariableDefaultValue = '';
 		}
-		
+
 		variableDialogOpen = true;
 	}
-	
+
 	async function saveVariable() {
 		try {
 			if (!newVariableName.trim()) {
 				error = 'Variable name is required';
 				return;
 			}
-			
+
 			if (editingVariable) {
 				// Update existing variable
 				const { error: updateError } = await supabase
@@ -239,71 +244,69 @@
 						default_value: newVariableDefaultValue.trim() || null
 					})
 					.eq('id', editingVariable.id);
-				
+
 				if (updateError) {
 					error = updateError.message;
 					return;
 				}
 			} else {
 				// Create new variable
-				const { error: insertError } = await supabase
-					.from('directory_variables')
-					.insert({
-						template_id: templateId,
-						name: newVariableName.trim(),
-						description: newVariableDescription.trim() || null,
-						type: 'text',
-						default_value: newVariableDefaultValue.trim() || null,
-						is_required: false
-					});
-				
+				const { error: insertError } = await supabase.from('directory_variables').insert({
+					template_id: templateId,
+					name: newVariableName.trim(),
+					description: newVariableDescription.trim() || null,
+					type: 'text',
+					default_value: newVariableDefaultValue.trim() || null,
+					is_required: false
+				});
+
 				if (insertError) {
 					error = insertError.message;
 					return;
 				}
 			}
-			
+
 			variableDialogOpen = false;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to save variable';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to save variable');
 		}
 	}
-	
+
 	function confirmDeleteVariable(variableId: string) {
 		deleteVariableId = variableId;
 		deleteVariableDialogOpen = true;
 	}
-	
+
 	async function deleteVariable() {
 		try {
 			const { error: deleteError } = await supabase
 				.from('directory_variables')
 				.delete()
 				.eq('id', deleteVariableId);
-			
+
 			if (deleteError) {
 				error = deleteError.message;
 				return;
 			}
-			
+
 			deleteVariableDialogOpen = false;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to delete variable';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete variable');
 		}
 	}
-	
+
 	async function createCategory() {
 		if (!newCategoryName.trim()) {
 			categoryError = 'Category name is required';
 			return;
 		}
-		
+
 		try {
 			savingCategory = true;
 			categoryError = '';
-			
+
 			const { data, error: insertError } = await supabase
 				.from('directory_categories')
 				.insert({
@@ -312,26 +315,26 @@
 				})
 				.select()
 				.single();
-			
+
 			if (insertError) {
 				categoryError = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
-			
+
 			// Close dialog and reset values
 			newCategoryDialogOpen = false;
 			newCategoryName = '';
 			newCategoryDescription = '';
-			
+
 			// Refresh categories and select the new one
 			await fetchCategories();
-			
+
 			if (data) {
 				if (template) {
 					template.category_id = data.id;
 				}
 			}
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -340,16 +343,20 @@
 </script>
 
 <div>
-	<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+	<div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-2">
-			<Button variant="outline" on:click={() => goto('/admin/directory')} class="w-full sm:w-auto mb-2">
+			<Button
+				variant="outline"
+				on:click={() => goto('/admin/directory')}
+				class="mb-2 w-full sm:w-auto"
+			>
 				<Icon icon="mdi:arrow-left" class="mr-2 h-4 w-4" />
 				Back to Directory
 			</Button>
-			<h1 class="text-2xl sm:text-3xl font-bold">Edit Template</h1>
+			<h1 class="text-2xl font-bold sm:text-3xl">Edit Template</h1>
 		</div>
-		
-		<div class="flex gap-2 lg:self-end md:self-end">
+
+		<div class="flex gap-2 md:self-end lg:self-end">
 			<Button on:click={saveTemplate} disabled={saving} class="w-full sm:w-auto">
 				{#if saving}
 					<Icon icon="mdi:loading" class="mr-2 h-4 w-4 animate-spin" />
@@ -361,25 +368,29 @@
 			</Button>
 		</div>
 	</div>
-	
+
 	{#if error}
 		<Alert variant="destructive" class="mb-4">
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{/if}
-	
+
 	{#if saveSuccess}
-		<Alert class="mb-4 bg-green-50 border-green-500 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300">
+		<Alert
+			class="mb-4 border-green-500 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/20 dark:text-green-300"
+		>
 			<AlertDescription>Template saved successfully</AlertDescription>
 		</Alert>
 	{/if}
-	
+
 	{#if loading}
 		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+			<div
+				class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
+			></div>
 		</div>
 	{:else if template}
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
+		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
 			<div class="lg:col-span-2">
 				<Card>
 					<CardHeader>
@@ -397,7 +408,7 @@
 									placeholder="Enter template title"
 								/>
 							</div>
-							
+
 							<div class="space-y-2">
 								<Label for="description">Description</Label>
 								<Textarea
@@ -406,7 +417,7 @@
 									placeholder="Enter template description"
 								/>
 							</div>
-							
+
 							<div class="space-y-2">
 								<Label for="content">Content *</Label>
 								<Textarea
@@ -419,8 +430,8 @@
 									Use "&#123;&#123;variable_name&#125;&#125;" syntax to define variables
 								</p>
 							</div>
-							
-							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								<div class="space-y-2">
 									<Label for="category">Category</Label>
 									<div class="flex gap-2">
@@ -430,17 +441,22 @@
 											bind:value={categoryId}
 										>
 											<option value="">None</option>
-											{#each categories as category}
+											{#each categories as category (category.id)}
 												<option value={category.id}>{category.name}</option>
 											{/each}
 										</select>
-										<Button size="icon" variant="outline" title="Add Category" on:click={() => newCategoryDialogOpen = true}>
+										<Button
+											size="icon"
+											variant="outline"
+											title="Add Category"
+											on:click={() => (newCategoryDialogOpen = true)}
+										>
 											<Icon icon="mdi:plus" class="h-4 w-4" />
 										</Button>
 									</div>
 								</div>
-								
-								<div class="space-y-2 flex items-end">
+
+								<div class="flex items-end space-y-2">
 									<div class="flex items-center space-x-2">
 										<input
 											type="checkbox"
@@ -458,13 +474,18 @@
 					</CardContent>
 				</Card>
 			</div>
-			
+
 			<div>
 				<Card>
 					<CardHeader>
-						<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+						<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 							<CardTitle>Variables</CardTitle>
-							<Button size="sm" variant="outline" on:click={() => openVariableDialog()} class="w-full sm:w-auto">
+							<Button
+								size="sm"
+								variant="outline"
+								on:click={() => openVariableDialog()}
+								class="w-full sm:w-auto"
+							>
 								<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
 								Add Variable
 							</Button>
@@ -473,13 +494,14 @@
 					</CardHeader>
 					<CardContent class="p-4 sm:p-6">
 						{#if variables.length === 0}
-							<div class="text-center py-4 text-muted-foreground">
-								No variables found. Add variables using &#123;&#123;variable_name&#125;&#125; syntax in your template content.
+							<div class="py-4 text-center text-muted-foreground">
+								No variables found. Add variables using &#123;&#123;variable_name&#125;&#125; syntax
+								in your template content.
 							</div>
 						{:else}
 							<div class="space-y-2">
-								{#each variables as variable}
-									<div class="flex justify-between items-center p-2 border rounded-md">
+								{#each variables as variable (variable.id)}
+									<div class="flex items-center justify-between rounded-md border p-2">
 										<div>
 											<div class="font-medium">{variable.name}</div>
 											{#if variable.description}
@@ -490,10 +512,20 @@
 											{/if}
 										</div>
 										<div class="flex gap-1">
-											<Button size="icon" variant="ghost" title="Edit" on:click={() => openVariableDialog(variable)}>
+											<Button
+												size="icon"
+												variant="ghost"
+												title="Edit"
+												on:click={() => openVariableDialog(variable)}
+											>
 												<Icon icon="mdi:pencil" class="h-4 w-4" />
 											</Button>
-											<Button size="icon" variant="ghost" title="Delete" on:click={() => confirmDeleteVariable(variable.id)}>
+											<Button
+												size="icon"
+												variant="ghost"
+												title="Delete"
+												on:click={() => confirmDeleteVariable(variable.id)}
+											>
 												<Icon icon="mdi:delete" class="h-4 w-4" />
 											</Button>
 										</div>
@@ -521,7 +553,7 @@
 				{editingVariable ? 'Update variable details' : 'Add a new variable to the template'}
 			</Dialog.Description>
 		</Dialog.Header>
-		
+
 		<div class="space-y-4 py-4">
 			<div class="space-y-2">
 				<Label for="variable-name">Name *</Label>
@@ -536,7 +568,7 @@
 					<p class="text-xs text-muted-foreground">Variable name cannot be changed</p>
 				{/if}
 			</div>
-			
+
 			<div class="space-y-2">
 				<Label for="variable-description">Description</Label>
 				<Textarea
@@ -545,7 +577,7 @@
 					placeholder="What this variable is used for"
 				/>
 			</div>
-			
+
 			<div class="space-y-2">
 				<Label for="variable-default">Default Value</Label>
 				<Input
@@ -556,19 +588,10 @@
 				/>
 			</div>
 		</div>
-		
+
 		<Dialog.Footer>
-			<Button 
-				variant="outline" 
-				on:click={() => variableDialogOpen = false}
-			>
-				Cancel
-			</Button>
-			<Button 
-				type="button" 
-				disabled={!newVariableName.trim()}
-				on:click={saveVariable}
-			>
+			<Button variant="outline" on:click={() => (variableDialogOpen = false)}>Cancel</Button>
+			<Button type="button" disabled={!newVariableName.trim()} on:click={saveVariable}>
 				{editingVariable ? 'Update' : 'Add'} Variable
 			</Button>
 		</Dialog.Footer>
@@ -581,23 +604,14 @@
 		<Dialog.Header>
 			<Dialog.Title>Delete Variable</Dialog.Title>
 			<Dialog.Description>
-				Are you sure you want to delete this variable? This will not remove it from your template content.
+				Are you sure you want to delete this variable? This will not remove it from your template
+				content.
 			</Dialog.Description>
 		</Dialog.Header>
-		
+
 		<Dialog.Footer>
-			<Button 
-				variant="outline" 
-				on:click={() => deleteVariableDialogOpen = false}
-			>
-				Cancel
-			</Button>
-			<Button 
-				variant="destructive"
-				on:click={deleteVariable}
-			>
-				Delete
-			</Button>
+			<Button variant="outline" on:click={() => (deleteVariableDialogOpen = false)}>Cancel</Button>
+			<Button variant="destructive" on:click={deleteVariable}>Delete</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
@@ -607,17 +621,15 @@
 	<Dialog.Content>
 		<Dialog.Header>
 			<Dialog.Title>Create New Category</Dialog.Title>
-			<Dialog.Description>
-				Add a new category to organize directory templates
-			</Dialog.Description>
+			<Dialog.Description>Add a new category to organize directory templates</Dialog.Description>
 		</Dialog.Header>
-		
+
 		{#if categoryError}
 			<Alert variant="destructive" class="mb-4">
 				<AlertDescription>{categoryError}</AlertDescription>
 			</Alert>
 		{/if}
-		
+
 		<div class="space-y-4 py-4">
 			<div class="space-y-2">
 				<Label for="category-name">Name *</Label>
@@ -628,7 +640,7 @@
 					placeholder="Enter category name"
 				/>
 			</div>
-			
+
 			<div class="space-y-2">
 				<Label for="category-description">Description</Label>
 				<Textarea
@@ -638,16 +650,11 @@
 				/>
 			</div>
 		</div>
-		
+
 		<Dialog.Footer>
-			<Button 
-				variant="outline" 
-				on:click={() => newCategoryDialogOpen = false}
-			>
-				Cancel
-			</Button>
-			<Button 
-				type="button" 
+			<Button variant="outline" on:click={() => (newCategoryDialogOpen = false)}>Cancel</Button>
+			<Button
+				type="button"
 				disabled={savingCategory || !newCategoryName.trim()}
 				on:click={createCategory}
 			>
@@ -655,4 +662,4 @@
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
-</Dialog.Root> 
+</Dialog.Root>

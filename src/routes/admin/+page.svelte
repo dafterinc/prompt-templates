@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import Icon from '@iconify/svelte';
 </script>
@@ -12,12 +19,15 @@
 <div class="space-y-4">
 	<p class="text-muted-foreground">Manage your site content and settings</p>
 
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-		<Card class="hover:shadow-md transition-shadow cursor-pointer" on:click={() => goto('/admin/directory')}>
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+		<Card
+			class="cursor-pointer transition-shadow hover:shadow-md"
+			on:click={() => goto('/admin/directory')}
+		>
 			<CardHeader>
 				<div class="flex items-center justify-between">
 					<CardTitle>Template Directory</CardTitle>
-					<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
 						<Icon icon="mdi:book-open-variant" class="h-5 w-5 text-primary" />
 					</div>
 				</div>
@@ -34,11 +44,14 @@
 			</CardFooter>
 		</Card>
 
-		<Card class="hover:shadow-md transition-shadow cursor-pointer" on:click={() => goto('/admin/users')}>
+		<Card
+			class="cursor-pointer transition-shadow hover:shadow-md"
+			on:click={() => goto('/admin/users')}
+		>
 			<CardHeader>
 				<div class="flex items-center justify-between">
 					<CardTitle>User Management</CardTitle>
-					<div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
 						<Icon icon="mdi:account-group" class="h-5 w-5 text-primary" />
 					</div>
 				</div>
@@ -54,6 +67,5 @@
 				</Button>
 			</CardFooter>
 		</Card>
-
 	</div>
-</div> 
+</div>

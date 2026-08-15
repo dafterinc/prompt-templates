@@ -10,10 +10,10 @@ generated text. Supabase provides auth, Postgres, and file storage.
 
 Two parallel domains exist and are frequently confused:
 
-| Domain | Tables | Routes | Access |
-|---|---|---|---|
-| Private user templates | `categories`, `templates`, `variables` | `/templates/*`, `/categories` | Owner-only via RLS |
-| Public directory | `directory_categories`, `directory_templates`, `directory_variables` | `/directory/*` (read), `/admin/directory/*` (write) | Public read, admin write |
+| Domain                 | Tables                                                               | Routes                                              | Access                   |
+| ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------- | ------------------------ |
+| Private user templates | `categories`, `templates`, `variables`                               | `/templates/*`, `/categories`                       | Owner-only via RLS       |
+| Public directory       | `directory_categories`, `directory_templates`, `directory_variables` | `/directory/*` (read), `/admin/directory/*` (write) | Public read, admin write |
 
 They have near-identical shapes but **separate tables, separate RLS policies, and separate
 page components**. A change to one is not automatically a change to the other.
@@ -52,7 +52,7 @@ Read this section before touching auth, admin, or the database.
 **not used**. The actual flow:
 
 - `src/lib/supabase.ts` installs a custom `auth.storage` adapter that writes the session to
-  `localStorage` *and* mirrors it into two hand-written cookies: `sb-access-token` (raw JWT)
+  `localStorage` _and_ mirrors it into two hand-written cookies: `sb-access-token` (raw JWT)
   and `sb-auth-token` (the full JSON session).
 - `src/hooks.server.ts` reads those cookies, extracts the access token, and validates it with
   `serverSupabase.auth.getUser(accessToken)` using a **service-role** client, then sets
@@ -102,7 +102,7 @@ deadlock reads on `user_profiles`.
 
 ### 5. Migration ordering (fixed — but read this before deploying an existing instance)
 
-`template_directory.sql` had **no timestamp prefix**, so it sorted *after* the `2025xxxx_` files
+`template_directory.sql` had **no timestamp prefix**, so it sorted _after_ the `2025xxxx_` files
 even though it is the file that **creates** `user_profiles`, which
 `20250322_user_profiles_update.sql` and `20250323_fix_user_profiles_policies.sql` then alter.
 `supabase db push` against a clean database failed.
@@ -181,11 +181,11 @@ Supabase coupling over ones that deepen it.
 The important thing to understand about this migration: **Neon replaces the database only.**
 Supabase currently supplies three things, and the other two need separate answers:
 
-| Supabase provides | Neon equivalent |
-|---|---|
-| Postgres | Neon (direct replacement; `@neondatabase/serverless` or any Postgres driver) |
-| Auth (`auth.users`, JWTs, password reset) | **None** — needs Auth.js, Lucia, Better Auth, or similar |
-| Storage (`profile_images` bucket) | **None** — needs S3/R2/Cloudinary/UploadThing or similar |
+| Supabase provides                         | Neon equivalent                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| Postgres                                  | Neon (direct replacement; `@neondatabase/serverless` or any Postgres driver) |
+| Auth (`auth.users`, JWTs, password reset) | **None** — needs Auth.js, Lucia, Better Auth, or similar                     |
+| Storage (`profile_images` bucket)         | **None** — needs S3/R2/Cloudinary/UploadThing or similar                     |
 
 Two structural consequences:
 
