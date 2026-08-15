@@ -24,9 +24,14 @@ export async function listCategories(userId: string): Promise<CategoryWithCount[
 	}));
 }
 
-export async function createCategory(userId: string, name: string): Promise<void> {
-	const { error } = await supabaseAdmin.from('categories').insert({ name, user_id: userId });
+export async function createCategory(userId: string, name: string): Promise<string> {
+	const { data, error } = await supabaseAdmin
+		.from('categories')
+		.insert({ name, user_id: userId })
+		.select('id')
+		.single();
 	if (error) throw error;
+	return data.id;
 }
 
 export async function updateCategory(userId: string, id: string, name: string): Promise<void> {
