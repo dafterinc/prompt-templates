@@ -27,3 +27,18 @@ vite.config.ts.timestamp-*
 .documentation-old
 .documentation-old/*
 CHANGELOG.md
+
+# Local editor / agent state
+# Note: CLAUDE.md and AGENTS.md are intentionally tracked — they are contributor docs.
+.claude/settings.local.json
+.claude/local/
+.cursor/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Scratch and backups
+*.bak
+*.local.md
+scratch/
+notes.local/

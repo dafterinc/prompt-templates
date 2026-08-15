@@ -1,6 +1,14 @@
+-- Directory tables, user_profiles, and shared timestamp trigger.
+--
+-- Renamed from `template_directory.sql` to `20250317_template_directory.sql`. Without a
+-- timestamp prefix this file sorted AFTER the 2025xxxx migrations, but it creates the
+-- `user_profiles` table that 20250322 and 20250323 alter, so `supabase db push` failed on a
+-- clean database. If you have a deployment that already applied it under the old name, update
+-- the corresponding row in `supabase_migrations.schema_migrations` rather than re-running it.
+
 -- Create table for directory categories
 CREATE TABLE IF NOT EXISTS directory_categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -9,7 +17,7 @@ CREATE TABLE IF NOT EXISTS directory_categories (
 
 -- Create table for directory templates
 CREATE TABLE IF NOT EXISTS directory_templates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
     content TEXT NOT NULL,
@@ -21,7 +29,7 @@ CREATE TABLE IF NOT EXISTS directory_templates (
 
 -- Create table for directory template variables
 CREATE TABLE IF NOT EXISTS directory_variables (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     template_id UUID NOT NULL REFERENCES directory_templates(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
