@@ -14,6 +14,8 @@
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
+	import { extractVariableNames } from '$lib/utils/template';
+	import { parseCSV, toCSV } from '$lib/utils/csv';
 	
 	interface Template {
 		id: string;
@@ -235,9 +237,7 @@
 			}
 			
 			// Extract variables from the content
-			const variableMatches = [...newTemplateContent.matchAll(/\{\{([^}]+)\}\}/g)];
-			const extractedVariables = variableMatches.map(match => match[1].trim());
-			const uniqueVariables = [...new Set(extractedVariables)];
+			const uniqueVariables = extractVariableNames(newTemplateContent);
 			
 			// Insert the template first
 			const { data: template, error: insertError } = await supabase
@@ -424,35 +424,20 @@
 			];
 			
 			// Convert data to CSV rows
-			const csvRows = templatesData.map(template => {
-				// Convert variables to JSON string
-				const variablesJson = JSON.stringify(template.directory_variables || []);
-				
-				// Escape CSV values (handle commas, quotes, newlines)
-				const escapeCSV = (value: any) => {
-					if (value === null || value === undefined) return '';
-					const str = String(value);
-					if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-						return `"${str.replace(/"/g, '""')}"`;
-					}
-					return str;
-				};
-				
-				return [
-					escapeCSV(template.title),
-					escapeCSV(template.description),
-					escapeCSV(template.content),
-					escapeCSV(template.directory_categories?.name || ''),
-					escapeCSV(template.featured ? 'Yes' : 'No'),
-					escapeCSV(variablesJson),
-					escapeCSV(template.created_at),
-					escapeCSV(template.updated_at)
-				].join(',');
-			});
-			
+			const csvRows = templatesData.map(template => [
+				template.title,
+				template.description,
+				template.content,
+				template.directory_categories?.name || '',
+				template.featured ? 'Yes' : 'No',
+				JSON.stringify(template.directory_variables || []),
+				template.created_at,
+				template.updated_at
+			]);
+
 			// Combine headers and rows
-			const csvContent = [headers.join(','), ...csvRows].join('\n');
-			
+			const csvContent = toCSV(headers, csvRows);
+
 			// Create and download file
 			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 			const link = document.createElement('a');
@@ -495,16 +480,16 @@
 			
 			// Read file content
 			const fileContent = await importFile.text();
-			
-			// Parse CSV
-			const lines = fileContent.split('\n').filter(line => line.trim());
-			if (lines.length < 2) {
+
+			// Parse CSV (quote-aware, handles multiline quoted fields)
+			const records = parseCSV(fileContent);
+			if (records.length < 2) {
 				importError = 'CSV file must have at least a header row and one data row';
 				return;
 			}
-			
-			const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-			const dataRows = lines.slice(1);
+
+			const headers = records[0].map(h => h.trim());
+			const dataRows = records.slice(1);
 			importTotalRows = dataRows.length;
 			
 			// Validate headers
@@ -530,9 +515,8 @@
 				importProgress = Math.round((importCurrentRow / importTotalRows) * 100);
 				
 				try {
-					const row = dataRows[i];
-					const values = parseCSVRow(row);
-					
+					const values = dataRows[i];
+
 					if (values.length !== headers.length) {
 						errors.push(`Row ${i + 2}: Column count mismatch`);
 						errorCount++;
@@ -599,9 +583,8 @@
 					}
 					
 					// Always extract variables from content to ensure we don't miss any
-					const variableMatches = [...rowData['Content'].matchAll(/\{\{([^}]+)\}\}/g)];
-					const contentVariables = variableMatches.map(match => ({
-						name: match[1].trim(),
+					const contentVariables = extractVariableNames(rowData['Content']).map(name => ({
+						name,
 						description: '',
 						type: 'text',
 						default_value: '',
@@ -684,38 +667,6 @@
 				importTimeout = null;
 			}
 		}
-	}
-	
-	function parseCSVRow(row: string): string[] {
-		const result: string[] = [];
-		let current = '';
-		let inQuotes = false;
-		
-		for (let i = 0; i < row.length; i++) {
-			const char = row[i];
-			
-			if (char === '"') {
-				if (inQuotes && row[i + 1] === '"') {
-					// Escaped quote
-					current += '"';
-					i++; // Skip next quote
-				} else {
-					// Toggle quote state
-					inQuotes = !inQuotes;
-				}
-			} else if (char === ',' && !inQuotes) {
-				// End of field
-				result.push(current.trim());
-				current = '';
-			} else {
-				current += char;
-			}
-		}
-		
-		// Add last field
-		result.push(current.trim());
-		
-		return result;
 	}
 	
 	function handleFileSelect(event: Event) {

@@ -13,6 +13,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
+	import { extractVariableNames } from '$lib/utils/template';
 	import Icon from '@iconify/svelte';
 	
 	interface Template {
@@ -150,61 +151,49 @@
 			// Check if content changed to update variables
 			if (content !== originalContent) {
 				// Parse variables from content
-				const variableMatches = content.match(/\{\{([^}]+)\}\}/g);
-				
-				if (variableMatches) {
-					// Extract unique variable names
-					const uniqueVars = [...new Set(
-						variableMatches.map(match => {
-							// Remove {{ and }} and trim whitespace
-							return match.replace(/\{\{|\}\}/g, '').trim();
-						})
-					)];
-					
-					// Get existing variables
-					const { data: existingVars } = await supabase
+				const uniqueVars = extractVariableNames(content);
+
+				// Get existing variables
+				const { data: existingVars } = await supabase
+					.from('variables')
+					.select('name')
+					.eq('template_id', templateId);
+
+				const existingVarNames = new Set((existingVars || []).map((v: any) => v.name));
+
+				// Find new variables to add
+				const newVars = uniqueVars.filter(name => !existingVarNames.has(name));
+
+				// Create variables for the template
+				if (newVars.length > 0) {
+					const variables = newVars.map(name => ({
+						template_id: templateId,
+						name,
+						type: 'text',
+						is_required: false
+					}));
+
+					const { error: variablesError } = await supabase
 						.from('variables')
-						.select('name')
-						.eq('template_id', templateId);
-					
-					const existingVarNames = new Set((existingVars || []).map((v: any) => v.name));
-					
-					// Find new variables to add
-					const newVars = uniqueVars.filter(name => !existingVarNames.has(name));
-					
-					// Create variables for the template
-					if (newVars.length > 0) {
-						const variables = newVars.map(name => ({
-							template_id: templateId,
-							name,
-							type: 'text',
-							is_required: false
-						}));
-						
-						const { error: variablesError } = await supabase
-							.from('variables')
-							.insert(variables);
-						
-						if (variablesError) {
-							logger.error('Error creating variables:', variablesError, 'templates');
-						}
+						.insert(variables);
+
+					if (variablesError) {
+						logger.error('Error creating variables:', variablesError, 'templates');
 					}
-					
-					// Find variables to delete (they were in the original but not in the new content)
-					const deletedVars = Array.from(existingVarNames).filter(name => !uniqueVars.includes(name));
-					
-					if (deletedVars.length > 0) {
-						for (const name of deletedVars) {
-							const { error: deleteError } = await supabase
-								.from('variables')
-								.delete()
-								.eq('template_id', templateId)
-								.eq('name', name);
-							
-							if (deleteError) {
-								logger.error(`Error deleting variable ${name}:`, deleteError, 'templates');
-							}
-						}
+				}
+
+				// Find variables to delete (they were in the original but not in the new content)
+				const deletedVars = Array.from(existingVarNames).filter(name => !uniqueVars.includes(name));
+
+				if (deletedVars.length > 0) {
+					const { error: deleteError } = await supabase
+						.from('variables')
+						.delete()
+						.eq('template_id', templateId)
+						.in('name', deletedVars);
+
+					if (deleteError) {
+						logger.error('Error deleting removed variables:', deleteError, 'templates');
 					}
 				}
 			}

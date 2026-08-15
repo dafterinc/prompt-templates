@@ -12,6 +12,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
+	import { extractVariableNames } from '$lib/utils/template';
 	
 	interface Category {
 		id: string;
@@ -94,17 +95,9 @@
 			}
 			
 			// Parse variables from content
-			const variableMatches = content.match(/\{\{([^}]+)\}\}/g);
-			
-			if (variableMatches && template) {
-				// Extract unique variable names
-				const uniqueVars = [...new Set(
-					variableMatches.map(match => {
-						// Remove {{ and }} and trim whitespace
-						return match.replace(/\{\{|\}\}/g, '').trim();
-					})
-				)];
-				
+			const uniqueVars = extractVariableNames(content);
+
+			if (template) {
 				// Create variables for the template
 				if (uniqueVars.length > 0) {
 					const variables = uniqueVars.map(name => ({

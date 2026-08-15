@@ -72,38 +72,27 @@
 	}
 	
 	async function fetchTemplates() {
-		// For directory templates, we only fetch templates marked as public/directory
+		// The list cards render only title/description/category/featured, so select those columns
+		// (skip the heavy `content` body) and fetch the variable count inline instead of one
+		// query per template — this page is public and runs for every anonymous visitor.
 		const { data, error: fetchError } = await supabase
 			.from('directory_templates')
-			.select(`
-				*,
-				directory_categories(name)
-			`)
+			.select('id, title, description, category_id, featured, created_at, updated_at, directory_categories(name), directory_variables(count)')
 			.order('featured', { ascending: false })
 			.order('updated_at', { ascending: false });
-		
+
 		if (fetchError) {
 			error = fetchError.message;
 			return;
 		}
-		
-		// Also fetch variable count for each template
+
 		if (data) {
-			allTemplates = await Promise.all(
-				data.map(async (template: Template) => {
-					const { count } = await supabase
-						.from('directory_variables')
-						.select('id', { count: 'exact', head: true })
-						.eq('template_id', template.id);
-					
-					return {
-						...template,
-						category_name: template.directory_categories?.name,
-						variables_count: count
-					};
-				})
-			);
-			
+			allTemplates = data.map((template: any) => ({
+				...template,
+				category_name: template.directory_categories?.name,
+				variables_count: template.directory_variables?.[0]?.count ?? 0
+			}));
+
 			templates = [...allTemplates];
 		}
 	}
