@@ -48,22 +48,22 @@
 			icon: 'mdi:variable'
 		},
 		{
-			title: 'Offline First',
-			description: 'Work without an internet connection, sync when online.',
-			content: 'All your templates are stored locally for immediate access. Changes sync automatically when you reconnect.',
-			icon: 'mdi:wifi-off'
+			title: 'Public Template Directory',
+			description: 'Browse and reuse community templates.',
+			content: 'Discover ready-made templates in the public directory and add them to your own collection in one click.',
+			icon: 'mdi:view-grid-outline'
 		},
 		{
-			title: 'Secure Cloud Sync',
-			description: 'Your data, synced across all devices.',
-			content: 'Templates encrypted in transit and at rest. Access your prompts from any device, anywhere.',
-			icon: 'mdi:cloud-sync'
+			title: 'Fill & Copy Instantly',
+			description: 'Generate finished text in seconds.',
+			content: 'Fill in your variables and copy the generated text straight to your clipboard with a single click.',
+			icon: 'mdi:content-copy'
 		},
 		{
-			title: 'Rich Text Formatting',
-			description: 'Create beautiful, formatted prompt templates.',
-			content: 'Use rich text formatting to create structured, visually appealing prompts that stand out.',
-			icon: 'mdi:format-text'
+			title: 'Import & Export',
+			description: 'Move your templates in and out via CSV.',
+			content: 'Bulk import templates from a CSV file, or export your whole collection to back it up or share it.',
+			icon: 'mdi:swap-horizontal'
 		},
 		{
 			title: 'Template Organization',
@@ -176,9 +176,9 @@
 		},
 		"featureList": [
 			"Customizable Variables",
-			"Offline First",
-			"Secure Cloud Sync",
-			"Rich Text Formatting",
+			"Public Template Directory",
+			"Fill and Copy Instantly",
+			"Import and Export",
 			"Template Organization",
 			"Self-Hostable"
 		],

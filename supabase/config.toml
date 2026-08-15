@@ -52,11 +52,8 @@ max_client_conn = 100
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# Disabled: there is no seed file in the repo. Enable and add a ./seed.sql to seed on db reset.
+enabled = false
 
 [realtime]
 enabled = true
@@ -91,12 +88,6 @@ enabled = true
 # Reduced file size limit as per security recommendation
 file_size_limit = "2MiB"
 
-# Add MIME type restrictions for storage buckets
-[storage.buckets.uploads]
-public = false
-file_size_limit = "2MiB"
-allowed_mime_types = ["image/png", "image/jpeg", "application/pdf", "text/plain"]
-
 # Configure profile_images bucket
 [storage.buckets.profile_images]
 public = true
@@ -117,10 +108,10 @@ allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# in emails. The Vite dev server runs on :5173.
+site_url = "http://127.0.0.1:5173"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["http://localhost:5173"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
