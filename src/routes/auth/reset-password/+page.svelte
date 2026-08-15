@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
+	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -14,13 +14,11 @@
 	let error = '';
 	let success = false;
 	
-	onMount(async () => {
-		// Check if we have a session already
-		const { data } = await supabase.auth.getSession();
-		if (!data.session) {
-			error = 'Invalid or expired reset token. Please request a new password reset link.';
-		}
-	});
+	// Better Auth sends a reset token as a query param.
+	const token = $page.url.searchParams.get('token');
+	if (!token) {
+		error = 'Invalid or expired reset token. Please request a new password reset link.';
+	}
 	
 	async function handleResetPassword() {
 		if (!password || !confirmPassword) {
@@ -42,15 +40,16 @@
 			loading = true;
 			error = '';
 			
-			const { error: updateError } = await supabase.auth.updateUser({
-				password
+			const { error: updateError } = await authClient.resetPassword({
+				newPassword: password,
+				token: token ?? ''
 			});
-			
+
 			if (updateError) {
-				error = updateError.message;
+				error = updateError.message || 'Failed to reset password';
 				return;
 			}
-			
+
 			success = true;
 			
 			// Redirect after a short delay

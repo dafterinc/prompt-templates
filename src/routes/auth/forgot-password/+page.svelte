@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
-	import { goto } from '$app/navigation';
+	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -23,15 +22,16 @@
 			error = '';
 			success = false;
 			
-			const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+			const { error: resetError } = await authClient.requestPasswordReset({
+				email,
 				redirectTo: `${window.location.origin}/auth/reset-password`
 			});
-			
+
 			if (resetError) {
-				error = resetError.message;
+				error = resetError.message || 'Failed to send reset link';
 				return;
 			}
-			
+
 			success = true;
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
