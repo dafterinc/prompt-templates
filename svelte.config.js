@@ -32,7 +32,7 @@ const config = {
 				],
 				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
 				'font-src': ['self', 'https://fonts.gstatic.com'],
-				'img-src': ['self', 'data:', 'https://*.public.blob.vercel-storage.com'],
+				'img-src': ['self', 'data:'],
 				'connect-src': [
 					'self',
 					'https://api.iconify.design',

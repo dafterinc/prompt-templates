@@ -65,8 +65,8 @@
 				return;
 			}
 
-			// Redirect to templates page on success
-			goto('/templates');
+			// Redirect on success; invalidateAll re-runs the layout load so the session is picked up.
+			await goto('/templates', { invalidateAll: true });
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
 		} finally {
@@ -105,8 +105,8 @@
 				return;
 			}
 
-			// Better Auth signs the user in on sign-up.
-			goto('/templates');
+			// Better Auth signs the user in on sign-up; invalidateAll refreshes the layout session.
+			await goto('/templates', { invalidateAll: true });
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
 		} finally {

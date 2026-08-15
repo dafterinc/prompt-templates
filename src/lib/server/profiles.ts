@@ -42,13 +42,17 @@ export async function updateProfile(userId: string, input: ProfileInput): Promis
 		WHERE id = ${userId}`;
 }
 
-/** Upload a profile image to Vercel Blob and record its URL. Returns the public URL. */
-export async function uploadProfileImage(userId: string, file: File): Promise<string> {
+// The Blob store is PRIVATE, so images are served through the authenticated /api/profile-image
+// route (streaming get()), not a public URL. We store the private blob URL and derive the pathname
+// from it when serving.
+
+/** Upload a profile image to the (private) Vercel Blob store and record its URL. */
+export async function uploadProfileImage(userId: string, file: File): Promise<void> {
 	const ext = (file.name.split('.').pop() || 'png').toLowerCase();
 	const pathname = `profile-images/${userId}/${Date.now()}.${ext}`;
 
-	const { url } = await put(pathname, file, {
-		access: 'public',
+	const blob = await put(pathname, file, {
+		access: 'private',
 		contentType: file.type,
 		token: env.BLOB_READ_WRITE_TOKEN
 	});
@@ -57,7 +61,7 @@ export async function uploadProfileImage(userId: string, file: File): Promise<st
 		SELECT profile_image_url FROM user_profiles WHERE id = ${userId}`;
 
 	await sql`
-		UPDATE user_profiles SET profile_image_url = ${url}, updated_at = now()
+		UPDATE user_profiles SET profile_image_url = ${blob.url}, updated_at = now()
 		WHERE id = ${userId}`;
 
 	// Best-effort removal of the previous image.
@@ -68,6 +72,11 @@ export async function uploadProfileImage(userId: string, file: File): Promise<st
 			/* ignore */
 		}
 	}
+}
 
-	return url;
+/** Fetch the current user's stored private-blob URL (or null). */
+export async function getProfileImageUrl(userId: string): Promise<string | null> {
+	const [row] = await sql<{ profile_image_url: string | null }[]>`
+		SELECT profile_image_url FROM user_profiles WHERE id = ${userId}`;
+	return row?.profile_image_url ?? null;
 }
