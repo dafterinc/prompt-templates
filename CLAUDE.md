@@ -35,12 +35,11 @@ npm run test         # unit (once) + e2e
 it that way. The test suite is scaffolding only (`1 + 2 === 3`, "an h1 renders"); do not treat
 green tests as evidence a change works.
 
-`npm run lint` **fails on a clean checkout** and is not a usable gate yet: Prettier reports ~127
-unformatted files (the repo has never been formatted) and ESLint reports ~178 errors, almost all
-pre-existing `no-explicit-any`, unused imports, and `svelte/require-each-key`. Do not fix these
-opportunistically inside an unrelated change — the reformat alone would rewrite most of the
-codebase and destroy `git blame`. Check your own files with
-`npx prettier --check <file>` and `npx eslint <file>` instead.
+`npm run lint` and `npm run test:unit` also pass clean. Keep all three green.
+
+`npm run build` needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set even though it never
+queries the database — prerendering imports `src/lib/supabase.ts`, which constructs the client at
+module scope and throws without them.
 
 ## Landmines
 
