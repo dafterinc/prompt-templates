@@ -5,12 +5,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Card, CardContent, CardHeader, CardFooter } from '$lib/components/ui/card';
+	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
 
 	interface Category {
@@ -30,7 +29,6 @@
 	// For new category dialog
 	let newCategoryDialogOpen = false;
 	let newCategoryName = '';
-	let newCategoryDescription = '';
 	let savingCategory = false;
 	let categoryError = '';
 
@@ -127,8 +125,8 @@
 			if (template) {
 				goto(`/templates/${template.id}`);
 			}
-		} catch (e: any) {
-			error = e.message || 'Failed to create template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to create template');
 		} finally {
 			loading = false;
 		}
@@ -161,7 +159,6 @@
 			// Close dialog and reset values
 			newCategoryDialogOpen = false;
 			newCategoryName = '';
-			newCategoryDescription = '';
 
 			// Refresh categories and select the new one
 			await fetchCategories();
@@ -169,7 +166,7 @@
 			if (data) {
 				categoryId = data.id;
 			}
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -246,7 +243,7 @@
 							class="w-full border-0 bg-transparent p-2 outline-none focus:ring-0"
 						>
 							<option value="" class="bg-background text-foreground">No Category</option>
-							{#each categories as category}
+							{#each categories as category (category.id)}
 								<option value={category.id} class="bg-background text-foreground"
 									>{category.name}</option
 								>

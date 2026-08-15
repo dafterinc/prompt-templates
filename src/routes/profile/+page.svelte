@@ -20,8 +20,20 @@
 	import { toast } from 'svelte-sonner';
 	import { logger } from '$lib/utils/logger';
 
+	interface UserProfile {
+		id: string;
+		is_admin?: boolean;
+		full_name?: string | null;
+		profile_image_url?: string | null;
+		company_name?: string | null;
+		industry?: string | null;
+		company_website?: string | null;
+		team_size?: string | null;
+		usage_purpose?: string | null;
+	}
+
 	let user: User | null = null;
-	let userProfile: any = null;
+	let userProfile: UserProfile | null = null;
 	let loading = true;
 	let saving = false;
 	let uploading = false;
@@ -162,9 +174,6 @@
 				return;
 			}
 
-			// First check if bucket exists, and if not, create it
-			const { data: buckets } = await supabase.storage.listBuckets();
-
 			// Delete previous file if it exists and is different
 			if (profileImageUrl) {
 				// Extract the path from the URL
@@ -192,7 +201,7 @@
 			}
 
 			// Upload the file
-			const { error: uploadError, data: uploadData } = await supabase.storage
+			const { error: uploadError } = await supabase.storage
 				.from('profile_images')
 				.upload(filePath, file, {
 					cacheControl: '3600',
@@ -227,7 +236,7 @@
 			} else {
 				toast.success('Profile image updated successfully');
 			}
-		} catch (err: any) {
+		} catch (err) {
 			updateError = 'An unexpected error occurred during upload';
 			toast.error('An unexpected error occurred during upload');
 			logger.error('Failed to upload image:', err, 'profile');
@@ -288,7 +297,7 @@
 				updateSuccess = true;
 				toast.success('Profile updated successfully');
 			}
-		} catch (err: any) {
+		} catch (err) {
 			updateError = 'An unexpected error occurred';
 			toast.error('An unexpected error occurred');
 			logger.error('Failed to update profile:', err, 'profile');
@@ -435,7 +444,7 @@
 										<Select.Value placeholder="Select your industry" />
 									</Select.Trigger>
 									<Select.Content>
-										{#each industryOptions as industryOption}
+										{#each industryOptions as industryOption (industryOption)}
 											<Select.Item value={industryOption}>{industryOption}</Select.Item>
 										{/each}
 									</Select.Content>
@@ -452,7 +461,7 @@
 										<Select.Value placeholder="Select your team size" />
 									</Select.Trigger>
 									<Select.Content>
-										{#each teamSizeOptions as sizeOption}
+										{#each teamSizeOptions as sizeOption (sizeOption)}
 											<Select.Item value={sizeOption}>{sizeOption}</Select.Item>
 										{/each}
 									</Select.Content>
@@ -469,7 +478,7 @@
 										<Select.Value placeholder="Select primary usage" />
 									</Select.Trigger>
 									<Select.Content>
-										{#each usagePurposeOptions as purposeOption}
+										{#each usagePurposeOptions as purposeOption (purposeOption)}
 											<Select.Item value={purposeOption}>{purposeOption}</Select.Item>
 										{/each}
 									</Select.Content>

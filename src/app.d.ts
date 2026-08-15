@@ -246,9 +246,9 @@ declare namespace svelteHTML {
 		view: SVGProps<SVGViewElement>;
 	}
 
-	interface HTMLProps<T extends EventTarget> extends HTMLAttributes<T> {}
+	type HTMLProps<T extends EventTarget> = HTMLAttributes<T>;
 
-	interface SVGProps<T extends EventTarget> extends SVGAttributes<T> {}
+	type SVGProps<T extends EventTarget> = SVGAttributes<T>;
 
 	interface HTMLAttributes<T> {
 		// Standard HTML Attributes

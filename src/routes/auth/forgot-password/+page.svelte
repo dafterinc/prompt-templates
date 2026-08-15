@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
-	import { goto } from '$app/navigation';
+	import { getErrorMessage } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -40,8 +40,8 @@
 			}
 
 			success = true;
-		} catch (e: any) {
-			error = e.message || 'An unexpected error occurred';
+		} catch (e) {
+			error = getErrorMessage(e, 'An unexpected error occurred');
 		} finally {
 			loading = false;
 		}

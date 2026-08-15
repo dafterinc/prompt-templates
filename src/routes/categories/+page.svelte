@@ -2,8 +2,8 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
-	import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Icon from '@iconify/svelte';
@@ -77,8 +77,8 @@
 			);
 
 			categories = categoriesWithCounts;
-		} catch (e: any) {
-			error = e.message;
+		} catch (e) {
+			error = getErrorMessage(e);
 		} finally {
 			loading = false;
 		}
@@ -107,7 +107,7 @@
 			// Reset form and refresh categories
 			newCategory.name = '';
 			await fetchCategories();
-		} catch (e: any) {
+		} catch (e) {
 			error = getUserFriendlyErrorMessage(e);
 		} finally {
 			saving = false;
@@ -139,7 +139,7 @@
 			// Reset edit mode and refresh categories
 			editingCategory = null;
 			await fetchCategories();
-		} catch (e: any) {
+		} catch (e) {
 			error = getUserFriendlyErrorMessage(e);
 		} finally {
 			saving = false;
@@ -176,21 +176,11 @@
 			deleteModalOpen = false;
 			categoryToDelete = null;
 			await fetchCategories();
-		} catch (e: any) {
-			error = e.message;
+		} catch (e) {
+			error = getErrorMessage(e);
 		} finally {
 			saving = false;
 		}
-	}
-
-	function cancelEdit() {
-		editingCategory = null;
-		error = '';
-	}
-
-	function startEdit(category: Category) {
-		// Create a copy to avoid directly modifying the list item
-		editingCategory = { ...category };
 	}
 
 	function confirmDelete(category: Category) {
@@ -279,7 +269,7 @@
 									</tr>
 								</thead>
 								<tbody class="divide-y">
-									{#each categories as category}
+									{#each categories as category (category.id)}
 										<tr class="hover:bg-muted/30">
 											<td class="px-4 py-3">
 												{#if editingCategory && editingCategory.id === category.id}

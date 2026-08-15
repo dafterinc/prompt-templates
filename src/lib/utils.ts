@@ -56,10 +56,30 @@ export const flyAndScale = (
 };
 
 /**
+ * Extracts a message from an unknown thrown value.
+ *
+ * Use this in `catch` blocks instead of typing the caught value as `any`. It handles real
+ * `Error` instances, plain strings, and the `{ message }` shaped objects that Supabase returns.
+ */
+export function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred'): string {
+	if (error instanceof Error) return error.message;
+	if (typeof error === 'string') return error;
+	if (
+		error &&
+		typeof error === 'object' &&
+		'message' in error &&
+		typeof (error as { message: unknown }).message === 'string'
+	) {
+		return (error as { message: string }).message;
+	}
+	return fallback;
+}
+
+/**
  * Provides user-friendly messages for database errors
  */
-export function getUserFriendlyErrorMessage(error: Error | string): string {
-	const message = typeof error === 'string' ? error : error.message;
+export function getUserFriendlyErrorMessage(error: unknown): string {
+	const message = getErrorMessage(error);
 
 	// Handle specific error types
 	if (

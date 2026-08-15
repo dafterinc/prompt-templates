@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -11,12 +12,10 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import Check from 'svelte-radix/Check.svelte';
 	import Icon from '@iconify/svelte';
-	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import { logger } from '$lib/utils/logger';
@@ -49,12 +48,10 @@
 	let loading = true;
 	let error = '';
 	let isAuthenticated = false;
-	let userId = '';
 
 	// For filtering
 	let searchTerm = '';
 	let selectedCategoryIds: Set<string> = new Set();
-	let showSidebar = true;
 	let drawerOpen = false;
 
 	onMount(() => {
@@ -68,13 +65,9 @@
 				data: { session }
 			} = await supabase.auth.getSession();
 			isAuthenticated = !!session;
-			if (session) {
-				userId = session.user.id;
-			}
-
 			await Promise.all([fetchTemplates(), fetchCategories()]);
-		} catch (e: any) {
-			error = e.message || 'Failed to load templates';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load templates');
 		} finally {
 			loading = false;
 		}
@@ -207,14 +200,6 @@
 		updateCategoryCounts(allTemplates);
 	}
 
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
-
 	function closeDrawer() {
 		drawerOpen = false;
 	}
@@ -289,7 +274,7 @@
 
 							{#if categories.length > 0}
 								<ul class="space-y-1">
-									{#each categories as category}
+									{#each categories as category (category.id)}
 										<li>
 											<button
 												class="flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted/50 {category.checked
@@ -356,7 +341,7 @@
 					</div>
 				{:else}
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-						{#each templates as template}
+						{#each templates as template (template.id)}
 							<Card class="transition-shadow duration-200 hover:shadow-md">
 								<a href={`/directory/${template.id}`} class="block">
 									<CardHeader class="mb-2">
@@ -422,7 +407,7 @@
 
 					{#if categories.length > 0}
 						<ul class="max-h-[40vh] space-y-1 overflow-y-auto">
-							{#each categories as category}
+							{#each categories as category (category.id)}
 								<li>
 									<button
 										class="flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted/50 {category.checked

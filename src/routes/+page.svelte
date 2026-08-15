@@ -4,14 +4,11 @@
 		Card,
 		CardContent,
 		CardDescription,
-		CardFooter,
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar';
 	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
-	import { onMount } from 'svelte';
 
 	const handleGetStarted = () => {
 		goto('/auth/login');
@@ -20,31 +17,6 @@
 	const handleGitHubView = () => {
 		window.open('https://github.com/dafterinc/prompt-templates', '_blank', 'noopener,noreferrer');
 	};
-
-	// For scroll-based animations
-	let isVisible = false;
-
-	onMount(() => {
-		const handleScroll = () => {
-			// Simple check if user has scrolled down enough to trigger animations
-			if (window.scrollY > 100) {
-				isVisible = true;
-			}
-		};
-
-		// Set initial state
-		setTimeout(() => {
-			handleScroll();
-		}, 100);
-
-		// Add scroll listener
-		window.addEventListener('scroll', handleScroll);
-
-		// Clean up
-		return () => {
-			window.removeEventListener('scroll', handleScroll);
-		};
-	});
 
 	// Feature data
 	const features = [
@@ -439,7 +411,7 @@
 				role="list"
 				aria-label="Features list"
 			>
-				{#each features as feature, i}
+				{#each features as feature, i (feature.title)}
 					<Card
 						class="animate-slide-up group border border-border transition-all duration-300 hover:border-primary hover:shadow-lg animate-delay-{(i *
 							100) %
@@ -457,6 +429,12 @@
 							<CardDescription>{feature.description}</CardDescription>
 						</CardHeader>
 						<CardContent>
+							<!--
+								Safe: `features` is a hardcoded array in this file, and the markup is limited
+								to <code> tags used to show the {{variable}} syntax. Never point {@html} at
+								template content, directory content, or anything else a user can supply.
+							-->
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 							<p>{@html feature.content}</p>
 						</CardContent>
 					</Card>
@@ -488,7 +466,7 @@
 				role="list"
 				aria-label="Use cases list"
 			>
-				{#each useCases as useCase, i}
+				{#each useCases as useCase, i (useCase.title)}
 					<div
 						class="animate-slide-up flex flex-col items-center rounded-xl bg-background p-6 text-center shadow-sm transition-all hover:scale-105 hover:shadow-md animate-delay-{(i *
 							100) %

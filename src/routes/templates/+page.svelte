@@ -13,14 +13,12 @@
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Drawer from '$lib/components/ui/drawer';
-	import { Textarea } from '$lib/components/ui/textarea';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import Check from 'svelte-radix/Check.svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
 	import Icon from '@iconify/svelte';
 
@@ -35,6 +33,14 @@
 		categories?: { name: string };
 		variables_count?: number | null;
 		category_name?: string;
+	}
+
+	interface ImportedVariable {
+		name: string;
+		description: string;
+		type: string;
+		default_value: string;
+		is_required: boolean;
 	}
 
 	interface Category {
@@ -54,13 +60,11 @@
 	// For filtering
 	let searchTerm = '';
 	let selectedCategoryIds: Set<string> = new Set();
-	let showSidebar = true;
 	let drawerOpen = false;
 
 	// For new category
 	let newCategoryDialogOpen = false;
 	let newCategoryName = '';
-	let newCategoryDescription = '';
 	let savingCategory = false;
 	let categoryError = '';
 
@@ -88,8 +92,8 @@
 
 			userId = session.user.id;
 			await Promise.all([fetchTemplates(), fetchCategories()]);
-		} catch (e: any) {
-			error = e.message || 'Failed to load templates';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load templates');
 		} finally {
 			loading = false;
 		}
@@ -221,14 +225,6 @@
 		goto('/templates/new');
 	}
 
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
-
 	async function createCategory() {
 		if (!newCategoryName.trim()) {
 			categoryError = 'Category name is required';
@@ -239,7 +235,7 @@
 			savingCategory = true;
 			categoryError = '';
 
-			const { data, error: insertError } = await supabase
+			const { error: insertError } = await supabase
 				.from('categories')
 				.insert({
 					name: newCategoryName.trim(),
@@ -256,11 +252,10 @@
 			// Close dialog and reset values
 			newCategoryDialogOpen = false;
 			newCategoryName = '';
-			newCategoryDescription = '';
 
 			// Refresh categories list
 			await fetchCategories();
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -312,7 +307,7 @@
 				const variablesJson = JSON.stringify(template.variables || []);
 
 				// Escape CSV values (handle commas, quotes, newlines)
-				const escapeCSV = (value: any) => {
+				const escapeCSV = (value: unknown) => {
 					if (value === null || value === undefined) return '';
 					const str = String(value);
 					if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -345,8 +340,8 @@
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-		} catch (e: any) {
-			error = e.message || 'Failed to export templates';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to export templates');
 		}
 	}
 
@@ -449,13 +444,13 @@
 					}
 
 					// Parse variables from JSON or extract from content
-					let variables: any[] = [];
+					let variables: ImportedVariable[] = [];
 
 					// Try to parse variables from JSON first
 					if (rowData['Variables (JSON)']?.trim()) {
 						try {
 							variables = JSON.parse(rowData['Variables (JSON)']);
-						} catch (parseError) {
+						} catch {
 							// If JSON parsing fails, extract from content
 							variables = [];
 						}
@@ -519,8 +514,8 @@
 					}
 
 					successCount++;
-				} catch (rowError: any) {
-					errors.push(`Row ${i + 2}: ${rowError.message}`);
+				} catch (rowError) {
+					errors.push(`Row ${i + 2}: ${getErrorMessage(rowError)}`);
 					errorCount++;
 				}
 			}
@@ -535,8 +530,8 @@
 			if (errorCount > 0) {
 				importError = `Failed to import ${errorCount} template(s):\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more errors` : ''}`;
 			}
-		} catch (e: any) {
-			importError = e.message || 'Failed to import templates';
+		} catch (e) {
+			importError = getErrorMessage(e, 'Failed to import templates');
 		} finally {
 			importing = false;
 		}
@@ -663,7 +658,7 @@
 
 							{#if categories.length > 0}
 								<ul class="space-y-1">
-									{#each categories as category}
+									{#each categories as category (category.id)}
 										<li>
 											<button
 												class="flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted/50 {category.checked
@@ -735,7 +730,7 @@
 					</div>
 				{:else}
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-						{#each templates as template}
+						{#each templates as template (template.id)}
 							<Card class="transition-shadow duration-200 hover:shadow-md">
 								<a href={`/templates/${template.id}`} class="block">
 									<CardHeader class="mb-2">
@@ -846,7 +841,7 @@
 
 					{#if categories.length > 0}
 						<ul class="max-h-[40vh] space-y-1 overflow-y-auto">
-							{#each categories as category}
+							{#each categories as category (category.id)}
 								<li>
 									<button
 										class="flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted/50 {category.checked

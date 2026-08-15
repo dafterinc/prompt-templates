@@ -10,8 +10,7 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
 	import Icon from '@iconify/svelte';
 
@@ -26,15 +25,6 @@
 	interface Category {
 		id: string;
 		name: string;
-	}
-
-	interface Variable {
-		id: string;
-		name: string;
-		description: string | null;
-		type: string;
-		default_value: string | null;
-		is_required: boolean;
 	}
 
 	let template: Template | null = null;
@@ -53,7 +43,6 @@
 	// For new category dialog
 	let newCategoryDialogOpen = false;
 	let newCategoryName = '';
-	let newCategoryDescription = '';
 	let savingCategory = false;
 	let categoryError = '';
 
@@ -99,8 +88,8 @@
 				originalContent = data.content;
 				categoryId = data.category_id || '';
 			}
-		} catch (e: any) {
-			error = e.message || 'Failed to load template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load template');
 		} finally {
 			loading = false;
 		}
@@ -168,7 +157,9 @@
 						.select('name')
 						.eq('template_id', templateId);
 
-					const existingVarNames = new Set((existingVars || []).map((v: any) => v.name));
+					const existingVarNames = new Set(
+						(existingVars || []).map((v: { name: string }) => v.name)
+					);
 
 					// Find new variables to add
 					const newVars = uniqueVars.filter((name) => !existingVarNames.has(name));
@@ -212,8 +203,8 @@
 
 			// Redirect to the template detail page
 			goto(`/templates/${templateId}`);
-		} catch (e: any) {
-			error = e.message || 'Failed to update template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to update template');
 		} finally {
 			saving = false;
 		}
@@ -234,8 +225,8 @@
 
 			// Redirect to templates list
 			goto('/templates');
-		} catch (e: any) {
-			error = e.message || 'Failed to delete template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete template');
 		} finally {
 			saving = false;
 			deleteModalOpen = false;
@@ -278,7 +269,7 @@
 					template.category_id = data.id;
 				}
 			}
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -371,7 +362,7 @@
 								class="w-full border-0 bg-transparent p-2 outline-none focus:ring-0"
 							>
 								<option value="" class="bg-background text-foreground">No Category</option>
-								{#each categories as category}
+								{#each categories as category (category.id)}
 									<option value={category.id} class="bg-background text-foreground"
 										>{category.name}</option
 									>

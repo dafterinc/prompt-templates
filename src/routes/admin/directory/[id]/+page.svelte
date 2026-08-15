@@ -8,18 +8,16 @@
 		Card,
 		CardContent,
 		CardDescription,
-		CardFooter,
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Badge } from '$lib/components/ui/badge';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 
 	interface Template {
 		id: string;
@@ -124,8 +122,8 @@
 			}
 
 			variables = variablesData || [];
-		} catch (e: any) {
-			error = e.message || 'Failed to load template data';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load template data');
 		} finally {
 			loading = false;
 		}
@@ -206,8 +204,8 @@
 
 			saveSuccess = true;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to save template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to save template');
 		} finally {
 			saving = false;
 		}
@@ -270,8 +268,8 @@
 
 			variableDialogOpen = false;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to save variable';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to save variable');
 		}
 	}
 
@@ -294,8 +292,8 @@
 
 			deleteVariableDialogOpen = false;
 			await loadData();
-		} catch (e: any) {
-			error = e.message || 'Failed to delete variable';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete variable');
 		}
 	}
 
@@ -336,7 +334,7 @@
 					template.category_id = data.id;
 				}
 			}
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -443,7 +441,7 @@
 											bind:value={categoryId}
 										>
 											<option value="">None</option>
-											{#each categories as category}
+											{#each categories as category (category.id)}
 												<option value={category.id}>{category.name}</option>
 											{/each}
 										</select>
@@ -502,7 +500,7 @@
 							</div>
 						{:else}
 							<div class="space-y-2">
-								{#each variables as variable}
+								{#each variables as variable (variable.id)}
 									<div class="flex items-center justify-between rounded-md border p-2">
 										<div>
 											<div class="font-medium">{variable.name}</div>

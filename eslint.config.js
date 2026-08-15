@@ -24,6 +24,27 @@ export default ts.config(
 		}
 	},
 	{
+		// Svelte's `$$Props` / `$$Events` / `$$Slots` type aliases look unused to ESLint but are
+		// read by the compiler to type a component's props, events, and slots.
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					varsIgnorePattern: '^\\$\\$',
+					argsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_'
+				}
+			]
+		}
+	},
+	{
+		// Tooling configs are CommonJS and legitimately use require().
+		files: ['**/*.cjs', 'tailwind.config.js', 'postcss.config.cjs'],
+		rules: {
+			'@typescript-eslint/no-require-imports': 'off'
+		}
+	},
+	{
 		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		ignores: ['eslint.config.js', 'svelte.config.js'],
 

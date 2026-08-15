@@ -6,17 +6,16 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '$lib/components/ui/card';
+	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
 	// Import individual components directly to avoid import errors
 	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
 	// Import Iconify
 	import Icon from '@iconify/svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
 
 	interface Template {
@@ -136,8 +135,8 @@
 
 			// Generate initial text
 			generateText();
-		} catch (e: any) {
-			error = e.message;
+		} catch (e) {
+			error = getErrorMessage(e);
 		} finally {
 			loading = false;
 		}
@@ -243,11 +242,6 @@
 		}
 	}
 
-	function formatDate(dateString: string) {
-		const date = new Date(dateString);
-		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-	}
-
 	function getVariableDisplayValue(variable: Variable) {
 		const value = variableValues[variable.name];
 		if (!value) return `[${variable.name}]`;
@@ -349,8 +343,8 @@
 				createNewCategory = false;
 				newCategoryName = '';
 			}, 2000);
-		} catch (e: any) {
-			addToCollectionError = e.message || 'Failed to add template to collection';
+		} catch (e) {
+			addToCollectionError = getErrorMessage(e, 'Failed to add template to collection');
 		} finally {
 			addingToCollection = false;
 		}
@@ -437,7 +431,7 @@
 		<Card class="mb-2">
 			<CardContent class="p-6">
 				<div class="whitespace-pre-wrap text-xl leading-relaxed">
-					{#each templateSegments as segment}
+					{#each templateSegments as segment, segmentIndex (segmentIndex)}
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
 						{:else if segment.type === 'variable' && segment.variable}
@@ -567,7 +561,7 @@
 								class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
 								bind:value={selectedCategoryId}
 							>
-								{#each userCategories as category}
+								{#each userCategories as category (category.id)}
 									<option value={category.id}>{category.name}</option>
 								{/each}
 							</select>

@@ -7,7 +7,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 interface LogEntry {
 	level: LogLevel;
 	message: string;
-	data?: any;
+	data?: unknown;
 	timestamp: string;
 	context?: string;
 }
@@ -27,7 +27,12 @@ class Logger {
 		return levels.indexOf(level) >= levels.indexOf(this.logLevel);
 	}
 
-	private formatMessage(level: LogLevel, message: string, data?: any, context?: string): LogEntry {
+	private formatMessage(
+		level: LogLevel,
+		message: string,
+		data?: unknown,
+		context?: string
+	): LogEntry {
 		return {
 			level,
 			message,
@@ -37,7 +42,7 @@ class Logger {
 		};
 	}
 
-	private log(level: LogLevel, message: string, data?: any, context?: string): void {
+	private log(level: LogLevel, message: string, data?: unknown, context?: string): void {
 		if (!this.shouldLog(level)) return;
 
 		const entry = this.formatMessage(level, message, data, context);
@@ -76,48 +81,48 @@ class Logger {
 		if (browser && 'navigator' in window && 'sendBeacon' in navigator) {
 			try {
 				navigator.sendBeacon('/api/logs', JSON.stringify(entry));
-			} catch (error) {
+			} catch {
 				// Silently fail if logging service is unavailable
 			}
 		}
 	}
 
-	debug(message: string, data?: any, context?: string): void {
+	debug(message: string, data?: unknown, context?: string): void {
 		this.log('debug', message, data, context);
 	}
 
-	info(message: string, data?: any, context?: string): void {
+	info(message: string, data?: unknown, context?: string): void {
 		this.log('info', message, data, context);
 	}
 
-	warn(message: string, data?: any, context?: string): void {
+	warn(message: string, data?: unknown, context?: string): void {
 		this.log('warn', message, data, context);
 	}
 
-	error(message: string, data?: any, context?: string): void {
+	error(message: string, data?: unknown, context?: string): void {
 		this.log('error', message, data, context);
 	}
 
 	// Convenience method for API errors
-	apiError(endpoint: string, error: any, context?: string): void {
+	apiError(endpoint: string, error: unknown, context?: string): void {
 		this.error(
 			`API Error on ${endpoint}`,
 			{
 				endpoint,
-				error: error?.message || error,
-				stack: error?.stack
+				error: error instanceof Error ? error.message : error,
+				stack: error instanceof Error ? error.stack : undefined
 			},
 			context
 		);
 	}
 
 	// Convenience method for authentication events
-	authEvent(event: string, data?: any): void {
+	authEvent(event: string, data?: unknown): void {
 		this.info(`Auth Event: ${event}`, data, 'auth');
 	}
 
 	// Convenience method for database operations
-	dbOperation(operation: string, table: string, data?: any): void {
+	dbOperation(operation: string, table: string, data?: unknown): void {
 		this.debug(`DB ${operation} on ${table}`, data, 'database');
 	}
 }

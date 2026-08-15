@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -114,8 +115,8 @@
 
 			// Generate initial text
 			generateText();
-		} catch (e: any) {
-			error = e.message;
+		} catch (e) {
+			error = getErrorMessage(e);
 		} finally {
 			loading = false;
 		}
@@ -177,8 +178,8 @@
 			if (newTemplate) {
 				goto(`/templates/${newTemplate.id}`);
 			}
-		} catch (e: any) {
-			error = e.message || 'Failed to duplicate template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to duplicate template');
 		} finally {
 			duplicating = false;
 		}
@@ -213,8 +214,8 @@
 
 			// Navigate back to templates list
 			goto('/templates');
-		} catch (e: any) {
-			error = e.message || 'Failed to delete template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete template');
 		} finally {
 			deleting = false;
 		}
@@ -366,7 +367,7 @@
 		<Card>
 			<CardContent class="p-4 sm:p-6">
 				<div class="whitespace-pre-wrap text-lg leading-relaxed sm:text-xl">
-					{#each templateSegments as segment}
+					{#each templateSegments as segment, segmentIndex (segmentIndex)}
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
 						{:else if segment.type === 'variable' && segment.variable}

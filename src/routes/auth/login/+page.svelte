@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -83,8 +84,8 @@
 
 			// Redirect to templates page on success
 			goto('/templates');
-		} catch (e: any) {
-			error = e.message || 'An unexpected error occurred';
+		} catch (e) {
+			error = getErrorMessage(e, 'An unexpected error occurred');
 		} finally {
 			loading = false;
 		}
@@ -122,8 +123,8 @@
 
 			// Update URL to show registered message
 			goto('/auth/login?registered=true&tab=sign-in');
-		} catch (e: any) {
-			error = e.message || 'An unexpected error occurred';
+		} catch (e) {
+			error = getErrorMessage(e, 'An unexpected error occurred');
 		} finally {
 			loading = false;
 		}

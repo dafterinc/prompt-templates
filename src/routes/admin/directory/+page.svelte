@@ -19,7 +19,7 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
 
 	interface Template {
@@ -34,6 +34,14 @@
 		variables_count?: number | null;
 		category_name?: string;
 		featured?: boolean;
+	}
+
+	interface ImportedVariable {
+		name: string;
+		description: string;
+		type: string;
+		default_value: string;
+		is_required: boolean;
 	}
 
 	interface Category {
@@ -89,7 +97,7 @@
 	let importProgress = 0;
 	let importTotalRows = 0;
 	let importCurrentRow = 0;
-	let importTimeout: NodeJS.Timeout | null = null;
+	let importTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	onMount(() => {
 		loadData();
@@ -99,8 +107,8 @@
 		try {
 			loading = true;
 			await Promise.all([fetchTemplates(), fetchCategories()]);
-		} catch (e: any) {
-			error = e.message || 'Failed to load data';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load data');
 		} finally {
 			loading = false;
 		}
@@ -159,7 +167,7 @@
 			savingCategory = true;
 			categoryError = '';
 
-			const { data, error: insertError } = await supabase
+			const { error: insertError } = await supabase
 				.from('directory_categories')
 				.insert({
 					name: newCategoryName.trim(),
@@ -180,7 +188,7 @@
 
 			// Refresh categories list
 			await fetchCategories();
-		} catch (e: any) {
+		} catch (e) {
 			categoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingCategory = false;
@@ -226,7 +234,7 @@
 
 			// Refresh categories list
 			await fetchCategories();
-		} catch (e: any) {
+		} catch (e) {
 			editCategoryError = getUserFriendlyErrorMessage(e);
 		} finally {
 			savingEditCategory = false;
@@ -299,8 +307,8 @@
 				newTemplateFeatured = false;
 				await fetchTemplates();
 			}
-		} catch (e: any) {
-			templateError = e.message || 'Failed to create template';
+		} catch (e) {
+			templateError = getErrorMessage(e, 'Failed to create template');
 		} finally {
 			savingTemplate = false;
 		}
@@ -334,8 +342,8 @@
 			// Close dialog and refresh
 			deleteTemplateDialogOpen = false;
 			await fetchTemplates();
-		} catch (e: any) {
-			error = e.message || 'Failed to delete template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete template');
 		}
 	}
 
@@ -371,8 +379,8 @@
 			// Close dialog and refresh
 			deleteCategoryDialogOpen = false;
 			await fetchCategories();
-		} catch (e: any) {
-			error = e.message || 'Failed to delete category';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete category');
 		}
 	}
 
@@ -390,17 +398,9 @@
 
 			// Refresh templates list
 			await fetchTemplates();
-		} catch (e: any) {
-			error = e.message || 'Failed to update template';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to update template');
 		}
-	}
-
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
 	}
 
 	async function exportToCSV() {
@@ -445,7 +445,7 @@
 				const variablesJson = JSON.stringify(template.directory_variables || []);
 
 				// Escape CSV values (handle commas, quotes, newlines)
-				const escapeCSV = (value: any) => {
+				const escapeCSV = (value: unknown) => {
 					if (value === null || value === undefined) return '';
 					const str = String(value);
 					if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -482,8 +482,8 @@
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-		} catch (e: any) {
-			error = e.message || 'Failed to export templates';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to export templates');
 		}
 	}
 
@@ -612,13 +612,13 @@
 					}
 
 					// Parse variables from JSON or extract from content
-					let variables: any[] = [];
+					let variables: ImportedVariable[] = [];
 
 					// Try to parse variables from JSON first
 					if (rowData['Variables (JSON)']?.trim()) {
 						try {
 							variables = JSON.parse(rowData['Variables (JSON)']);
-						} catch (parseError) {
+						} catch {
 							// If JSON parsing fails, extract from content
 							variables = [];
 						}
@@ -684,8 +684,8 @@
 					}
 
 					successCount++;
-				} catch (rowError: any) {
-					errors.push(`Row ${i + 2}: ${rowError.message}`);
+				} catch (rowError) {
+					errors.push(`Row ${i + 2}: ${getErrorMessage(rowError)}`);
 					errorCount++;
 				}
 			}
@@ -700,8 +700,8 @@
 			if (errorCount > 0) {
 				importError = `Failed to import ${errorCount} template(s):\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more errors` : ''}`;
 			}
-		} catch (e: any) {
-			importError = e.message || 'Failed to import templates';
+		} catch (e) {
+			importError = getErrorMessage(e, 'Failed to import templates');
 		} finally {
 			importing = false;
 			importProgress = 0;
@@ -831,7 +831,7 @@
 						</div>
 					{:else}
 						<div class="grid gap-4">
-							{#each templates as template}
+							{#each templates as template (template.id)}
 								<Card class="transition-shadow duration-200 hover:shadow-md">
 									<CardHeader>
 										<div class="flex items-start justify-between">
@@ -899,7 +899,7 @@
 						</div>
 					{:else}
 						<div class="grid gap-4">
-							{#each categories as category}
+							{#each categories as category (category.id)}
 								<Card class="transition-shadow duration-200 hover:shadow-md">
 									<CardHeader>
 										<div class="flex items-start justify-between">
@@ -1002,7 +1002,7 @@
 						bind:value={newTemplateCategoryId}
 					>
 						<option value="">None</option>
-						{#each categories as category}
+						{#each categories as category (category.id)}
 							<option value={category.id}>{category.name}</option>
 						{/each}
 					</select>

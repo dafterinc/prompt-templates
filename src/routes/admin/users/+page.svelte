@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
@@ -65,8 +66,8 @@
 			}
 
 			users = data.users || [];
-		} catch (e: any) {
-			error = e.message || 'Failed to load users';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load users');
 		} finally {
 			loading = false;
 		}
@@ -138,8 +139,8 @@
 			setTimeout(() => {
 				editDialogOpen = false;
 			}, 1000);
-		} catch (e: any) {
-			error = e.message || 'Failed to update user';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to update user');
 		} finally {
 			saving = false;
 		}
@@ -172,8 +173,8 @@
 			setTimeout(() => {
 				deleteDialogOpen = false;
 			}, 1500);
-		} catch (e: any) {
-			error = e.message || 'Failed to delete user';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to delete user');
 		} finally {
 			deleting = false;
 		}
@@ -232,7 +233,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each users as user}
+							{#each users as user (user.id)}
 								<tr class="border-b hover:bg-muted/20">
 									<td class="p-2">{user.email}</td>
 									<td class="p-2">{new Date(user.created_at).toLocaleDateString()}</td>

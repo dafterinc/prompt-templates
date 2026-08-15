@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -64,8 +65,8 @@
 			setTimeout(() => {
 				goto('/auth/login');
 			}, 3000);
-		} catch (e: any) {
-			error = e.message || 'An unexpected error occurred';
+		} catch (e) {
+			error = getErrorMessage(e, 'An unexpected error occurred');
 		} finally {
 			loading = false;
 		}

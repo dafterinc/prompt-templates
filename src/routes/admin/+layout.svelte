@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { getErrorMessage } from '$lib/utils';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
@@ -38,8 +39,8 @@
 			}
 
 			isAdmin = true;
-		} catch (e: any) {
-			error = e.message || 'Failed to load admin interface';
+		} catch (e) {
+			error = getErrorMessage(e, 'Failed to load admin interface');
 			goto('/');
 		} finally {
 			loading = false;
