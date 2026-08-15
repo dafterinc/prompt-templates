@@ -18,6 +18,7 @@
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
+	import { parseTemplateContent as parseSegments, generateText as renderText } from '$lib/utils/template';
 	
 	interface Template {
 		id: string;
@@ -162,68 +163,12 @@
 	
 	function parseTemplateContent() {
 		if (!template) return;
-		
-		const segments: ContentSegment[] = [];
-		let content = template.content;
-		let lastIndex = 0;
-		
-		// Regular expression to find variable placeholders like {{variable_name}}
-		const regex = /\{\{([^}]+)\}\}/g;
-		let match;
-		
-		while ((match = regex.exec(content)) !== null) {
-			const variableName = match[1];
-			const matchedVariable = variables.find(v => v.name === variableName);
-			
-			// Add text before the variable
-			if (match.index > lastIndex) {
-				segments.push({
-					type: 'text',
-					content: content.substring(lastIndex, match.index)
-				});
-			}
-			
-			// Add the variable
-			if (matchedVariable) {
-				segments.push({
-					type: 'variable',
-					content: variableName,
-					variable: matchedVariable
-				});
-			} else {
-				// If variable not found, treat it as text
-				segments.push({
-					type: 'text',
-					content: match[0]
-				});
-			}
-			
-			lastIndex = match.index + match[0].length;
-		}
-		
-		// Add remaining text
-		if (lastIndex < content.length) {
-			segments.push({
-				type: 'text',
-				content: content.substring(lastIndex)
-			});
-		}
-		
-		templateSegments = segments;
+		templateSegments = parseSegments(template.content, variables);
 	}
-	
+
 	function generateText() {
 		if (!template) return;
-		
-		let text = template.content;
-		for (const variable of variables) {
-			const value = variableValues[variable.name] || '';
-			// Replace all occurrences of {{variable_name}} with the value
-			const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
-			text = text.replace(regex, value);
-		}
-		
-		generatedText = text;
+		generatedText = renderText(template.content, variableValues);
 	}
 	
 	// TypeScript safe function to handle variable value changes

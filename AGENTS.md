@@ -17,7 +17,7 @@ cp .env.example .env   # fill in Supabase URL, anon key, service role key
 npm run dev
 ```
 
-Database migrations must be applied manually and **not in filename order** — see
+Database migrations apply in filename order (`YYYYMMDD_description.sql`) — see
 [README.md](README.md#3-set-up-the-database) and the migration-ordering landmine in
 [`CLAUDE.md`](CLAUDE.md).
 
@@ -31,8 +31,9 @@ npm run test:unit    # vitest
 npm run test:e2e     # playwright
 ```
 
-The test suite is scaffolding only. Green tests do not mean a change works; rely on
-`npm run check` (currently 0 errors — keep it there) plus manual verification in the browser.
+Test coverage is thin — real unit tests exist for the shared `$lib/utils` helpers, but the
+route components and server code are largely untested. Green tests do not mean a change works;
+rely on `npm run check` (currently 0 errors — keep it there) plus manual verification in the browser.
 
 `npm run lint` fails repo-wide today (~127 unformatted files, ~178 pre-existing ESLint errors).
 Lint only the files you touched, and leave the backlog to its own dedicated pull request.
@@ -42,11 +43,12 @@ Lint only the files you touched, and leave the backlog to its own dedicated pull
 Five things in this codebase behave unexpectedly. All are documented in detail in
 [`CLAUDE.md`](CLAUDE.md):
 
-1. Auth is hand-rolled cookie mirroring, **not** `@supabase/ssr` (which is installed but unused).
-2. Environment mode is read from `APP_ENV`, not `NODE_ENV`.
+1. Auth is hand-rolled cookie mirroring, **not** `@supabase/ssr`. Cookie names live in
+   `src/lib/constants.ts` and are shared between the client adapter and the server hook.
+2. Environment mode is read from `APP_ENV`, not `NODE_ENV`, and defaults to production (secure).
 3. Admin access is gated in three separate places.
 4. RLS admin checks must use the `is_admin_user()` function, never an inline `EXISTS` subquery.
-5. Migration files do not apply in alphabetical order.
+5. Migration files apply in filename order (`YYYYMMDD_description.sql`).
 
 ## Planned direction
 

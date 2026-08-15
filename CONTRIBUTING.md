@@ -13,8 +13,8 @@ npm run dev
 ```
 
 You need your own Supabase project to run the app — see
-[Quick start](README.md#-quick-start) in the README, and apply the migrations in the order given
-there (they are **not** alphabetical).
+[Quick start](README.md#-quick-start) in the README. Migrations apply in filename order
+(`YYYYMMDD_description.sql`).
 
 ## Before you write code
 
@@ -61,8 +61,9 @@ is very hard to review.
 
 ## Testing
 
-The current suite is scaffolding — a trivial unit test and one smoke check each for Vitest and
-Playwright. `npm run check` (svelte-check) is the meaningful correctness gate today.
+Coverage is still thin, but the shared `$lib/utils` helpers (CSV parsing, `{{variable}}`
+parsing/rendering) have real unit tests. `npm run check` (svelte-check) remains the meaningful
+correctness gate.
 
 Tests for new behaviour are very welcome. Unit tests live beside the code as `*.spec.ts` or
 `*.test.ts`; end-to-end tests live in `e2e/`.

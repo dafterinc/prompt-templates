@@ -48,34 +48,38 @@ Read this section before touching auth, admin, or the database.
 
 ### 1. Authentication is hand-rolled, not `@supabase/ssr`
 
-`@supabase/ssr` and `@supabase/auth-helpers-sveltekit` are in `package.json` but are
-**not used**. The actual flow:
+Auth is a custom cookie-mirroring flow (`@supabase/ssr` is **not** a dependency):
 
+- The two cookie names (`sb-access-token`, `sb-auth-token`) and their max-age live in
+  `src/lib/constants.ts` and are imported by both sides of the contract.
 - `src/lib/supabase.ts` installs a custom `auth.storage` adapter that writes the session to
-  `localStorage` *and* mirrors it into two hand-written cookies: `sb-access-token` (raw JWT)
-  and `sb-auth-token` (the full JSON session).
+  `localStorage` *and* mirrors it into those two cookies: `sb-access-token` (raw JWT) and
+  `sb-auth-token` (the full JSON session). The cookies are marked `Secure` over HTTPS.
 - `src/hooks.server.ts` reads those cookies, extracts the access token, and validates it with
   `serverSupabase.auth.getUser(accessToken)` using a **service-role** client, then sets
-  `locals.user` / `locals.isAdmin`.
+  `locals.user` / `locals.isAdmin`. Resolved auth is cached per access token for 60s to avoid a
+  round trip on every request.
 
 Consequences:
 
-- Changing the cookie names, the storage adapter, or the cookie shape breaks server-side auth
-  silently — the app still renders, users just stop being logged in on the server.
-- Do not partially migrate to `@supabase/ssr`. Either leave it alone or do the whole
-  cookie/session path in one change.
+- The cookies are set from JavaScript, so they cannot be `HttpOnly`. A full server-set session
+  (the proper XSS-proof fix) is a dedicated change to the whole cookie/session path — do it all
+  at once, not partially.
 - The service-role key is used in the request hook on every authenticated request. Never
   import `$env/dynamic/private` or the server client into anything under `src/lib` that a
   `.svelte` file can import.
 
 ### 2. `APP_ENV`, not `NODE_ENV`
 
-`hooks.server.ts` resolves the mode as `env.APP_ENV || process.env.NODE_ENV || 'development'`.
-Security headers, CSP, rate limiting, and CORS all key off it. `APP_ENV=production` is how you
-test production security locally. Documentation or code that assumes `NODE_ENV` alone is wrong.
+`hooks.server.ts` resolves the mode as `env.APP_ENV || process.env.NODE_ENV || 'production'`.
+Security headers, rate limiting, and CORS all key off it — it now **defaults to production
+(secure)** when neither var is set, so a misconfigured deploy fails closed. `APP_ENV=production`
+is how you test production security locally. Documentation or code that assumes `NODE_ENV` alone
+is wrong.
 
-In development mode, security headers and rate limiting are **skipped entirely** — a CSP or
-CORS bug will not reproduce under `npm run dev`.
+In development mode, the security headers and rate limiting are **skipped entirely**. The
+Content-Security-Policy is configured in `svelte.config.js` (`kit.csp`), not in the hook, so it
+applies in all modes — but a CORS or rate-limit bug will not reproduce under `npm run dev`.
 
 ### 3. Admin access is gated in three places
 
@@ -126,6 +130,12 @@ meaningful server route: `src/routes/api/admin/users/+server.ts` (list/delete us
 the service role). This means **RLS is the authorization model**. A new table without policies
 is either invisible or world-writable — there is no server layer to catch the mistake.
 
+Because RLS is the whole boundary, be careful with privileged columns. `user_profiles.is_admin`
+is protected by a column-level `GRANT` (see `20260815_security_and_performance.sql`):
+`authenticated` may update its profile fields but **not** `is_admin`. Without that, any user
+could grant themselves admin by writing their own row from the browser. Admin promotion happens
+via the service-role client, which bypasses the grant.
+
 ## Conventions
 
 - **Svelte 5 running in legacy (Svelte 4) syntax**: `export let data`, `$:` reactive statements,
@@ -146,28 +156,29 @@ is either invisible or world-writable — there is no server layer to catch the 
   route files.
 - **Icons**: `@iconify/svelte` with Iconify names (`heroicons:arrow-path`). Iconify API hosts are
   already allowlisted in the CSP; a different icon CDN would need a CSP change.
-- **Variable syntax** is `{{variable_name}}`, parsed by regex in `templates/[id]/+page.svelte`,
-  `directory/[id]/+page.svelte`, `templates/new/+page.svelte`, and `templates/[id]/edit/+page.svelte`.
-  Four copies. Changing the syntax means changing all four.
+- **Variable syntax** is `{{variable_name}}`, parsed and rendered by the shared helpers in
+  `src/lib/utils/template.ts` (`extractVariableNames`, `parseTemplateContent`, `generateText`).
+  All routes import these — change the syntax in one place. CSV import/export shares
+  `src/lib/utils/csv.ts` similarly.
 
 ## Known rough edges
 
 Context, not a to-do list — do not fix these opportunistically as part of unrelated work.
 
-- **Page components are very large**: `admin/directory/+page.svelte` (~1280 lines) and
-  `templates/+page.svelte` (~980 lines) each embed a hand-written CSV parser plus import/export,
-  dialogs, and filtering.
-- **CSV handling is duplicated** between those two files with no shared module and no library.
+- **Page components are very large**: `admin/directory/+page.svelte` and `templates/+page.svelte`
+  still embed import/export, dialogs, and filtering inline, though the CSV parsing and
+  `{{variable}}` logic now come from shared `$lib/utils` modules.
 - **Rate limiting is in-memory** (`Map` in `src/lib/server/middleware.ts`), so it resets on
-  restart and does not work across multiple instances or serverless invocations.
+  restart and does not work across multiple instances or serverless invocations. Entries are
+  now swept periodically so the map stays bounded.
 - **`src/app.d.ts` hand-declares `$app/navigation`, `$app/stores`, and huge `svelteHTML`
   namespaces**, shadowing SvelteKit's real types. This masks type errors. Removing it is a
   standalone project.
-- **Tailwind version mismatch**: `tailwindcss@3` in `dependencies`, `@tailwindcss/vite@4` in
-  `devDependencies`. The v4 plugin is not wired into `vite.config.ts`; v3 via PostCSS is what
-  actually runs.
-- **`adapter-auto`** is configured, so there is no committed target platform. A self-host build
-  needs `@sveltejs/adapter-node`.
+- **Tailwind is v3 via PostCSS** (`postcss.config.cjs`, which also runs autoprefixer). `vite.config.ts`
+  no longer inlines a `css.postcss` block (that used to override the config file and drop autoprefixer).
+- **`@sveltejs/adapter-vercel`** is the committed deploy target. Note: a local `npm run build`
+  on Windows fails at the adapter's symlink step (`EPERM`) unless Developer Mode is on — this is
+  local-only and does not affect Vercel's Linux builds. Use `npm run dev`/`npm run check` locally.
 
 ## Planned direction
 
@@ -208,13 +219,10 @@ The coupling currently lives in:
 
 ### Hosting
 
-Staying put for now. `adapter-auto` is configured and nothing host-specific is committed — no
-`vercel.json`, no `wrangler.toml`, no `@vercel/*` or Cloudflare dependency. A self-hosted build
-needs `@sveltejs/adapter-node`.
-
-When picking a host later, note that the in-memory rate limiter in `src/lib/server/middleware.ts`
-only works on a single long-lived process. On any serverless or multi-instance platform it silently
-does nothing useful.
+**Vercel.** `@sveltejs/adapter-vercel` is committed (the earlier Cloudflare idea is dropped). On
+Vercel the app runs as serverless functions, so the in-memory rate limiter in
+`src/lib/server/middleware.ts` does **not** work across invocations — each cold start gets its own
+empty `Map`. A durable limiter (Vercel KV / Upstash Redis) is needed if rate limiting must hold.
 
 ## Contributing workflow
 

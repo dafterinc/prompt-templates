@@ -48,33 +48,21 @@
 			loading = true;
 			error = '';
 			
-			// First get all categories
+			// Fetch categories with their template counts in a single query.
 			const { data, error: fetchError } = await supabase
 				.from('categories')
-				.select('*')
+				.select('*, templates(count)')
 				.order('name');
-			
+
 			if (fetchError) {
 				error = fetchError.message;
 				return;
 			}
-			
-			// Then get template counts for each category
-			const categoriesWithCounts = await Promise.all(
-				(data || []).map(async (category) => {
-					const { count } = await supabase
-						.from('templates')
-						.select('id', { count: 'exact', head: true })
-						.eq('category_id', category.id);
-					
-					return {
-						...category,
-						template_count: count || 0
-					};
-				})
-			);
-			
-			categories = categoriesWithCounts;
+
+			categories = (data || []).map((category: any) => ({
+				...category,
+				template_count: category.templates?.[0]?.count ?? 0
+			}));
 		} catch (e: any) {
 			error = e.message;
 		} finally {

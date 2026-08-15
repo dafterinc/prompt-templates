@@ -13,6 +13,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
+	import { extractVariableNames } from '$lib/utils/template';
 	
 	interface Template {
 		id: string;
@@ -167,9 +168,7 @@
 			}
 			
 			// Find new variables in the content
-			const variableMatches = [...content.matchAll(/\{\{([^}]+)\}\}/g)];
-			const extractedVariables = variableMatches.map(match => match[1].trim());
-			const uniqueVariables = [...new Set(extractedVariables)];
+			const uniqueVariables = extractVariableNames(content);
 			
 			// Check for new variables that don't exist yet
 			const newVariables = uniqueVariables.filter(varName => 
