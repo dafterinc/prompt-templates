@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 import { dev } from '$app/environment';
 
@@ -63,23 +62,9 @@ class Logger {
       }
     }
 
-    // In production, you might want to send logs to a logging service
-    if (!this.isDevelopment && level === 'error') {
-      // TODO: Send to logging service (e.g., Sentry, LogRocket, etc.)
-      this.sendToLoggingService(entry);
-    }
-  }
-
-  private sendToLoggingService(entry: LogEntry): void {
-    // Placeholder for sending logs to external service
-    // This could be implemented with services like Sentry, LogRocket, etc.
-    if (browser && 'navigator' in window && 'sendBeacon' in navigator) {
-      try {
-        navigator.sendBeacon('/api/logs', JSON.stringify(entry));
-      } catch (error) {
-        // Silently fail if logging service is unavailable
-      }
-    }
+    // Production error reporting to an external service (Sentry, LogRocket, etc.) can be wired
+    // in here. There is intentionally no default network sink — the previous implementation
+    // beaconed every error to a non-existent /api/logs route, which silently discarded them.
   }
 
   debug(message: string, data?: any, context?: string): void {
@@ -96,25 +81,6 @@ class Logger {
 
   error(message: string, data?: any, context?: string): void {
     this.log('error', message, data, context);
-  }
-
-  // Convenience method for API errors
-  apiError(endpoint: string, error: any, context?: string): void {
-    this.error(`API Error on ${endpoint}`, {
-      endpoint,
-      error: error?.message || error,
-      stack: error?.stack
-    }, context);
-  }
-
-  // Convenience method for authentication events
-  authEvent(event: string, data?: any): void {
-    this.info(`Auth Event: ${event}`, data, 'auth');
-  }
-
-  // Convenience method for database operations
-  dbOperation(operation: string, table: string, data?: any): void {
-    this.debug(`DB ${operation} on ${table}`, data, 'database');
   }
 }
 
