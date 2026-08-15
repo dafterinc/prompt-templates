@@ -19,7 +19,8 @@
 
 	async function signOut() {
 		await authClient.signOut();
-		await goto('/');
+		// invalidateAll re-runs the layout load so the header reflects the signed-out state at once.
+		await goto('/', { invalidateAll: true });
 	}
 
 	// Auth state comes from the server load (Better Auth session resolved in hooks.server.ts).

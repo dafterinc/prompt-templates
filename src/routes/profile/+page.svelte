@@ -23,7 +23,8 @@
 	let companyWebsite = data.profile.company_website ?? '';
 	let teamSize = data.profile.team_size ?? '';
 	let usagePurpose = data.profile.usage_purpose ?? '';
-	let profileImageUrl = data.profile.profile_image_url ?? null;
+	// Private Blob store: the avatar is streamed through /api/profile-image, not a public URL.
+	let profileImageUrl = data.profile.profile_image_url ? '/api/profile-image' : null;
 
 	let saving = false;
 	let uploading = false;
@@ -106,8 +107,8 @@
 									uploading = true;
 									return async ({ result, update }) => {
 										await update({ reset: false });
-										if (result.type === 'success' && result.data?.imageUrl) {
-											profileImageUrl = String(result.data.imageUrl);
+										if (result.type === 'success') {
+											profileImageUrl = `/api/profile-image?t=${Date.now()}`;
 											toast.success('Profile image updated');
 										} else if (result.type === 'failure') {
 											toast.error('Error updating profile image');

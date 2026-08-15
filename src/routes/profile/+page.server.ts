@@ -47,8 +47,8 @@ export const actions: Actions = {
 			return fail(400, { error: 'Image must be less than 2MB', scope: 'image' });
 		}
 		try {
-			const imageUrl = await uploadProfileImage(user.id, file);
-			return { success: true, scope: 'image', imageUrl };
+			await uploadProfileImage(user.id, file);
+			return { success: true, scope: 'image' };
 		} catch (e: any) {
 			return fail(400, { error: e?.message ?? 'Failed to upload image', scope: 'image' });
 		}
