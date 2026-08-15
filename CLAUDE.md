@@ -176,8 +176,9 @@ Context, not a to-do list — do not fix these opportunistically as part of unre
   standalone project.
 - **Tailwind is v3 via PostCSS** (`postcss.config.cjs`, which also runs autoprefixer). `vite.config.ts`
   no longer inlines a `css.postcss` block (that used to override the config file and drop autoprefixer).
-- **`adapter-auto`** is configured, so there is no committed target platform. A self-host build
-  needs `@sveltejs/adapter-node`.
+- **`@sveltejs/adapter-vercel`** is the committed deploy target. Note: a local `npm run build`
+  on Windows fails at the adapter's symlink step (`EPERM`) unless Developer Mode is on — this is
+  local-only and does not affect Vercel's Linux builds. Use `npm run dev`/`npm run check` locally.
 
 ## Planned direction
 
@@ -218,13 +219,10 @@ The coupling currently lives in:
 
 ### Hosting
 
-Staying put for now. `adapter-auto` is configured and nothing host-specific is committed — no
-`vercel.json`, no `wrangler.toml`, no `@vercel/*` or Cloudflare dependency. A self-hosted build
-needs `@sveltejs/adapter-node`.
-
-When picking a host later, note that the in-memory rate limiter in `src/lib/server/middleware.ts`
-only works on a single long-lived process. On any serverless or multi-instance platform it silently
-does nothing useful.
+**Vercel.** `@sveltejs/adapter-vercel` is committed (the earlier Cloudflare idea is dropped). On
+Vercel the app runs as serverless functions, so the in-memory rate limiter in
+`src/lib/server/middleware.ts` does **not** work across invocations — each cold start gets its own
+empty `Map`. A durable limiter (Vercel KV / Upstash Redis) is needed if rate limiting must hold.
 
 ## Contributing workflow
 
