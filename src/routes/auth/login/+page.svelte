@@ -6,17 +6,24 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-	
+
 	let email = '';
 	let password = '';
 	let confirmPassword = '';
 	let loading = false;
 	let error = '';
 	let activeTab = 'sign-in';
-	
+
 	// Initialize activeTab from URL params on mount and watch for changes
 	onMount(() => {
 		const tabParam = $page.url.searchParams.get('tab');
@@ -26,7 +33,7 @@
 			activeTab = 'sign-in';
 		}
 	});
-	
+
 	// Watch for URL changes and update activeTab accordingly
 	$: {
 		const tabParam = $page.url.searchParams.get('tab');
@@ -36,12 +43,13 @@
 			activeTab = 'sign-in';
 		}
 	}
-	
+
 	// Check for registered param
 	$: if ($page.url.searchParams.get('registered') === 'true' && !error) {
-		error = 'Registration successful! Please check your email to verify your account before logging in.';
+		error =
+			'Registration successful! Please check your email to verify your account before logging in.';
 	}
-	
+
 	// Handle tab change
 	function handleTabChange(value: string | undefined) {
 		if (value) {
@@ -52,27 +60,27 @@
 			goto(url.toString(), { replaceState: true });
 		}
 	}
-	
+
 	async function handleLogin() {
 		if (!email || !password) {
 			error = 'Please enter both email and password';
 			return;
 		}
-		
+
 		try {
 			loading = true;
 			error = '';
-			
+
 			const { error: signInError } = await supabase.auth.signInWithPassword({
 				email,
 				password
 			});
-			
+
 			if (signInError) {
 				error = signInError.message;
 				return;
 			}
-			
+
 			// Redirect to templates page on success
 			goto('/templates');
 		} catch (e: any) {
@@ -81,37 +89,37 @@
 			loading = false;
 		}
 	}
-	
+
 	async function handleRegister() {
 		if (!email || !password) {
 			error = 'Please enter both email and password';
 			return;
 		}
-		
+
 		if (password !== confirmPassword) {
 			error = 'Passwords do not match';
 			return;
 		}
-		
+
 		if (password.length < 6) {
 			error = 'Password must be at least 6 characters';
 			return;
 		}
-		
+
 		try {
 			loading = true;
 			error = '';
-			
+
 			const { error: signUpError } = await supabase.auth.signUp({
 				email,
 				password
 			});
-			
+
 			if (signUpError) {
 				error = signUpError.message;
 				return;
 			}
-			
+
 			// Update URL to show registered message
 			goto('/auth/login?registered=true&tab=sign-in');
 		} catch (e: any) {
@@ -122,26 +130,31 @@
 	}
 </script>
 
-<div class="max-w-md mx-auto">
+<div class="mx-auto max-w-md">
 	<Card>
 		<CardHeader>
 			<CardTitle class="text-center">Welcome to Prompt Templates</CardTitle>
-			<CardDescription class="text-center">Manage and use your templates efficiently</CardDescription>
+			<CardDescription class="text-center"
+				>Manage and use your templates efficiently</CardDescription
+			>
 		</CardHeader>
-		
+
 		<CardContent>
 			<Tabs value={activeTab} onValueChange={handleTabChange} class="w-full">
 				<TabsList class="grid w-full grid-cols-2">
 					<TabsTrigger value="sign-in">Sign In</TabsTrigger>
 					<TabsTrigger value="sign-up">Sign Up</TabsTrigger>
 				</TabsList>
-				
+
 				{#if error}
-					<Alert variant={error.includes('successful') ? 'default' : 'destructive'} class="mt-4 mb-2">
+					<Alert
+						variant={error.includes('successful') ? 'default' : 'destructive'}
+						class="mb-2 mt-4"
+					>
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
 				{/if}
-				
+
 				<TabsContent value="sign-in" class="mt-4">
 					<form on:submit|preventDefault={handleLogin} class="space-y-4">
 						<div class="space-y-2">
@@ -154,7 +167,7 @@
 								placeholder="your@email.com"
 							/>
 						</div>
-						
+
 						<div class="space-y-2">
 							<Label for="password">Password</Label>
 							<Input
@@ -165,21 +178,19 @@
 								placeholder="••••••••"
 							/>
 						</div>
-						
-						<Button
-							type="submit"
-							disabled={loading}
-							class="w-full"
-						>
+
+						<Button type="submit" disabled={loading} class="w-full">
 							{loading ? 'Signing in...' : 'Sign In'}
 						</Button>
-						
-						<div class="text-center text-sm mt-2">
-							<a href="/auth/forgot-password" class="text-primary hover:underline">Forgot password?</a>
+
+						<div class="mt-2 text-center text-sm">
+							<a href="/auth/forgot-password" class="text-primary hover:underline"
+								>Forgot password?</a
+							>
 						</div>
 					</form>
 				</TabsContent>
-				
+
 				<TabsContent value="sign-up" class="mt-4">
 					<form on:submit|preventDefault={handleRegister} class="space-y-4">
 						<div class="space-y-2">
@@ -192,7 +203,7 @@
 								placeholder="your@email.com"
 							/>
 						</div>
-						
+
 						<div class="space-y-2">
 							<Label for="register-password">Password</Label>
 							<Input
@@ -202,11 +213,9 @@
 								required
 								placeholder="••••••••"
 							/>
-							<p class="text-xs text-muted-foreground">
-								Password must be at least 6 characters
-							</p>
+							<p class="text-xs text-muted-foreground">Password must be at least 6 characters</p>
 						</div>
-						
+
 						<div class="space-y-2">
 							<Label for="confirm-password">Confirm Password</Label>
 							<Input
@@ -217,23 +226,19 @@
 								placeholder="••••••••"
 							/>
 						</div>
-						
-						<Button
-							type="submit"
-							disabled={loading}
-							class="w-full"
-						>
+
+						<Button type="submit" disabled={loading} class="w-full">
 							{loading ? 'Signing up...' : 'Sign Up'}
 						</Button>
 					</form>
 				</TabsContent>
 			</Tabs>
 		</CardContent>
-		
+
 		<CardFooter>
 			<p class="w-full text-center text-sm text-muted-foreground">
 				By signing in/up, you agree to our Terms of Service and Privacy Policy
 			</p>
 		</CardFooter>
 	</Card>
-</div> 
+</div>

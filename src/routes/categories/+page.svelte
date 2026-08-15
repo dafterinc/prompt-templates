@@ -7,7 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Icon from '@iconify/svelte';
-	
+
 	interface Category {
 		id: string;
 		name: string;
@@ -15,7 +15,7 @@
 		updated_at: string;
 		template_count?: number;
 	}
-	
+
 	let categories: Category[] = [];
 	let loading = true;
 	let error = '';
@@ -27,38 +27,40 @@
 	let deleteModalOpen = false;
 	let categoryToDelete: Category | null = null;
 	let userId = '';
-	
+
 	onMount(() => {
 		checkAuth();
 		fetchCategories();
 	});
-	
+
 	async function checkAuth() {
-		const { data: { session } } = await supabase.auth.getSession();
-		
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
+
 		if (!session) {
 			goto('/auth/login');
 		} else {
 			userId = session.user.id;
 		}
 	}
-	
+
 	async function fetchCategories() {
 		try {
 			loading = true;
 			error = '';
-			
+
 			// First get all categories
 			const { data, error: fetchError } = await supabase
 				.from('categories')
 				.select('*')
 				.order('name');
-			
+
 			if (fetchError) {
 				error = fetchError.message;
 				return;
 			}
-			
+
 			// Then get template counts for each category
 			const categoriesWithCounts = await Promise.all(
 				(data || []).map(async (category) => {
@@ -66,14 +68,14 @@
 						.from('templates')
 						.select('id', { count: 'exact', head: true })
 						.eq('category_id', category.id);
-					
+
 					return {
 						...category,
 						template_count: count || 0
 					};
 				})
 			);
-			
+
 			categories = categoriesWithCounts;
 		} catch (e: any) {
 			error = e.message;
@@ -81,29 +83,27 @@
 			loading = false;
 		}
 	}
-	
+
 	async function handleCreateCategory() {
 		if (!newCategory.name.trim()) {
 			error = 'Category name is required';
 			return;
 		}
-		
+
 		try {
 			saving = true;
 			error = '';
-			
-			const { error: insertError } = await supabase
-				.from('categories')
-				.insert({
-					name: newCategory.name.trim(),
-					user_id: userId
-				});
-			
+
+			const { error: insertError } = await supabase.from('categories').insert({
+				name: newCategory.name.trim(),
+				user_id: userId
+			});
+
 			if (insertError) {
 				error = getUserFriendlyErrorMessage(insertError);
 				return;
 			}
-			
+
 			// Reset form and refresh categories
 			newCategory.name = '';
 			await fetchCategories();
@@ -113,16 +113,16 @@
 			saving = false;
 		}
 	}
-	
+
 	async function handleUpdateCategory() {
 		if (!editingCategory || !editingCategory.name.trim()) {
 			return;
 		}
-		
+
 		try {
 			saving = true;
 			error = '';
-			
+
 			const { error: updateError } = await supabase
 				.from('categories')
 				.update({
@@ -130,12 +130,12 @@
 					updated_at: new Date().toISOString()
 				})
 				.eq('id', editingCategory.id);
-			
+
 			if (updateError) {
 				error = getUserFriendlyErrorMessage(updateError);
 				return;
 			}
-			
+
 			// Reset edit mode and refresh categories
 			editingCategory = null;
 			await fetchCategories();
@@ -145,32 +145,33 @@
 			saving = false;
 		}
 	}
-	
+
 	async function handleDeleteCategory() {
 		if (!categoryToDelete) return;
-		
+
 		try {
 			saving = true;
 			error = '';
-			
+
 			// Check if category has templates
 			if ((categoryToDelete.template_count || 0) > 0) {
-				error = 'Cannot delete a category that has templates. Please reassign or delete the templates first.';
+				error =
+					'Cannot delete a category that has templates. Please reassign or delete the templates first.';
 				deleteModalOpen = false;
 				categoryToDelete = null;
 				return;
 			}
-			
+
 			const { error: deleteError } = await supabase
 				.from('categories')
 				.delete()
 				.eq('id', categoryToDelete.id);
-			
+
 			if (deleteError) {
 				error = deleteError.message;
 				return;
 			}
-			
+
 			// Close modal and refresh categories
 			deleteModalOpen = false;
 			categoryToDelete = null;
@@ -181,17 +182,17 @@
 			saving = false;
 		}
 	}
-	
+
 	function cancelEdit() {
 		editingCategory = null;
 		error = '';
 	}
-	
+
 	function startEdit(category: Category) {
 		// Create a copy to avoid directly modifying the list item
 		editingCategory = { ...category };
 	}
-	
+
 	function confirmDelete(category: Category) {
 		categoryToDelete = category;
 		deleteModalOpen = true;
@@ -203,21 +204,21 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex justify-between items-center">
+	<div class="flex items-center justify-between">
 		<h1 class="text-3xl font-bold tracking-tight">Categories</h1>
 		<div class="flex items-center gap-2">
 			<a href="/templates">
 				<Button variant="outline" size="sm">
-					<Icon icon="heroicons:arrow-left" class="h-4 w-4 mr-2" />
+					<Icon icon="heroicons:arrow-left" class="mr-2 h-4 w-4" />
 					Back to Templates
 				</Button>
 			</a>
 		</div>
 	</div>
-	
+
 	{#if loading}
 		<div class="flex items-center justify-center p-8">
-			<div class="animate-spin mr-2">
+			<div class="mr-2 animate-spin">
 				<Icon icon="heroicons:arrow-path" width="24" height="24" />
 			</div>
 			<span>Loading categories...</span>
@@ -235,12 +236,12 @@
 				</CardHeader>
 				<CardContent>
 					<form class="space-y-4" on:submit|preventDefault={handleCreateCategory}>
-						<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-5">
 							<div class="md:col-span-4">
 								<input
 									type="text"
 									placeholder="Enter category name"
-									class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+									class="w-full rounded-md border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
 									bind:value={newCategory.name}
 									disabled={saving}
 								/>
@@ -254,7 +255,7 @@
 					</form>
 				</CardContent>
 			</Card>
-			
+
 			<!-- Categories list -->
 			<Card>
 				<CardHeader>
@@ -262,11 +263,13 @@
 				</CardHeader>
 				<CardContent>
 					{#if categories.length === 0}
-						<div class="text-center py-8">
-							<p class="text-muted-foreground">No categories found. Create your first category above.</p>
+						<div class="py-8 text-center">
+							<p class="text-muted-foreground">
+								No categories found. Create your first category above.
+							</p>
 						</div>
 					{:else}
-						<div class="border rounded-md overflow-hidden">
+						<div class="overflow-hidden rounded-md border">
 							<table class="w-full">
 								<thead class="bg-muted">
 									<tr>
@@ -282,7 +285,7 @@
 												{#if editingCategory && editingCategory.id === category.id}
 													<input
 														type="text"
-														class="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+														class="w-full rounded-md border bg-background px-3 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
 														bind:value={editingCategory.name}
 														on:keydown={(e) => {
 															if (e instanceof KeyboardEvent && e.key === 'Enter') {
@@ -298,8 +301,8 @@
 											<td class="px-4 py-3 text-right">
 												<div class="flex justify-end gap-1">
 													{#if editingCategory && editingCategory.id === category.id}
-														<Button 
-															variant="ghost" 
+														<Button
+															variant="ghost"
 															size="sm"
 															class="h-8 w-8 p-0"
 															title="Save"
@@ -307,27 +310,27 @@
 														>
 															<Icon icon="heroicons:check" class="h-4 w-4 text-green-500" />
 														</Button>
-														<Button 
-															variant="ghost" 
+														<Button
+															variant="ghost"
 															size="sm"
 															class="h-8 w-8 p-0"
 															title="Cancel"
-															on:click={() => editingCategory = null}
+															on:click={() => (editingCategory = null)}
 														>
 															<Icon icon="heroicons:x-mark" class="h-4 w-4 text-red-500" />
 														</Button>
 													{:else}
-														<Button 
-															variant="ghost" 
+														<Button
+															variant="ghost"
 															size="sm"
 															class="h-8 w-8 p-0"
 															title="Edit"
-															on:click={() => editingCategory = { ...category }}
+															on:click={() => (editingCategory = { ...category })}
 														>
 															<Icon icon="heroicons:pencil-square" class="h-4 w-4" />
 														</Button>
-														<Button 
-															variant="ghost" 
+														<Button
+															variant="ghost"
 															size="sm"
 															class="h-8 w-8 p-0"
 															title="Delete"
@@ -352,31 +355,30 @@
 
 <!-- Delete Modal -->
 {#if deleteModalOpen && categoryToDelete}
-	<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-		<div class="bg-background rounded-lg shadow-lg p-6 max-w-md w-full">
-			<h3 class="text-xl font-semibold mb-4">Delete Category</h3>
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+		<div class="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+			<h3 class="mb-4 text-xl font-semibold">Delete Category</h3>
 			<p class="mb-6">
 				Are you sure you want to delete "{categoryToDelete.name}"? This action cannot be undone.
 				{#if categoryToDelete.template_count && categoryToDelete.template_count > 0}
-					<span class="block mt-2 text-red-500">
-						This category contains {categoryToDelete.template_count} templates. Deleting it will remove the category from these templates.
+					<span class="mt-2 block text-red-500">
+						This category contains {categoryToDelete.template_count} templates. Deleting it will remove
+						the category from these templates.
 					</span>
 				{/if}
 			</p>
 			<div class="flex justify-end gap-2">
-				<Button 
-					variant="outline" 
-					on:click={() => { deleteModalOpen = false; categoryToDelete = null; }}
+				<Button
+					variant="outline"
+					on:click={() => {
+						deleteModalOpen = false;
+						categoryToDelete = null;
+					}}
 				>
 					Cancel
 				</Button>
-				<Button 
-					variant="destructive" 
-					on:click={handleDeleteCategory}
-				>
-					Delete
-				</Button>
+				<Button variant="destructive" on:click={handleDeleteCategory}>Delete</Button>
 			</div>
 		</div>
 	</div>
-{/if} 
+{/if}

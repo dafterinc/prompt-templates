@@ -13,12 +13,12 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter()
 	},
-	
+
 	// Allow Svelte to process files in node_modules
 	compilerOptions: {
 		customElement: false
 	},
-	
+
 	// Enable processing .svelte files from node_modules
 	extensions: ['.svelte']
 };

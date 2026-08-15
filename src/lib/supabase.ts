@@ -8,55 +8,55 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Check for required environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  logger.error(
-    'Missing Supabase credentials. Please set the following environment variables:',
-    {
-      missing: {
-        VITE_SUPABASE_URL: !supabaseUrl,
-        VITE_SUPABASE_ANON_KEY: !supabaseAnonKey
-      }
-    },
-    'supabase'
-  );
+	logger.error(
+		'Missing Supabase credentials. Please set the following environment variables:',
+		{
+			missing: {
+				VITE_SUPABASE_URL: !supabaseUrl,
+				VITE_SUPABASE_ANON_KEY: !supabaseAnonKey
+			}
+		},
+		'supabase'
+	);
 }
 
 // Create the Supabase client with browser-safe configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storage: {
-      getItem: (key) => {
-        if (browser) {
-          const value = localStorage.getItem(key);
-          if (value) {
-            // Set both cookie formats for compatibility
-            const session = JSON.parse(value);
-            document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=28800; SameSite=Lax`;
-            document.cookie = `sb-auth-token=${value}; path=/; max-age=28800; SameSite=Lax`;
-          }
-          return value;
-        }
-        return null;
-      },
-      setItem: (key, value) => {
-        if (browser) {
-          localStorage.setItem(key, value);
-          // Set both cookie formats for compatibility
-          const session = JSON.parse(value);
-          document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=28800; SameSite=Lax`;
-          document.cookie = `sb-auth-token=${value}; path=/; max-age=28800; SameSite=Lax`;
-        }
-      },
-      removeItem: (key) => {
-        if (browser) {
-          localStorage.removeItem(key);
-          // Remove both cookie formats
-          document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-          document.cookie = `sb-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-        }
-      }
-    }
-  }
-}); 
+	auth: {
+		persistSession: true,
+		autoRefreshToken: true,
+		detectSessionInUrl: true,
+		storage: {
+			getItem: (key) => {
+				if (browser) {
+					const value = localStorage.getItem(key);
+					if (value) {
+						// Set both cookie formats for compatibility
+						const session = JSON.parse(value);
+						document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=28800; SameSite=Lax`;
+						document.cookie = `sb-auth-token=${value}; path=/; max-age=28800; SameSite=Lax`;
+					}
+					return value;
+				}
+				return null;
+			},
+			setItem: (key, value) => {
+				if (browser) {
+					localStorage.setItem(key, value);
+					// Set both cookie formats for compatibility
+					const session = JSON.parse(value);
+					document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=28800; SameSite=Lax`;
+					document.cookie = `sb-auth-token=${value}; path=/; max-age=28800; SameSite=Lax`;
+				}
+			},
+			removeItem: (key) => {
+				if (browser) {
+					localStorage.removeItem(key);
+					// Remove both cookie formats
+					document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+					document.cookie = `sb-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+				}
+			}
+		}
+	}
+});

@@ -15,7 +15,7 @@
 	// Import Iconify
 	import Icon from '@iconify/svelte';
 	import { logger } from '$lib/utils/logger';
-	
+
 	interface Template {
 		id: string;
 		title: string;
@@ -28,7 +28,7 @@
 		created_at: string;
 		updated_at: string;
 	}
-	
+
 	interface Variable {
 		id: string;
 		name: string;
@@ -38,13 +38,13 @@
 		is_required: boolean;
 		value?: string;
 	}
-	
+
 	interface ContentSegment {
 		type: 'text' | 'variable';
 		content: string;
 		variable?: Variable;
 	}
-	
+
 	let template: Template | null = null;
 	let variables: Variable[] = [];
 	let variableValues: Record<string, string> = {};
@@ -56,22 +56,24 @@
 	let duplicating = false;
 	let deleteModalOpen = false;
 	let deleting = false;
-	
+
 	const templateId = $page.params.id;
-	
+
 	onMount(() => {
 		checkAuth();
 		fetchTemplateAndVariables();
 	});
-	
+
 	async function checkAuth() {
-		const { data: { session } } = await supabase.auth.getSession();
-		
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
+
 		if (!session) {
 			goto('/auth/login');
 		}
 	}
-	
+
 	async function fetchTemplateAndVariables() {
 		try {
 			// Fetch template with category
@@ -80,36 +82,36 @@
 				.select('*, category:categories(*)')
 				.eq('id', templateId)
 				.single();
-			
+
 			if (templateError) {
 				error = templateError.message;
 				return;
 			}
-			
+
 			template = templateData;
-			
+
 			// Fetch variables for this template
 			const { data: variablesData, error: variablesError } = await supabase
 				.from('variables')
 				.select('*')
 				.eq('template_id', templateId)
 				.order('name');
-			
+
 			if (variablesError) {
 				error = variablesError.message;
 				return;
 			}
-			
+
 			variables = variablesData || [];
-			
+
 			// Initialize variable values with defaults
-			variables.forEach(variable => {
+			variables.forEach((variable) => {
 				variableValues[variable.name] = variable.default_value || '';
 			});
-			
+
 			// Parse template content into segments
 			parseTemplateContent();
-			
+
 			// Generate initial text
 			generateText();
 		} catch (e: any) {
@@ -118,21 +120,23 @@
 			loading = false;
 		}
 	}
-	
+
 	async function duplicateTemplate() {
 		if (!template) return;
-		
+
 		try {
 			duplicating = true;
 			error = '';
-			
+
 			// Get current user's session
-			const { data: { session } } = await supabase.auth.getSession();
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
 			if (!session) {
 				goto('/auth/login');
 				return;
 			}
-			
+
 			// Create a new template as a copy of the current one
 			const { data: newTemplate, error: templateError } = await supabase
 				.from('templates')
@@ -145,15 +149,15 @@
 				})
 				.select()
 				.single();
-			
+
 			if (templateError) {
 				error = templateError.message;
 				return;
 			}
-			
+
 			// Duplicate variables for the new template
 			if (variables.length > 0 && newTemplate) {
-				const newVariables = variables.map(variable => ({
+				const newVariables = variables.map((variable) => ({
 					template_id: newTemplate.id,
 					name: variable.name,
 					description: variable.description,
@@ -161,16 +165,14 @@
 					default_value: variable.default_value,
 					is_required: variable.is_required
 				}));
-				
-				const { error: variablesError } = await supabase
-					.from('variables')
-					.insert(newVariables);
-				
+
+				const { error: variablesError } = await supabase.from('variables').insert(newVariables);
+
 				if (variablesError) {
 					logger.error('Error duplicating variables:', variablesError, 'templates');
 				}
 			}
-			
+
 			// Navigate to the new template
 			if (newTemplate) {
 				goto(`/templates/${newTemplate.id}`);
@@ -181,34 +183,34 @@
 			duplicating = false;
 		}
 	}
-	
+
 	async function handleDelete() {
 		try {
 			deleting = true;
 			error = '';
-			
+
 			// Delete associated variables first
 			const { error: variablesError } = await supabase
 				.from('variables')
 				.delete()
 				.eq('template_id', templateId);
-			
+
 			if (variablesError) {
 				error = variablesError.message;
 				return;
 			}
-			
+
 			// Then delete the template
 			const { error: templateError } = await supabase
 				.from('templates')
 				.delete()
 				.eq('id', templateId);
-			
+
 			if (templateError) {
 				error = templateError.message;
 				return;
 			}
-			
+
 			// Navigate back to templates list
 			goto('/templates');
 		} catch (e: any) {
@@ -217,22 +219,22 @@
 			deleting = false;
 		}
 	}
-	
+
 	function parseTemplateContent() {
 		if (!template) return;
-		
+
 		const segments: ContentSegment[] = [];
 		let content = template.content;
 		let lastIndex = 0;
-		
+
 		// Regular expression to find variable placeholders like {{variable_name}}
 		const regex = /\{\{([^}]+)\}\}/g;
 		let match;
-		
+
 		while ((match = regex.exec(content)) !== null) {
 			const variableName = match[1];
-			const matchedVariable = variables.find(v => v.name === variableName);
-			
+			const matchedVariable = variables.find((v) => v.name === variableName);
+
 			// Add text before the variable
 			if (match.index > lastIndex) {
 				segments.push({
@@ -240,7 +242,7 @@
 					content: content.substring(lastIndex, match.index)
 				});
 			}
-			
+
 			// Add the variable
 			if (matchedVariable) {
 				segments.push({
@@ -255,10 +257,10 @@
 					content: match[0]
 				});
 			}
-			
+
 			lastIndex = match.index + match[0].length;
 		}
-		
+
 		// Add remaining text
 		if (lastIndex < content.length) {
 			segments.push({
@@ -266,13 +268,13 @@
 				content: content.substring(lastIndex)
 			});
 		}
-		
+
 		templateSegments = segments;
 	}
-	
+
 	function generateText() {
 		if (!template) return;
-		
+
 		let text = template.content;
 		for (const variable of variables) {
 			const value = variableValues[variable.name] || '';
@@ -280,16 +282,16 @@
 			const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
 			text = text.replace(regex, value);
 		}
-		
+
 		generatedText = text;
 	}
-	
+
 	// TypeScript safe function to handle variable value changes
 	function handleVariableChange(variableName: string, value: string) {
 		variableValues[variableName] = value;
 		generateText();
 	}
-	
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(generatedText);
@@ -301,12 +303,12 @@
 			logger.error('Failed to copy: ', err, 'templates');
 		}
 	}
-	
+
 	function formatDate(dateString: string) {
 		const date = new Date(dateString);
 		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 	}
-	
+
 	function getVariableDisplayValue(variable: Variable) {
 		const value = variableValues[variable.name];
 		if (!value) return `[${variable.name}]`;
@@ -315,13 +317,17 @@
 </script>
 
 <svelte:head>
-	<title>{template?.title ? `${template.title} | Prompt Templates` : 'Template | Prompt Templates'}</title>
+	<title
+		>{template?.title
+			? `${template.title} | Prompt Templates`
+			: 'Template | Prompt Templates'}</title
+	>
 </svelte:head>
 
 <div class="space-y-4">
 	{#if loading}
 		<div class="flex items-center justify-center p-8">
-			<div class="animate-spin mr-2">
+			<div class="mr-2 animate-spin">
 				<Icon icon="heroicons:arrow-path" width="24" height="24" />
 			</div>
 			<span>Loading template...</span>
@@ -333,19 +339,22 @@
 	{:else if template}
 		<div class="space-y-3">
 			<div>
-				<a href="/templates" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+				<a
+					href="/templates"
+					class="inline-flex items-center text-muted-foreground hover:text-foreground"
+				>
 					&larr; <span class="ml-1">Back to Templates</span>
 				</a>
 			</div>
-			
+
 			<div>
-				<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{template.title}</h1>
+				<h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{template.title}</h1>
 				{#if template.description}
-					<p class="text-muted-foreground mt-1">{template.description}</p>
+					<p class="mt-1 text-muted-foreground">{template.description}</p>
 				{/if}
 			</div>
 		</div>
-		
+
 		{#if template.category}
 			<div>
 				<Badge variant="secondary">
@@ -353,18 +362,18 @@
 				</Badge>
 			</div>
 		{/if}
-		
+
 		<Card>
 			<CardContent class="p-4 sm:p-6">
-				<div class="text-lg sm:text-xl leading-relaxed whitespace-pre-wrap">
+				<div class="whitespace-pre-wrap text-lg leading-relaxed sm:text-xl">
 					{#each templateSegments as segment}
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
 						{:else if segment.type === 'variable' && segment.variable}
 							<Root>
 								<Trigger>
-									<button 
-										class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+									<button
+										class="inline-flex rounded border border-primary/20 bg-primary/10 px-1 py-0.5 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
 									>
 										{getVariableDisplayValue(segment.variable)}
 									</button>
@@ -377,25 +386,27 @@
 												<span class="text-destructive">*</span>
 											{/if}
 										</Label>
-										
+
 										{#if segment.variable.description}
-											<p class="text-xs text-muted-foreground mb-2">
+											<p class="mb-2 text-xs text-muted-foreground">
 												{segment.variable.description}
 											</p>
 										{/if}
-										
+
 										{#if segment.variable!.type === 'text'}
 											<Input
 												id={segment.variable!.id}
 												type="text"
 												value={variableValues[segment.variable!.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
+												on:input={(e) =>
+													handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{:else if segment.variable!.type === 'textarea'}
 											<Textarea
 												id={segment.variable!.id}
 												value={variableValues[segment.variable!.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
+												on:input={(e) =>
+													handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{/if}
 									</div>
@@ -406,18 +417,18 @@
 				</div>
 			</CardContent>
 		</Card>
-		
+
 		<div class="text-sm text-muted-foreground">
 			<p>Last updated: {formatDate(template.updated_at)}</p>
 		</div>
-		
+
 		<div class="space-y-4">
 			<div>
 				<div class="text-center">
 					<Button
 						variant="default"
 						size="lg"
-						class="w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-6"
+						class="w-full px-4 py-3 sm:w-auto sm:px-8 sm:py-6"
 						on:click={copyToClipboard}
 					>
 						{#if copySuccess}
@@ -430,7 +441,7 @@
 					</Button>
 				</div>
 			</div>
-			
+
 			<div class="flex gap-2 sm:justify-center">
 				<Button
 					variant="outline"
@@ -442,17 +453,14 @@
 					<span class="hidden sm:inline">{duplicating ? 'Duplicating...' : 'Duplicate'}</span>
 				</Button>
 				<a href={`/templates/${templateId}/edit`} class="flex-1 sm:flex-none">
-					<Button 
-						variant="secondary" 
-						class="w-full"
-					>
+					<Button variant="secondary" class="w-full">
 						<Icon icon="mdi:pencil" class="h-5 w-5 sm:mr-2" />
 						<span class="hidden sm:inline">Edit Template</span>
 					</Button>
 				</a>
 				<Button
 					variant="destructive"
-					on:click={() => deleteModalOpen = true}
+					on:click={() => (deleteModalOpen = true)}
 					class="flex-1 sm:flex-none"
 				>
 					<Icon icon="mdi:delete" class="h-5 w-5 sm:mr-2" />
@@ -461,25 +469,25 @@
 			</div>
 		</div>
 	{/if}
-	
+
 	{#if deleteModalOpen}
-		<div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-			<Card class="max-w-md w-full">
+		<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+			<Card class="w-full max-w-md">
 				<CardHeader>
 					<CardTitle>Delete Template</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<p>Are you sure you want to delete this template? This action cannot be undone.</p>
 				</CardContent>
-				<CardFooter class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
-					<Button 
-						variant="outline" 
-						on:click={() => deleteModalOpen = false}
-						class="sm:mr-2 w-full sm:w-auto"
+				<CardFooter class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-0">
+					<Button
+						variant="outline"
+						on:click={() => (deleteModalOpen = false)}
+						class="w-full sm:mr-2 sm:w-auto"
 					>
 						Cancel
 					</Button>
-					<Button 
+					<Button
 						variant="destructive"
 						on:click={handleDelete}
 						disabled={deleting}
@@ -491,4 +499,4 @@
 			</Card>
 		</div>
 	{/if}
-</div> 
+</div>

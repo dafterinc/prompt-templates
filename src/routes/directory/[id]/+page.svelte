@@ -18,7 +18,7 @@
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
-	
+
 	interface Template {
 		id: string;
 		title: string;
@@ -31,7 +31,7 @@
 		created_at: string;
 		updated_at: string;
 	}
-	
+
 	interface Variable {
 		id: string;
 		name: string;
@@ -41,18 +41,18 @@
 		is_required: boolean;
 		value?: string;
 	}
-	
+
 	interface ContentSegment {
 		type: 'text' | 'variable';
 		content: string;
 		variable?: Variable;
 	}
-	
+
 	interface Category {
 		id: string;
 		name: string;
 	}
-	
+
 	let template: Template | null = null;
 	let variables: Variable[] = [];
 	let variableValues: Record<string, string> = {};
@@ -61,11 +61,11 @@
 	let error = '';
 	let copySuccess = false;
 	let templateSegments: ContentSegment[] = [];
-	
+
 	// Authentication state
 	let isAuthenticated = false;
 	let userId = '';
-	
+
 	// Add to collection dialog
 	let addToCollectionDialogOpen = false;
 	let userCategories: Category[] = [];
@@ -75,17 +75,19 @@
 	let addingToCollection = false;
 	let addToCollectionError = '';
 	let addToCollectionSuccess = false;
-	
+
 	const templateId = $page.params.id;
-	
+
 	onMount(() => {
 		checkAuth();
 		fetchTemplateAndVariables();
 	});
-	
+
 	async function checkAuth() {
-		const { data: { session } } = await supabase.auth.getSession();
-		
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
+
 		isAuthenticated = !!session;
 		if (session) {
 			userId = session.user.id;
@@ -93,7 +95,7 @@
 			await fetchUserCategories();
 		}
 	}
-	
+
 	async function fetchTemplateAndVariables() {
 		try {
 			// Fetch template with category
@@ -102,36 +104,36 @@
 				.select('*, category:directory_categories(*)')
 				.eq('id', templateId)
 				.single();
-			
+
 			if (templateError) {
 				error = templateError.message;
 				return;
 			}
-			
+
 			template = templateData;
-			
+
 			// Fetch variables for this template
 			const { data: variablesData, error: variablesError } = await supabase
 				.from('directory_variables')
 				.select('*')
 				.eq('template_id', templateId)
 				.order('name');
-			
+
 			if (variablesError) {
 				error = variablesError.message;
 				return;
 			}
-			
+
 			variables = variablesData || [];
-			
+
 			// Initialize variable values with defaults
-			variables.forEach(variable => {
+			variables.forEach((variable) => {
 				variableValues[variable.name] = variable.default_value || '';
 			});
-			
+
 			// Parse template content into segments
 			parseTemplateContent();
-			
+
 			// Generate initial text
 			generateText();
 		} catch (e: any) {
@@ -140,41 +142,38 @@
 			loading = false;
 		}
 	}
-	
+
 	async function fetchUserCategories() {
 		if (!isAuthenticated) return;
-		
-		const { data, error: fetchError } = await supabase
-			.from('categories')
-			.select('*')
-			.order('name');
-		
+
+		const { data, error: fetchError } = await supabase.from('categories').select('*').order('name');
+
 		if (fetchError) {
 			logger.error('Error fetching user categories:', fetchError, 'directory');
 			return;
 		}
-		
+
 		userCategories = data || [];
 		if (userCategories.length > 0) {
 			selectedCategoryId = userCategories[0].id;
 		}
 	}
-	
+
 	function parseTemplateContent() {
 		if (!template) return;
-		
+
 		const segments: ContentSegment[] = [];
 		let content = template.content;
 		let lastIndex = 0;
-		
+
 		// Regular expression to find variable placeholders like {{variable_name}}
 		const regex = /\{\{([^}]+)\}\}/g;
 		let match;
-		
+
 		while ((match = regex.exec(content)) !== null) {
 			const variableName = match[1];
-			const matchedVariable = variables.find(v => v.name === variableName);
-			
+			const matchedVariable = variables.find((v) => v.name === variableName);
+
 			// Add text before the variable
 			if (match.index > lastIndex) {
 				segments.push({
@@ -182,7 +181,7 @@
 					content: content.substring(lastIndex, match.index)
 				});
 			}
-			
+
 			// Add the variable
 			if (matchedVariable) {
 				segments.push({
@@ -197,10 +196,10 @@
 					content: match[0]
 				});
 			}
-			
+
 			lastIndex = match.index + match[0].length;
 		}
-		
+
 		// Add remaining text
 		if (lastIndex < content.length) {
 			segments.push({
@@ -208,13 +207,13 @@
 				content: content.substring(lastIndex)
 			});
 		}
-		
+
 		templateSegments = segments;
 	}
-	
+
 	function generateText() {
 		if (!template) return;
-		
+
 		let text = template.content;
 		for (const variable of variables) {
 			const value = variableValues[variable.name] || '';
@@ -222,16 +221,16 @@
 			const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
 			text = text.replace(regex, value);
 		}
-		
+
 		generatedText = text;
 	}
-	
+
 	// TypeScript safe function to handle variable value changes
 	function handleVariableChange(variableName: string, value: string) {
 		variableValues[variableName] = value;
 		generateText();
 	}
-	
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(generatedText);
@@ -243,40 +242,40 @@
 			logger.error('Failed to copy: ', err, 'directory');
 		}
 	}
-	
+
 	function formatDate(dateString: string) {
 		const date = new Date(dateString);
 		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 	}
-	
+
 	function getVariableDisplayValue(variable: Variable) {
 		const value = variableValues[variable.name];
 		if (!value) return `[${variable.name}]`;
 		return value;
 	}
-	
+
 	function openAddToCollectionDialog() {
 		if (!isAuthenticated) {
 			goto('/auth/login');
 			return;
 		}
-		
+
 		// Automatically set createNewCategory to true if no categories exist
 		if (userCategories.length === 0) {
 			createNewCategory = true;
 		}
-		
+
 		addToCollectionDialogOpen = true;
 	}
-	
+
 	async function addToCollection() {
 		if (!template || !isAuthenticated) return;
-		
+
 		try {
 			addingToCollection = true;
 			addToCollectionError = '';
 			addToCollectionSuccess = false;
-			
+
 			// If creating new category
 			let categoryId: string | null = selectedCategoryId;
 			if ((createNewCategory || userCategories.length === 0) && newCategoryName.trim()) {
@@ -288,20 +287,20 @@
 					})
 					.select()
 					.single();
-				
+
 				if (categoryError) {
 					addToCollectionError = getUserFriendlyErrorMessage(categoryError);
 					return;
 				}
-				
+
 				categoryId = newCategory.id;
 			}
-			
+
 			// Ensure we have a valid category ID or set it to null
 			if (!categoryId) {
 				categoryId = null;
 			}
-			
+
 			// Create a copy of the template in the user's collection
 			const { data: newTemplate, error: templateError } = await supabase
 				.from('templates')
@@ -314,15 +313,15 @@
 				})
 				.select()
 				.single();
-			
+
 			if (templateError) {
 				addToCollectionError = templateError.message;
 				return;
 			}
-			
+
 			// Copy variables for the new template
 			if (variables.length > 0 && newTemplate) {
-				const newVariables = variables.map(variable => ({
+				const newVariables = variables.map((variable) => ({
 					template_id: newTemplate.id,
 					name: variable.name,
 					description: variable.description,
@@ -330,21 +329,19 @@
 					default_value: variable.default_value,
 					is_required: variable.is_required
 				}));
-				
-				const { error: variablesError } = await supabase
-					.from('variables')
-					.insert(newVariables);
-				
+
+				const { error: variablesError } = await supabase.from('variables').insert(newVariables);
+
 				if (variablesError) {
 					logger.error('Error copying variables:', variablesError, 'directory');
 					addToCollectionError = 'Failed to copy all variables. Template may be incomplete.';
 					return;
 				}
 			}
-			
+
 			// Success!
 			addToCollectionSuccess = true;
-			
+
 			// Reset form
 			setTimeout(() => {
 				addToCollectionDialogOpen = false;
@@ -352,7 +349,6 @@
 				createNewCategory = false;
 				newCategoryName = '';
 			}, 2000);
-			
 		} catch (e: any) {
 			addToCollectionError = e.message || 'Failed to add template to collection';
 		} finally {
@@ -361,10 +357,12 @@
 	}
 </script>
 
-<div class="space-y-4 px-4 py-4 sm:px-6 sm:py-6 max-w-4xl mx-auto">
+<div class="mx-auto max-w-4xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
 	{#if loading}
 		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+			<div
+				class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
+			></div>
 		</div>
 	{:else if error}
 		<Alert variant="destructive" class="mb-4">
@@ -372,18 +370,21 @@
 		</Alert>
 	{:else if template}
 		<div class="space-y-3">
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<a href="/directory" class="text-muted-foreground hover:text-foreground inline-flex items-center">
+					<a
+						href="/directory"
+						class="inline-flex items-center text-muted-foreground hover:text-foreground"
+					>
 						&larr; <span class="ml-1">Back to Directory</span>
 					</a>
 				</div>
-				<div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+				<div class="mt-2 flex flex-wrap gap-2 sm:mt-0">
 					<Button
 						variant="default"
 						size="sm"
 						on:click={copyToClipboard}
-						class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none"
+						class="min-w-0 flex-1 font-medium sm:min-w-[140px] sm:flex-none"
 					>
 						{#if copySuccess}
 							<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
@@ -393,13 +394,13 @@
 							Copy to Clipboard
 						{/if}
 					</Button>
-					
+
 					{#if isAuthenticated}
 						<Button
 							variant="secondary"
 							size="sm"
 							on:click={openAddToCollectionDialog}
-							class="min-w-0 sm:min-w-[160px] flex-1 sm:flex-none"
+							class="min-w-0 flex-1 sm:min-w-[160px] sm:flex-none"
 						>
 							<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
 							Add to My Collection
@@ -409,7 +410,7 @@
 							variant="secondary"
 							size="sm"
 							on:click={() => goto('/auth/login')}
-							class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none"
+							class="min-w-0 flex-1 sm:min-w-[120px] sm:flex-none"
 						>
 							<Icon icon="mdi:login" class="mr-2 h-4 w-4" />
 							Sign In
@@ -418,13 +419,13 @@
 				</div>
 			</div>
 			<div>
-				<h1 class="text-xl sm:text-2xl font-bold">{template.title}</h1>
+				<h1 class="text-xl font-bold sm:text-2xl">{template.title}</h1>
 				{#if template.description}
-					<p class="text-muted-foreground mt-1">{template.description}</p>
+					<p class="mt-1 text-muted-foreground">{template.description}</p>
 				{/if}
 			</div>
 		</div>
-		
+
 		{#if template.category}
 			<div class="mb-4">
 				<Badge variant="secondary">
@@ -432,18 +433,18 @@
 				</Badge>
 			</div>
 		{/if}
-		
+
 		<Card class="mb-2">
 			<CardContent class="p-6">
-				<div class="text-xl leading-relaxed whitespace-pre-wrap">
+				<div class="whitespace-pre-wrap text-xl leading-relaxed">
 					{#each templateSegments as segment}
 						{#if segment.type === 'text'}
 							<span>{segment.content}</span>
 						{:else if segment.type === 'variable' && segment.variable}
 							<Root>
 								<Trigger>
-									<button 
-										class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
+									<button
+										class="inline-flex rounded border border-primary/20 bg-primary/10 px-1 py-0.5 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
 									>
 										{getVariableDisplayValue(segment.variable)}
 									</button>
@@ -456,25 +457,27 @@
 												<span class="text-destructive">*</span>
 											{/if}
 										</Label>
-										
+
 										{#if segment.variable.description}
-											<p class="text-xs text-muted-foreground mb-2">
+											<p class="mb-2 text-xs text-muted-foreground">
 												{segment.variable.description}
 											</p>
 										{/if}
-										
+
 										{#if segment.variable!.type === 'text'}
 											<Input
 												id={segment.variable!.id}
 												type="text"
 												value={variableValues[segment.variable!.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
+												on:input={(e) =>
+													handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{:else if segment.variable!.type === 'textarea'}
 											<Textarea
 												id={segment.variable!.id}
 												value={variableValues[segment.variable!.name] || ''}
-												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
+												on:input={(e) =>
+													handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{/if}
 									</div>
@@ -485,17 +488,17 @@
 				</div>
 			</CardContent>
 		</Card>
-		
-		<div class="text-sm text-muted-foreground mb-8">
+
+		<div class="mb-8 text-sm text-muted-foreground">
 			<p>From the Public Template Directory</p>
 		</div>
-		
-		<div class="sticky bottom-8 flex justify-center z-10">
-			<div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+		<div class="sticky bottom-8 z-10 flex justify-center">
+			<div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
 				<Button
 					variant="default"
 					size="lg"
-					class="shadow-lg px-4 sm:px-8 py-6"
+					class="px-4 py-6 shadow-lg sm:px-8"
 					on:click={copyToClipboard}
 				>
 					{#if copySuccess}
@@ -506,12 +509,12 @@
 						Copy to Clipboard
 					{/if}
 				</Button>
-				
+
 				{#if isAuthenticated}
 					<Button
 						variant="secondary"
 						size="lg"
-						class="shadow-lg px-4 sm:px-8 py-6"
+						class="px-4 py-6 shadow-lg sm:px-8"
 						on:click={openAddToCollectionDialog}
 					>
 						<Icon icon="mdi:plus" class="mr-2 h-5 w-5" />
@@ -521,7 +524,7 @@
 					<Button
 						variant="secondary"
 						size="lg"
-						class="shadow-lg px-4 sm:px-8 py-6"
+						class="px-4 py-6 shadow-lg sm:px-8"
 						on:click={() => goto('/auth/login')}
 					>
 						<Icon icon="mdi:login" class="mr-2 h-5 w-5" />
@@ -542,18 +545,16 @@
 				Add this template to your personal collection for easy access and customization.
 			</Dialog.Description>
 		</Dialog.Header>
-		
+
 		{#if addToCollectionError}
 			<Alert variant="destructive" class="mb-4">
 				<AlertDescription>{addToCollectionError}</AlertDescription>
 			</Alert>
 		{/if}
-		
+
 		{#if addToCollectionSuccess}
-			<Alert class="mb-4 bg-green-50 text-green-800 border-green-300">
-				<AlertDescription>
-					Template successfully added to your collection!
-				</AlertDescription>
+			<Alert class="mb-4 border-green-300 bg-green-50 text-green-800">
+				<AlertDescription>Template successfully added to your collection!</AlertDescription>
 			</Alert>
 		{:else}
 			<div class="space-y-4 py-4">
@@ -571,11 +572,11 @@
 								{/each}
 							</select>
 						{/if}
-						
+
 						{#if !createNewCategory && userCategories.length === 0}
 							<p class="text-sm text-muted-foreground">You don't have any categories yet</p>
 						{/if}
-						
+
 						{#if createNewCategory || userCategories.length === 0}
 							<div class="space-y-2">
 								<Label for="new-category-name">New Category Name</Label>
@@ -587,7 +588,7 @@
 								/>
 							</div>
 						{/if}
-						
+
 						{#if userCategories.length > 0}
 							<div class="flex items-center space-x-2">
 								<input
@@ -605,20 +606,21 @@
 				</div>
 			</div>
 		{/if}
-		
-		<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
-			<Button 
-				variant="outline" 
-				on:click={() => addToCollectionDialogOpen = false}
+
+		<Dialog.Footer class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-0">
+			<Button
+				variant="outline"
+				on:click={() => (addToCollectionDialogOpen = false)}
 				disabled={addingToCollection || addToCollectionSuccess}
-				class="sm:mr-2 w-full sm:w-auto"
+				class="w-full sm:mr-2 sm:w-auto"
 			>
 				{addToCollectionSuccess ? 'Close' : 'Cancel'}
 			</Button>
 			{#if !addToCollectionSuccess}
-				<Button 
-					type="button" 
-					disabled={addingToCollection || ((createNewCategory || userCategories.length === 0) && !newCategoryName)}
+				<Button
+					type="button"
+					disabled={addingToCollection ||
+						((createNewCategory || userCategories.length === 0) && !newCategoryName)}
 					on:click={addToCollection}
 					class="w-full sm:w-auto"
 				>
@@ -627,4 +629,4 @@
 			{/if}
 		</Dialog.Footer>
 	</Dialog.Content>
-</Dialog.Root> 
+</Dialog.Root>

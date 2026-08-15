@@ -48,10 +48,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.then(({ data, error }) => {
 				if (error) return { data: null, error };
 				// Count templates per user
-				const counts = data.reduce((acc, template) => {
-					acc[template.user_id] = (acc[template.user_id] || 0) + 1;
-					return acc;
-				}, {} as Record<string, number>);
+				const counts = data.reduce(
+					(acc, template) => {
+						acc[template.user_id] = (acc[template.user_id] || 0) + 1;
+						return acc;
+					},
+					{} as Record<string, number>
+				);
 				return { data: counts, error: null };
 			});
 
@@ -67,10 +70,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.then(({ data, error }) => {
 				if (error) return { data: null, error };
 				// Count categories per user
-				const counts = data.reduce((acc, category) => {
-					acc[category.user_id] = (acc[category.user_id] || 0) + 1;
-					return acc;
-				}, {} as Record<string, number>);
+				const counts = data.reduce(
+					(acc, category) => {
+						acc[category.user_id] = (acc[category.user_id] || 0) + 1;
+						return acc;
+					},
+					{} as Record<string, number>
+				);
 				return { data: counts, error: null };
 			});
 
