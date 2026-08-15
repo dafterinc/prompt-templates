@@ -7,11 +7,9 @@ import postgres from 'postgres';
 // it must never be exposed to the browser bundle (no VITE_/public prefix).
 //
 // The database sits behind pgBouncer in transaction mode (port 6432), so prepared statements MUST
-// be disabled (`prepare: false`) or connections will error. SSL is taken from the connection
-// string's sslmode=require.
+// be disabled (`prepare: false`) or connections will error.
 //
-// NOTE: this client is not yet wired into the data-access modules. They still use
-// $lib/server/supabase.ts until each is ported over to SQL in Phase 2.
+// This is the app's single data-access client — every $lib/server/* module queries through it.
 export const sql = postgres(env.DATABASE_URL || '', {
   prepare: false,
   // The lab database presents a self-signed certificate; keep TLS but skip CA verification.

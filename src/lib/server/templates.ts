@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { sql } from './db';
 import { createCategory } from './categories';
 import { extractVariableNames } from '$lib/utils/template';
 import { parseCSV } from '$lib/utils/csv';
@@ -47,32 +47,39 @@ export interface TemplateListItem {
 
 /** List the user's templates for the list page: displayed columns + variable count, no content. */
 export async function listTemplates(userId: string): Promise<TemplateListItem[]> {
-	const { data, error } = await supabaseAdmin
-		.from('templates')
-		.select('id, title, description, category_id, updated_at, categories(name), variables(count)')
-		.eq('user_id', userId)
-		.order('updated_at', { ascending: false });
-	if (error) throw error;
-	return (data ?? []).map((t: any) => ({
-		id: t.id,
-		title: t.title,
-		description: t.description,
-		category_id: t.category_id,
-		updated_at: t.updated_at,
-		category_name: t.categories?.name ?? null,
-		variables_count: t.variables?.[0]?.count ?? 0
-	}));
+	return await sql<TemplateListItem[]>`
+		SELECT t.id, t.title, t.description, t.category_id,
+			c.name AS category_name,
+			(SELECT count(*)::int FROM variables v WHERE v.template_id = t.id) AS variables_count,
+			t.updated_at
+		FROM templates t
+		LEFT JOIN categories c ON c.id = t.category_id
+		WHERE t.user_id = ${userId}
+		ORDER BY t.updated_at DESC`;
 }
 
 /** Full templates (with category name + variables) for CSV export. */
 export async function getTemplatesForExport(userId: string): Promise<any[]> {
-	const { data, error } = await supabaseAdmin
-		.from('templates')
-		.select('*, categories(name), variables(name, description, type, default_value, is_required)')
-		.eq('user_id', userId)
-		.order('title');
-	if (error) throw error;
-	return data ?? [];
+	return await sql<any[]>`
+		SELECT t.*,
+			CASE WHEN c.id IS NULL THEN NULL ELSE json_build_object('name', c.name) END AS categories,
+			(
+				SELECT coalesce(
+					json_agg(json_build_object(
+						'name', v.name,
+						'description', v.description,
+						'type', v.type,
+						'default_value', v.default_value,
+						'is_required', v.is_required
+					)),
+					'[]'::json
+				)
+				FROM variables v WHERE v.template_id = t.id
+			) AS variables
+		FROM templates t
+		LEFT JOIN categories c ON c.id = t.category_id
+		WHERE t.user_id = ${userId}
+		ORDER BY t.title`;
 }
 
 export interface ImportResult {
@@ -96,12 +103,10 @@ export async function importTemplatesFromCSV(userId: string, csvText: string): P
 		return { successCount: 0, errorCount: 0, errors: [`Missing required headers: ${missing.join(', ')}`] };
 	}
 
-	const { data: cats } = await supabaseAdmin
-		.from('categories')
-		.select('id, name')
-		.eq('user_id', userId);
+	const cats = await sql<{ id: string; name: string }[]>`
+		SELECT id, name FROM categories WHERE user_id = ${userId}`;
 	const categoriesByName = new Map<string, string>(
-		(cats ?? []).map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
+		cats.map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
 	);
 
 	let successCount = 0;
@@ -149,34 +154,37 @@ export async function importTemplatesFromCSV(userId: string, csvText: string): P
 				}
 			}
 
-			const { data: tmpl, error: tErr } = await supabaseAdmin
-				.from('templates')
-				.insert({
-					title: row['Title'].trim(),
-					description: row['Description']?.trim() || null,
-					content: row['Content'].trim(),
-					category_id: categoryId,
-					user_id: userId
-				})
-				.select('id')
-				.single();
-			if (tErr) {
-				errors.push(`Row ${i + 2}: Failed to create template: ${tErr.message}`);
+			let templateId: string;
+			try {
+				const [tmpl] = await sql<{ id: string }[]>`
+					INSERT INTO templates ${sql({
+						title: row['Title'].trim(),
+						description: row['Description']?.trim() || null,
+						content: row['Content'].trim(),
+						category_id: categoryId,
+						user_id: userId
+					})} RETURNING id`;
+				templateId = tmpl.id;
+			} catch (tErr: any) {
+				errors.push(`Row ${i + 2}: Failed to create template: ${tErr?.message ?? tErr}`);
 				errorCount++;
 				continue;
 			}
 
 			if (variables.length > 0) {
 				const rows = variables.map((v) => ({
-					template_id: tmpl.id,
+					template_id: templateId,
 					name: v.name,
 					description: v.description || '',
 					type: v.type || 'text',
 					default_value: v.default_value || '',
 					is_required: v.is_required || false
 				}));
-				const { error: vErr } = await supabaseAdmin.from('variables').insert(rows);
-				if (vErr) errors.push(`Row ${i + 2}: Template created but variables failed: ${vErr.message}`);
+				try {
+					await sql`INSERT INTO variables ${sql(rows)}`;
+				} catch (vErr: any) {
+					errors.push(`Row ${i + 2}: Template created but variables failed: ${vErr?.message ?? vErr}`);
+				}
 			}
 			successCount++;
 		} catch (e: any) {
@@ -193,23 +201,19 @@ export async function getTemplate(
 	userId: string,
 	id: string
 ): Promise<{ template: TemplateRow; variables: VariableRow[] } | null> {
-	const { data: template, error } = await supabaseAdmin
-		.from('templates')
-		.select('*, category:categories(id, name)')
-		.eq('id', id)
-		.eq('user_id', userId)
-		.maybeSingle();
-	if (error) throw error;
+	const [template] = await sql<TemplateRow[]>`
+		SELECT t.id, t.title, t.description, t.content, t.category_id, t.created_at, t.updated_at,
+			CASE WHEN c.id IS NULL THEN NULL ELSE json_build_object('id', c.id, 'name', c.name) END AS category
+		FROM templates t
+		LEFT JOIN categories c ON c.id = t.category_id
+		WHERE t.id = ${id} AND t.user_id = ${userId}`;
 	if (!template) return null;
 
-	const { data: variables, error: vErr } = await supabaseAdmin
-		.from('variables')
-		.select('*')
-		.eq('template_id', id)
-		.order('name');
-	if (vErr) throw vErr;
+	const variables = await sql<VariableRow[]>`
+		SELECT id, template_id, name, description, type, default_value, is_required
+		FROM variables WHERE template_id = ${id} ORDER BY name`;
 
-	return { template: template as TemplateRow, variables: (variables ?? []) as VariableRow[] };
+	return { template, variables };
 }
 
 async function insertVariables(templateId: string, names: string[]): Promise<void> {
@@ -220,19 +224,25 @@ async function insertVariables(templateId: string, names: string[]): Promise<voi
 		type: 'text',
 		is_required: false
 	}));
-	const { error } = await supabaseAdmin.from('variables').insert(rows);
-	if (error) throw error;
+	await sql`INSERT INTO variables ${sql(rows)}`;
 }
 
 export async function createTemplate(userId: string, input: TemplateInput): Promise<string> {
-	const { data, error } = await supabaseAdmin
-		.from('templates')
-		.insert({ ...input, user_id: userId })
-		.select('id')
-		.single();
-	if (error) throw error;
-	await insertVariables(data.id, extractVariableNames(input.content));
-	return data.id;
+	const names = extractVariableNames(input.content);
+	return await sql.begin(async (tx) => {
+		const [row] = await tx<{ id: string }[]>`
+			INSERT INTO templates ${tx({ ...input, user_id: userId })} RETURNING id`;
+		if (names.length > 0) {
+			const rows = names.map((name) => ({
+				template_id: row.id,
+				name,
+				type: 'text',
+				is_required: false
+			}));
+			await tx`INSERT INTO variables ${tx(rows)}`;
+		}
+		return row.id;
+	});
 }
 
 /** Update a template the user owns, syncing variables when the content changed. */
@@ -242,45 +252,29 @@ export async function updateTemplate(
 	input: TemplateInput,
 	previousContent: string
 ): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('templates')
-		.update({ ...input, updated_at: new Date().toISOString() })
-		.eq('id', id)
-		.eq('user_id', userId);
-	if (error) throw error;
+	await sql`
+		UPDATE templates SET ${sql(input)}, updated_at = now()
+		WHERE id = ${id} AND user_id = ${userId}`;
 
 	if (input.content === previousContent) return;
 
 	const desired = extractVariableNames(input.content);
-	const { data: existing, error: exErr } = await supabaseAdmin
-		.from('variables')
-		.select('name')
-		.eq('template_id', id);
-	if (exErr) throw exErr;
+	const existing = await sql<{ name: string }[]>`
+		SELECT name FROM variables WHERE template_id = ${id}`;
 
-	const existingNames = new Set((existing ?? []).map((v: { name: string }) => v.name));
+	const existingNames = new Set(existing.map((v: { name: string }) => v.name));
 	const toAdd = desired.filter((n) => !existingNames.has(n));
 	const toRemove = [...existingNames].filter((n) => !desired.includes(n));
 
 	await insertVariables(id, toAdd);
 	if (toRemove.length > 0) {
-		const { error: delErr } = await supabaseAdmin
-			.from('variables')
-			.delete()
-			.eq('template_id', id)
-			.in('name', toRemove);
-		if (delErr) throw delErr;
+		await sql`DELETE FROM variables WHERE template_id = ${id} AND name = ANY(${toRemove})`;
 	}
 }
 
 /** Delete a template the user owns. variables.template_id is ON DELETE CASCADE. */
 export async function deleteTemplate(userId: string, id: string): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('templates')
-		.delete()
-		.eq('id', id)
-		.eq('user_id', userId);
-	if (error) throw error;
+	await sql`DELETE FROM templates WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 /** Duplicate a template the user owns (with its variables). Returns the new id, or null. */
@@ -289,30 +283,27 @@ export async function duplicateTemplate(userId: string, id: string): Promise<str
 	if (!owned) return null;
 	const { template, variables } = owned;
 
-	const { data: created, error } = await supabaseAdmin
-		.from('templates')
-		.insert({
-			title: `${template.title} (Copy)`,
-			description: template.description,
-			content: template.content,
-			category_id: template.category_id,
-			user_id: userId
-		})
-		.select('id')
-		.single();
-	if (error) throw error;
+	return await sql.begin(async (tx) => {
+		const [created] = await tx<{ id: string }[]>`
+			INSERT INTO templates ${tx({
+				title: `${template.title} (Copy)`,
+				description: template.description,
+				content: template.content,
+				category_id: template.category_id,
+				user_id: userId
+			})} RETURNING id`;
 
-	if (variables.length > 0) {
-		const rows = variables.map((v) => ({
-			template_id: created.id,
-			name: v.name,
-			description: v.description,
-			type: v.type,
-			default_value: v.default_value,
-			is_required: v.is_required
-		}));
-		const { error: vErr } = await supabaseAdmin.from('variables').insert(rows);
-		if (vErr) throw vErr;
-	}
-	return created.id;
+		if (variables.length > 0) {
+			const rows = variables.map((v) => ({
+				template_id: created.id,
+				name: v.name,
+				description: v.description,
+				type: v.type,
+				default_value: v.default_value,
+				is_required: v.is_required
+			}));
+			await tx`INSERT INTO variables ${tx(rows)}`;
+		}
+		return created.id;
+	});
 }
