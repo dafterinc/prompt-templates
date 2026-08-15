@@ -371,6 +371,11 @@ Clear site data and sign in again. Note these cookies expire after 8 hours.
 **Database connection issues** — free-tier Supabase projects pause after a period of inactivity.
 Check the project is active and unpaused in the dashboard.
 
+**`npm run build` fails with "supabaseUrl is required"** — the build prerenders pages, which
+imports the Supabase client at module scope, so `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+must be set even for a build that never talks to the database. Create your `.env` before
+building.
+
 **Build errors** — `rm -rf node_modules && npm install`, confirm Node 18+, and run `npm run check`
 for type errors.
 

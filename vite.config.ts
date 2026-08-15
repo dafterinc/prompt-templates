@@ -2,7 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import tailwindcss from 'tailwindcss';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	plugins: [sveltekit()],
 	css: {
 		postcss: {
@@ -15,7 +15,10 @@ export default defineConfig({
 	},
 	resolve: {
 		// Ensure .svelte files in node_modules are resolved properly
-		extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.svelte']
+		extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.svelte'],
+		// Under Vitest, resolve Svelte's client build. Without this the server build is loaded
+		// and every component render fails with `lifecycle_function_unavailable`.
+		conditions: mode === 'test' ? ['browser'] : []
 	},
 	ssr: {
 		// Add svelte-sonner to noExternal to ensure it's properly processed in SSR
@@ -27,4 +30,4 @@ export default defineConfig({
 		environment: 'jsdom',
 		setupFiles: ['./src/setupTests.ts']
 	}
-});
+}));

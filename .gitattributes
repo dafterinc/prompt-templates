@@ -1,0 +1,15 @@
+# Normalize line endings so Windows and Unix contributors don't produce whole-file diffs.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+
+# Generated — collapse in diffs and exclude from language stats
+package-lock.json linguist-generated=true -diff

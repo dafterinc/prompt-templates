@@ -31,11 +31,12 @@ npm run test:unit    # vitest
 npm run test:e2e     # playwright
 ```
 
-The test suite is scaffolding only. Green tests do not mean a change works; rely on
-`npm run check` (currently 0 errors — keep it there) plus manual verification in the browser.
+`npm run check`, `npm run lint`, and `npm run test:unit` all pass clean — keep them that way.
+Coverage is still thin (the CSV module is the only well-tested unit), so green tests alone do not
+mean a change works; verify in the browser too.
 
-`npm run lint` fails repo-wide today (~127 unformatted files, ~178 pre-existing ESLint errors).
-Lint only the files you touched, and leave the backlog to its own dedicated pull request.
+`npm run build` requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to be set, even though
+the build never queries the database.
 
 ## Before you change anything
 

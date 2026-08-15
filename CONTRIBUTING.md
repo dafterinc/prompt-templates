@@ -27,19 +27,15 @@ comments on a first PR would otherwise be about one of those.
 
 1. Fork the repository and branch off `main`: `git checkout -b feature/your-change`
 2. Make your change, matching the conventions of the file you are editing
-3. Verify with `npm run check` — it currently passes with zero errors, so any error you see is
-   yours
-4. Check the files you touched:
+3. Verify:
    ```bash
-   npx prettier --check <your files>
-   npx eslint <your files>
+   npm run check
+   npm run lint
+   npm run test:unit
    ```
-5. Commit with a descriptive message and open a pull request against `main`
-
-> `npm run lint` across the whole repo currently fails: the codebase has never been
-> Prettier-formatted (~127 files) and ESLint reports ~178 pre-existing errors. Cleaning that up
-> is worthwhile, but as its own dedicated pull request — please don't bundle a repo-wide reformat
-> with a behaviour change.
+   All three pass on `main`, so anything they report is yours. Run `npm run format` if the lint
+   step complains about formatting.
+4. Commit with a descriptive message and open a pull request against `main`
 
 Please keep pull requests focused. A change that fixes a bug plus reformats a 1000-line component
 is very hard to review.
@@ -61,11 +57,12 @@ is very hard to review.
 
 ## Testing
 
-The current suite is scaffolding — a trivial unit test and one smoke check each for Vitest and
-Playwright. `npm run check` (svelte-check) is the meaningful correctness gate today.
+Coverage is thin: `$lib/utils/csv.ts` is well covered, and the rest is smoke tests. `npm run check`
+(svelte-check) remains the broadest correctness gate.
 
 Tests for new behaviour are very welcome. Unit tests live beside the code as `*.spec.ts` or
-`*.test.ts`; end-to-end tests live in `e2e/`.
+`*.test.ts`; end-to-end tests live in `e2e/` and need a running app plus a configured Supabase
+project.
 
 ## Security
 
