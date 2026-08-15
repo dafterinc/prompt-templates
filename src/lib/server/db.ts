@@ -13,5 +13,8 @@ import postgres from 'postgres';
 // NOTE: this client is not yet wired into the data-access modules. They still use
 // $lib/server/supabase.ts until each is ported over to SQL in Phase 2.
 export const sql = postgres(env.DATABASE_URL || '', {
-  prepare: false
+  prepare: false,
+  // The lab database presents a self-signed certificate; keep TLS but skip CA verification.
+  // For production, pin the CA cert instead.
+  ssl: { rejectUnauthorized: false }
 });

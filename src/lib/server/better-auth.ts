@@ -12,8 +12,16 @@ import { env } from '$env/dynamic/private';
 //
 // NOTE: not yet wired into hooks.server.ts — the auth cutover is a separate step. Generate the
 // schema with `npx @better-auth/cli@latest generate` before first use.
+// node-postgres treats `sslmode=require` in the URL as verify-full, which rejects the lab's
+// self-signed certificate and ignores the explicit `ssl` option. Strip sslmode from the URL and
+// pass ssl explicitly: TLS stays on, CA verification is skipped. Pin the CA cert for production.
+const pgConnectionString = (env.DATABASE_URL || '').replace(/\??&?sslmode=[^&]*/i, '');
+
 export const auth = betterAuth({
-	database: new Pool({ connectionString: env.DATABASE_URL }),
+	database: new Pool({
+		connectionString: pgConnectionString,
+		ssl: { rejectUnauthorized: false }
+	}),
 	secret: env.BETTER_AUTH_SECRET,
 	baseURL: env.BETTER_AUTH_URL,
 	emailAndPassword: {
