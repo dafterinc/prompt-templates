@@ -1,321 +1,94 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '$lib/components/ui/card';
+	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
-	// Import individual components directly to avoid import errors
 	import { Root, Trigger, Content } from '$lib/components/ui/popover/index';
-	// Import Iconify
 	import Icon from '@iconify/svelte';
-	import { getUserFriendlyErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
-	import { parseTemplateContent as parseSegments, generateText as renderText } from '$lib/utils/template';
-	
-	interface Template {
-		id: string;
-		title: string;
-		description: string | null;
-		content: string;
-		category: {
-			id: string;
-			name: string;
-		} | null;
-		created_at: string;
-		updated_at: string;
-	}
-	
-	interface Variable {
-		id: string;
-		name: string;
-		description: string | null;
-		type: string;
-		default_value: string | null;
-		is_required: boolean;
-		value?: string;
-	}
-	
-	interface ContentSegment {
-		type: 'text' | 'variable';
-		content: string;
-		variable?: Variable;
-	}
-	
-	interface Category {
-		id: string;
-		name: string;
-	}
-	
-	let template: Template | null = null;
-	let variables: Variable[] = [];
+	import {
+		parseTemplateContent as parseSegments,
+		generateText as renderText,
+		type ContentSegment
+	} from '$lib/utils/template';
+	import type { PageData, ActionData } from './$types';
+
+	type Variable = PageData['variables'][number];
+
+	export let data: PageData;
+	export let form: ActionData;
+
+	$: template = data.template;
+	$: variables = data.variables as Variable[];
+	$: isAuthenticated = data.isAuthenticated;
+	$: userCategories = data.userCategories;
+
 	let variableValues: Record<string, string> = {};
 	let generatedText = '';
-	let loading = true;
-	let error = '';
+	let templateSegments: ContentSegment<Variable>[] = [];
 	let copySuccess = false;
-	let templateSegments: ContentSegment[] = [];
-	
-	// Authentication state
-	let isAuthenticated = false;
-	let userId = '';
-	
-	// Add to collection dialog
-	let addToCollectionDialogOpen = false;
-	let userCategories: Category[] = [];
-	let selectedCategoryId = '';
-	let newCategoryName = '';
-	let createNewCategory = false;
-	let addingToCollection = false;
-	let addToCollectionError = '';
-	let addToCollectionSuccess = false;
-	
-	const templateId = $page.params.id;
-	
-	onMount(() => {
-		checkAuth();
-		fetchTemplateAndVariables();
-	});
-	
-	async function checkAuth() {
-		const { data: { session } } = await supabase.auth.getSession();
-		
-		isAuthenticated = !!session;
-		if (session) {
-			userId = session.user.id;
-			// If user is authenticated, fetch their categories
-			await fetchUserCategories();
-		}
-	}
-	
-	async function fetchTemplateAndVariables() {
-		try {
-			// Fetch template with category
-			const { data: templateData, error: templateError } = await supabase
-				.from('directory_templates')
-				.select('*, category:directory_categories(*)')
-				.eq('id', templateId)
-				.single();
-			
-			if (templateError) {
-				error = templateError.message;
-				return;
-			}
-			
-			template = templateData;
-			
-			// Fetch variables for this template
-			const { data: variablesData, error: variablesError } = await supabase
-				.from('directory_variables')
-				.select('*')
-				.eq('template_id', templateId)
-				.order('name');
-			
-			if (variablesError) {
-				error = variablesError.message;
-				return;
-			}
-			
-			variables = variablesData || [];
-			
-			// Initialize variable values with defaults
-			variables.forEach(variable => {
-				variableValues[variable.name] = variable.default_value || '';
-			});
-			
-			// Parse template content into segments
-			parseTemplateContent();
-			
-			// Generate initial text
-			generateText();
-		} catch (e: any) {
-			error = e.message;
-		} finally {
-			loading = false;
-		}
-	}
-	
-	async function fetchUserCategories() {
-		if (!isAuthenticated) return;
-		
-		const { data, error: fetchError } = await supabase
-			.from('categories')
-			.select('*')
-			.order('name');
-		
-		if (fetchError) {
-			logger.error('Error fetching user categories:', fetchError, 'directory');
-			return;
-		}
-		
-		userCategories = data || [];
-		if (userCategories.length > 0) {
-			selectedCategoryId = userCategories[0].id;
-		}
-	}
-	
-	function parseTemplateContent() {
-		if (!template) return;
-		templateSegments = parseSegments(template.content, variables);
-	}
 
-	function generateText() {
-		if (!template) return;
+	let initializedId: string | null = null;
+	$: if (template && template.id !== initializedId) {
+		initializedId = template.id;
+		variableValues = {};
+		for (const variable of variables) {
+			variableValues[variable.name] = variable.default_value || '';
+		}
+		templateSegments = parseSegments(template.content, variables);
 		generatedText = renderText(template.content, variableValues);
 	}
-	
-	// TypeScript safe function to handle variable value changes
+
 	function handleVariableChange(variableName: string, value: string) {
 		variableValues[variableName] = value;
-		generateText();
+		generatedText = renderText(template.content, variableValues);
 	}
-	
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(generatedText);
 			copySuccess = true;
-			setTimeout(() => {
-				copySuccess = false;
-			}, 2000);
+			setTimeout(() => (copySuccess = false), 2000);
 		} catch (err) {
 			logger.error('Failed to copy: ', err, 'directory');
 		}
 	}
-	
-	function formatDate(dateString: string) {
-		const date = new Date(dateString);
-		return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-	}
-	
+
 	function getVariableDisplayValue(variable: Variable) {
 		const value = variableValues[variable.name];
 		if (!value) return `[${variable.name}]`;
 		return value;
 	}
-	
-	function openAddToCollectionDialog() {
+
+	// Add to collection dialog
+	let dialogOpen = false;
+	let createNew = false;
+	let selectedCategoryId = '';
+	let newCategoryName = '';
+	let adding = false;
+
+	$: if (userCategories.length > 0 && !selectedCategoryId) {
+		selectedCategoryId = userCategories[0].id;
+	}
+
+	function openDialog() {
 		if (!isAuthenticated) {
 			goto('/auth/login');
 			return;
 		}
-		
-		// Automatically set createNewCategory to true if no categories exist
-		if (userCategories.length === 0) {
-			createNewCategory = true;
-		}
-		
-		addToCollectionDialogOpen = true;
-	}
-	
-	async function addToCollection() {
-		if (!template || !isAuthenticated) return;
-		
-		try {
-			addingToCollection = true;
-			addToCollectionError = '';
-			addToCollectionSuccess = false;
-			
-			// If creating new category
-			let categoryId: string | null = selectedCategoryId;
-			if ((createNewCategory || userCategories.length === 0) && newCategoryName.trim()) {
-				const { data: newCategory, error: categoryError } = await supabase
-					.from('categories')
-					.insert({
-						name: newCategoryName.trim(),
-						user_id: userId
-					})
-					.select()
-					.single();
-				
-				if (categoryError) {
-					addToCollectionError = getUserFriendlyErrorMessage(categoryError);
-					return;
-				}
-				
-				categoryId = newCategory.id;
-			}
-			
-			// Ensure we have a valid category ID or set it to null
-			if (!categoryId) {
-				categoryId = null;
-			}
-			
-			// Create a copy of the template in the user's collection
-			const { data: newTemplate, error: templateError } = await supabase
-				.from('templates')
-				.insert({
-					title: template.title,
-					description: template.description,
-					content: template.content,
-					category_id: categoryId,
-					user_id: userId
-				})
-				.select()
-				.single();
-			
-			if (templateError) {
-				addToCollectionError = templateError.message;
-				return;
-			}
-			
-			// Copy variables for the new template
-			if (variables.length > 0 && newTemplate) {
-				const newVariables = variables.map(variable => ({
-					template_id: newTemplate.id,
-					name: variable.name,
-					description: variable.description,
-					type: variable.type,
-					default_value: variable.default_value,
-					is_required: variable.is_required
-				}));
-				
-				const { error: variablesError } = await supabase
-					.from('variables')
-					.insert(newVariables);
-				
-				if (variablesError) {
-					logger.error('Error copying variables:', variablesError, 'directory');
-					addToCollectionError = 'Failed to copy all variables. Template may be incomplete.';
-					return;
-				}
-			}
-			
-			// Success!
-			addToCollectionSuccess = true;
-			
-			// Reset form
-			setTimeout(() => {
-				addToCollectionDialogOpen = false;
-				addToCollectionSuccess = false;
-				createNewCategory = false;
-				newCategoryName = '';
-			}, 2000);
-			
-		} catch (e: any) {
-			addToCollectionError = e.message || 'Failed to add template to collection';
-		} finally {
-			addingToCollection = false;
-		}
+		if (userCategories.length === 0) createNew = true;
+		dialogOpen = true;
 	}
 </script>
 
 <div class="space-y-4 px-4 py-4 sm:px-6 sm:py-6 max-w-4xl mx-auto">
-	{#if loading}
-		<div class="flex justify-center py-12">
-			<div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-		</div>
-	{:else if error}
-		<Alert variant="destructive" class="mb-4">
-			<AlertDescription>{error}</AlertDescription>
-		</Alert>
-	{:else if template}
+	{#if template}
 		<div class="space-y-3">
 			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div>
@@ -324,12 +97,7 @@
 					</a>
 				</div>
 				<div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
-					<Button
-						variant="default"
-						size="sm"
-						on:click={copyToClipboard}
-						class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none"
-					>
+					<Button variant="default" size="sm" on:click={copyToClipboard} class="font-medium min-w-0 sm:min-w-[140px] flex-1 sm:flex-none">
 						{#if copySuccess}
 							<Icon icon="mdi:check" class="mr-2 h-4 w-4" />
 							Copied!
@@ -338,24 +106,14 @@
 							Copy to Clipboard
 						{/if}
 					</Button>
-					
+
 					{#if isAuthenticated}
-						<Button
-							variant="secondary"
-							size="sm"
-							on:click={openAddToCollectionDialog}
-							class="min-w-0 sm:min-w-[160px] flex-1 sm:flex-none"
-						>
+						<Button variant="secondary" size="sm" on:click={openDialog} class="min-w-0 sm:min-w-[160px] flex-1 sm:flex-none">
 							<Icon icon="mdi:plus" class="mr-2 h-4 w-4" />
 							Add to My Collection
 						</Button>
 					{:else}
-						<Button
-							variant="secondary"
-							size="sm"
-							on:click={() => goto('/auth/login')}
-							class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none"
-						>
+						<Button variant="secondary" size="sm" on:click={() => goto('/auth/login')} class="min-w-0 sm:min-w-[120px] flex-1 sm:flex-none">
 							<Icon icon="mdi:login" class="mr-2 h-4 w-4" />
 							Sign In
 						</Button>
@@ -369,15 +127,13 @@
 				{/if}
 			</div>
 		</div>
-		
+
 		{#if template.category}
 			<div class="mb-4">
-				<Badge variant="secondary">
-					{template.category.name}
-				</Badge>
+				<Badge variant="secondary">{template.category.name}</Badge>
 			</div>
 		{/if}
-		
+
 		<Card class="mb-2">
 			<CardContent class="p-6">
 				<div class="text-xl leading-relaxed whitespace-pre-wrap">
@@ -387,9 +143,7 @@
 						{:else if segment.type === 'variable' && segment.variable}
 							<Root>
 								<Trigger>
-									<button 
-										class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30"
-									>
+									<button class="inline-flex px-1 py-0.5 rounded bg-primary/10 border border-primary/20 font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/30">
 										{getVariableDisplayValue(segment.variable)}
 									</button>
 								</Trigger>
@@ -401,24 +155,22 @@
 												<span class="text-destructive">*</span>
 											{/if}
 										</Label>
-										
+
 										{#if segment.variable.description}
-											<p class="text-xs text-muted-foreground mb-2">
-												{segment.variable.description}
-											</p>
+											<p class="text-xs text-muted-foreground mb-2">{segment.variable.description}</p>
 										{/if}
-										
-										{#if segment.variable!.type === 'text'}
+
+										{#if segment.variable.type === 'text'}
 											<Input
-												id={segment.variable!.id}
+												id={segment.variable.id}
 												type="text"
-												value={variableValues[segment.variable!.name] || ''}
+												value={variableValues[segment.variable.name] || ''}
 												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
-										{:else if segment.variable!.type === 'textarea'}
+										{:else if segment.variable.type === 'textarea'}
 											<Textarea
-												id={segment.variable!.id}
-												value={variableValues[segment.variable!.name] || ''}
+												id={segment.variable.id}
+												value={variableValues[segment.variable.name] || ''}
 												on:input={(e) => handleVariableChange(segment.variable!.name, e.currentTarget.value)}
 											/>
 										{/if}
@@ -430,19 +182,14 @@
 				</div>
 			</CardContent>
 		</Card>
-		
+
 		<div class="text-sm text-muted-foreground mb-8">
 			<p>From the Public Template Directory</p>
 		</div>
-		
+
 		<div class="sticky bottom-8 flex justify-center z-10">
 			<div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-				<Button
-					variant="default"
-					size="lg"
-					class="shadow-lg px-4 sm:px-8 py-6"
-					on:click={copyToClipboard}
-				>
+				<Button variant="default" size="lg" class="shadow-lg px-4 sm:px-8 py-6" on:click={copyToClipboard}>
 					{#if copySuccess}
 						<Icon icon="mdi:check" class="mr-2 h-5 w-5" />
 						Copied to Clipboard! ✓
@@ -451,24 +198,14 @@
 						Copy to Clipboard
 					{/if}
 				</Button>
-				
+
 				{#if isAuthenticated}
-					<Button
-						variant="secondary"
-						size="lg"
-						class="shadow-lg px-4 sm:px-8 py-6"
-						on:click={openAddToCollectionDialog}
-					>
+					<Button variant="secondary" size="lg" class="shadow-lg px-4 sm:px-8 py-6" on:click={openDialog}>
 						<Icon icon="mdi:plus" class="mr-2 h-5 w-5" />
 						Add to My Collection
 					</Button>
 				{:else}
-					<Button
-						variant="secondary"
-						size="lg"
-						class="shadow-lg px-4 sm:px-8 py-6"
-						on:click={() => goto('/auth/login')}
-					>
+					<Button variant="secondary" size="lg" class="shadow-lg px-4 sm:px-8 py-6" on:click={() => goto('/auth/login')}>
 						<Icon icon="mdi:login" class="mr-2 h-5 w-5" />
 						Sign In to Save
 					</Button>
@@ -479,97 +216,79 @@
 </div>
 
 <!-- Add to Collection Dialog -->
-<Dialog.Root bind:open={addToCollectionDialogOpen}>
+<Dialog.Root bind:open={dialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Add to My Collection</Dialog.Title>
-			<Dialog.Description>
-				Add this template to your personal collection for easy access and customization.
-			</Dialog.Description>
+			<Dialog.Description>Add this template to your personal collection for easy access and customization.</Dialog.Description>
 		</Dialog.Header>
-		
-		{#if addToCollectionError}
-			<Alert variant="destructive" class="mb-4">
-				<AlertDescription>{addToCollectionError}</AlertDescription>
-			</Alert>
+
+		{#if form?.error}
+			<Alert variant="destructive" class="mb-4"><AlertDescription>{form.error}</AlertDescription></Alert>
 		{/if}
-		
-		{#if addToCollectionSuccess}
-			<Alert class="mb-4 bg-green-50 text-green-800 border-green-300">
-				<AlertDescription>
-					Template successfully added to your collection!
-				</AlertDescription>
-			</Alert>
-		{:else}
+
+		<form
+			method="POST"
+			action="?/addToCollection"
+			use:enhance={() => {
+				adding = true;
+				return async ({ result, update }) => {
+					await update({ reset: false });
+					if (result.type === 'success') {
+						dialogOpen = false;
+						createNew = false;
+						newCategoryName = '';
+					}
+					adding = false;
+				};
+			}}
+		>
+			<input type="hidden" name="create_new" value={createNew || userCategories.length === 0 ? 'true' : 'false'} />
+
 			<div class="space-y-4 py-4">
 				<div class="space-y-2">
 					<Label for="category-select">Add to Category</Label>
 					<div class="grid grid-cols-1 gap-4">
-						{#if !createNewCategory && userCategories.length > 0}
+						{#if !createNew && userCategories.length > 0}
 							<select
 								id="category-select"
+								name="category_id"
 								class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
 								bind:value={selectedCategoryId}
 							>
-								{#each userCategories as category}
+								{#each userCategories as category (category.id)}
 									<option value={category.id}>{category.name}</option>
 								{/each}
 							</select>
 						{/if}
-						
-						{#if !createNewCategory && userCategories.length === 0}
+
+						{#if !createNew && userCategories.length === 0}
 							<p class="text-sm text-muted-foreground">You don't have any categories yet</p>
 						{/if}
-						
-						{#if createNewCategory || userCategories.length === 0}
+
+						{#if createNew || userCategories.length === 0}
 							<div class="space-y-2">
 								<Label for="new-category-name">New Category Name</Label>
-								<Input
-									id="new-category-name"
-									type="text"
-									bind:value={newCategoryName}
-									placeholder="Enter category name"
-								/>
+								<Input id="new-category-name" name="new_category_name" type="text" bind:value={newCategoryName} placeholder="Enter category name" />
 							</div>
 						{/if}
-						
+
 						{#if userCategories.length > 0}
 							<div class="flex items-center space-x-2">
-								<input
-									type="checkbox"
-									id="create-new-category"
-									bind:checked={createNewCategory}
-									class="h-4 w-4 rounded border-gray-300 focus:ring-primary"
-								/>
-								<label for="create-new-category" class="text-sm font-medium">
-									Create a new category
-								</label>
+								<input type="checkbox" id="create-new-category" bind:checked={createNew} class="h-4 w-4 rounded border-gray-300 focus:ring-primary" />
+								<label for="create-new-category" class="text-sm font-medium">Create a new category</label>
 							</div>
 						{/if}
 					</div>
 				</div>
 			</div>
-		{/if}
-		
-		<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
-			<Button 
-				variant="outline" 
-				on:click={() => addToCollectionDialogOpen = false}
-				disabled={addingToCollection || addToCollectionSuccess}
-				class="sm:mr-2 w-full sm:w-auto"
-			>
-				{addToCollectionSuccess ? 'Close' : 'Cancel'}
-			</Button>
-			{#if !addToCollectionSuccess}
-				<Button 
-					type="button" 
-					disabled={addingToCollection || ((createNewCategory || userCategories.length === 0) && !newCategoryName)}
-					on:click={addToCollection}
-					class="w-full sm:w-auto"
-				>
-					{addingToCollection ? 'Adding...' : 'Add to Collection'}
+
+			<Dialog.Footer class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-end">
+				<Button type="button" variant="outline" on:click={() => (dialogOpen = false)} disabled={adding} class="sm:mr-2 w-full sm:w-auto">Cancel</Button>
+				<Button type="submit" disabled={adding || ((createNew || userCategories.length === 0) && !newCategoryName.trim())} class="w-full sm:w-auto">
+					{adding ? 'Adding...' : 'Add to Collection'}
 				</Button>
-			{/if}
-		</Dialog.Footer>
+			</Dialog.Footer>
+		</form>
 	</Dialog.Content>
-</Dialog.Root> 
+</Dialog.Root>
