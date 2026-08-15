@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
@@ -87,55 +86,28 @@
 			saving = true;
 			saveSuccess = false;
 			error = '';
-			
-			if (isAdmin) {
-				// Check if profile exists, if not create it
-				if (!users.find(u => u.id === editingUserId)?.has_profile) {
-					const { error: insertError } = await supabase
-						.from('user_profiles')
-						.insert({
-							id: editingUserId,
-							is_admin: true
-						});
-					
-					if (insertError) {
-						error = insertError.message;
-						return;
-					}
-				} else {
-					// Update existing profile
-					const { error: updateError } = await supabase
-						.from('user_profiles')
-						.update({ is_admin: true })
-						.eq('id', editingUserId);
-					
-					if (updateError) {
-						error = updateError.message;
-						return;
-					}
-				}
-			} else {
-				// If user has a profile, update it to remove admin status
-				if (users.find(u => u.id === editingUserId)?.has_profile) {
-					const { error: updateError } = await supabase
-						.from('user_profiles')
-						.update({ is_admin: false })
-						.eq('id', editingUserId);
-					
-					if (updateError) {
-						error = updateError.message;
-						return;
-					}
-				}
+
+			// Admin status is changed through the service-role endpoint — the is_admin column is
+			// not writable from the browser.
+			const response = await fetch('/api/admin/users', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId: editingUserId, isAdmin })
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				error = data.error || 'Failed to update user';
+				return;
 			}
-			
+
 			saveSuccess = true;
 			await loadUsers();
 			// Close dialog after a short delay
 			setTimeout(() => {
 				editDialogOpen = false;
 			}, 1000);
-			
 		} catch (e: any) {
 			error = e.message || 'Failed to update user';
 		} finally {
