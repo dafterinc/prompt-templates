@@ -102,6 +102,39 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 };
 
+export const PATCH: RequestHandler = async ({ locals, request }) => {
+	// Check if user is admin
+	if (!locals.isAdmin) {
+		return json({ error: 'Unauthorized' }, { status: 403 });
+	}
+
+	try {
+		const { userId, isAdmin } = await request.json();
+
+		if (!userId || typeof isAdmin !== 'boolean') {
+			return json({ error: 'userId and isAdmin (boolean) are required' }, { status: 400 });
+		}
+
+		// Admin status is set via the service-role client — the is_admin column is not writable by
+		// the authenticated role (see 20260815_security_and_performance.sql). Upsert handles users
+		// that do not yet have a profile row.
+		const { error } = await serverSupabase
+			.from('user_profiles')
+			.upsert({ id: userId, is_admin: isAdmin }, { onConflict: 'id' });
+
+		if (error) {
+			logger.error('Error updating admin status', error, 'api:admin/users');
+			return json({ error: error.message }, { status: 500 });
+		}
+
+		return json({ success: true });
+	} catch (error) {
+		logger.error('Unexpected error updating user', error, 'api:admin/users');
+		const message = error instanceof Error ? error.message : 'Failed to update user';
+		return json({ error: message }, { status: 500 });
+	}
+};
+
 export const DELETE: RequestHandler = async ({ locals, request }) => {
 	// Check if user is admin
 	if (!locals.isAdmin) {
