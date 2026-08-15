@@ -1,381 +1,394 @@
 # ✨ Prompt Templates
 
-A powerful, self-hostable web application for building, managing, and generating text prompts with customizable variables. Perfect for writers, marketers, developers, content creators, and anyone who regularly uses templates for communication!
+A self-hostable web application for building, managing, and generating text prompts with
+customizable variables. Write a template once with `{{placeholders}}`, then fill them in through
+a form whenever you need the text — useful for writers, marketers, developers, support teams, and
+anyone who retypes the same structured text.
 
 ## 🚀 Features
 
-### Core Functionality
-- ✏️ **Template Management**: Create, edit, duplicate, and organize prompt templates
-- 🔄 **Dynamic Variables**: Define custom variables with types, descriptions, and default values
-- 🎯 **Interactive Interface**: Fill-in-the-blank interface for easy template usage
-- 📋 **One-Click Copy**: Copy generated content to clipboard instantly
-- 🏷️ **Smart Organization**: Categorize templates for better organization
-- 🔍 **Advanced Search**: Filter templates by category, content, or variables
+### Templates
+- ✏️ Create, edit, duplicate, and delete prompt templates
+- 🔄 `{{variable}}` placeholders with description, type, default value, and required flag
+- 🎯 Fill-in-the-blank interface that renders the finished text live
+- 📋 One-click copy to clipboard
+- 🏷️ Organize templates into personal categories
+- 🔍 Search and multi-category filtering
+- 📥 CSV import / export of your template library
 
-### User Experience
-- 🌓 **Dark/Light Mode**: Automatic theme switching with user preference
-- 📱 **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
-- ⚡ **Fast Performance**: Optimized for speed with modern web technologies
-- 🎨 **Beautiful UI**: Clean, intuitive interface built with ShadCN components
+### Public directory
+- 🌐 Browse a shared, publicly readable directory of templates — no account required
+- ⭐ Featured templates surfaced first
+- 📄 Use any directory template directly, or save a copy into your own library
+- 🛠️ Admin CRUD for directory templates, categories, and variables
+- 📊 Bulk CSV import / export for the directory, with per-row progress and error reporting
 
-### Enterprise Features
-- 🔒 **Secure Authentication**: User accounts with Supabase Auth
-- 👑 **Admin Dashboard**: Manage public templates and users
-- ☁️ **Cloud Sync**: Templates sync across devices
-- 🔐 **Self-Hostable**: Complete control over your data and infrastructure
-- 📊 **User Management**: Admin controls for user access and permissions
+### Accounts and admin
+- 🔒 Email/password authentication via Supabase Auth
+- 👤 User profiles with avatar upload, company, industry, team size, and usage purpose
+- 👑 Admin dashboard: manage the directory, list users, and delete users with their content
+- 🔐 Row Level Security enforced at the database level
 
-## 🛠️ Technology Stack
+### Experience
+- 🌓 Dark / light mode with persisted preference
+- 📱 Responsive layout for desktop, tablet, and mobile
+- 🎨 Clean UI built on shadcn-svelte components
+
+## 🛠️ Technology stack
 
 ### Frontend
-- **[SvelteKit](https://kit.svelte.dev/)** - Modern full-stack framework
-- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
-- **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[ShadCN UI](https://shadcn-svelte.com/)** - High-quality component library
-- **[Iconify](https://iconify.design/)** - Comprehensive icon system
+- **[SvelteKit 2](https://kit.svelte.dev/)** with **[Svelte 5](https://svelte.dev/)** (legacy syntax)
+- **[TypeScript](https://www.typescriptlang.org/)**
+- **[TailwindCSS 3](https://tailwindcss.com/)**
+- **[shadcn-svelte](https://shadcn-svelte.com/)** over [bits-ui](https://bits-ui.com/)
+- **[Iconify](https://iconify.design/)** for icons, **[svelte-sonner](https://svelte-sonner.vercel.app/)** for toasts
 
-### Backend & Infrastructure
-- **[Supabase](https://supabase.com/)** - Backend-as-a-Service (Auth, Database, Storage)
-- **[PostgreSQL](https://postgresql.org/)** - Robust relational database
-- **[Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)** - Database-level security
-- **[Vite](https://vitejs.dev/)** - Fast build tool and dev server
+### Backend
+- **[Supabase](https://supabase.com/)** — Auth, Postgres, Storage
+- **[PostgreSQL](https://postgresql.org/)** with [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
+- **[Vite 6](https://vitejs.dev/)**
 
-### Development & Quality
-- **[ESLint](https://eslint.org/)** - Code linting and formatting
-- **[Prettier](https://prettier.io/)** - Code formatting
-- **[Vitest](https://vitest.dev/)** - Unit testing framework
-- **[Playwright](https://playwright.dev/)** - End-to-end testing
+### Tooling
+- **[ESLint](https://eslint.org/)** + **[Prettier](https://prettier.io/)**
+- **[Vitest](https://vitest.dev/)** (unit) and **[Playwright](https://playwright.dev/)** (e2e)
 
-## 📁 Project Structure
+## 📁 Project structure
 
 ```
 prompt-templates/
-├── 📁 src/                          # Source code
-│   ├── 📁 lib/                      # Shared libraries and utilities
-│   │   ├── 📁 components/           # Reusable UI components
-│   │   │   └── 📁 ui/              # ShadCN UI components
-│   │   ├── 📁 server/              # Server-side utilities
-│   │   │   └── middleware.ts       # Rate limiting, HTTPS, CORS
-│   │   ├── 📁 utils/               # Utility functions
-│   │   │   └── logger.ts           # Centralized logging system
-│   │   ├── index.ts                # Library exports
-│   │   ├── supabase.ts             # Supabase client configuration
-│   │   └── utils.ts                # Common utility functions
-│   ├── 📁 routes/                  # SvelteKit routes (file-based routing)
-│   │   ├── 📁 admin/               # Admin dashboard routes
-│   │   ├── 📁 api/                 # API endpoints
-│   │   ├── 📁 auth/                # Authentication pages
-│   │   ├── 📁 categories/          # Category management
-│   │   ├── 📁 directory/           # Public template directory
-│   │   ├── 📁 profile/             # User profile management
-│   │   ├── 📁 templates/           # Template management
-│   │   ├── +layout.svelte          # Root layout component
-│   │   ├── +layout.server.ts       # Server-side layout logic
-│   │   └── +page.svelte            # Homepage
-│   ├── 📁 static/                  # Static assets
-│   ├── app.css                     # Global styles
-│   ├── app.d.ts                    # TypeScript declarations
-│   ├── app.html                    # HTML template
-│   └── hooks.server.ts             # Server hooks (auth, middleware)
-├── 📁 supabase/                    # Supabase configuration
-│   ├── 📁 migrations/              # Database migrations
-│   └── config.toml                 # Supabase local development config
-├── 📁 e2e/                         # End-to-end tests
-├── 📁 node_modules/                # Dependencies
-├── .env.example                    # Environment variables template
-├── components.json                 # ShadCN UI configuration
-├── eslint.config.js                # ESLint configuration
-├── package.json                    # Dependencies and scripts
-├── playwright.config.ts            # Playwright test configuration
-├── postcss.config.cjs              # PostCSS configuration
-├── svelte.config.js                # SvelteKit configuration
-├── tailwind.config.cjs             # TailwindCSS configuration
-├── tsconfig.json                   # TypeScript configuration
-└── vite.config.ts                  # Vite configuration
+├── src/
+│   ├── lib/
+│   │   ├── components/ui/          # shadcn-svelte components (button, dialog, drawer, …)
+│   │   ├── server/
+│   │   │   └── middleware.ts       # rate limiting, HTTPS forcing
+│   │   ├── utils/
+│   │   │   └── logger.ts           # leveled logger used across the app
+│   │   ├── supabase.ts             # browser Supabase client + cookie-mirroring session storage
+│   │   └── utils.ts                # cn(), transitions, friendly DB error messages
+│   ├── routes/
+│   │   ├── admin/                  # admin dashboard (users, directory management)
+│   │   ├── api/admin/users/        # server route: list / delete users (service role)
+│   │   ├── auth/                   # login, register, forgot / reset password
+│   │   ├── categories/             # personal category management
+│   │   ├── directory/              # public template directory
+│   │   ├── profile/                # profile + avatar upload
+│   │   ├── templates/              # private template CRUD and usage
+│   │   ├── +layout.svelte          # shell: nav, auth state, theme
+│   │   ├── +layout.server.ts       # exposes locals.user / locals.isAdmin
+│   │   └── +page.svelte            # landing page
+│   ├── app.css                     # global styles and theme tokens
+│   ├── app.d.ts                    # App.Locals / App.PageData declarations
+│   ├── app.html                    # HTML shell
+│   └── hooks.server.ts             # auth, admin gate, CORS, CSP, rate limiting
+├── static/                         # favicon, og-image
+├── supabase/
+│   ├── migrations/                 # SQL schema and RLS policies
+│   └── config.toml                 # Supabase local dev config
+├── e2e/                            # Playwright tests
+├── .env.example
+├── components.json                 # shadcn-svelte config
+├── svelte.config.js                # SvelteKit config (adapter-auto)
+├── tailwind.config.js
+└── vite.config.ts                  # Vite + Vitest config
 ```
 
-## 💻 Quick Start
+Agent-facing engineering notes live in [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
+
+## 💻 Quick start
 
 ### Prerequisites
 - **Node.js** 18+ and npm
-- **Supabase account** (free tier available)
-- **Git** for version control
+- A **Supabase** project (the free tier is enough)
+- **Git**
 
-### 1. Clone and Install
+### 1. Clone and install
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/prompt-templates.git
+git clone https://github.com/dafterinc/prompt-templates.git
 cd prompt-templates
-
-# Install dependencies
 npm install
 ```
 
-### 2. Set Up Supabase
+### 2. Configure environment
 
-#### Create a Supabase Project
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Wait for the project to be ready (usually 2-3 minutes)
-3. Go to **Settings** → **API** to get your credentials
-
-#### Configure Environment Variables
 ```bash
-# Copy the example environment file
 cp .env.example .env
 ```
 
-Edit `.env` with your Supabase credentials:
+Fill in your Supabase credentials (**Settings → API** in the Supabase dashboard):
+
 ```env
-# Supabase Configuration
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Application Environment
-NODE_ENV=development
-MODE=development
-
-# Logging Configuration
-PUBLIC_ENABLE_LOGGING=true
-
-# Security Configuration (Production)
-FORCE_HTTPS=false
-ALLOWED_ORIGINS=http://localhost:5173,https://yourdomain.com
-
-# Rate Limiting (Production)
-RATE_LIMIT_MAX_REQUESTS=100
-RATE_LIMIT_WINDOW_MS=60000
+# 'development' or 'production' — controls security headers, CSP, CORS, rate limiting
+APP_ENV=development
 ```
 
-#### Set Up Database Schema
-1. In your Supabase dashboard, go to **SQL Editor**
-2. Run the database migrations from `supabase/migrations/` (if any)
-3. The application will automatically create necessary tables on first run
+> The service role key bypasses Row Level Security. It is used only on the server
+> (`src/hooks.server.ts` and `src/routes/api/admin/users/+server.ts`). Never expose it to the
+> browser and never commit your `.env`.
 
-### 3. Set Up Admin User
-After your first user signs up:
+### 3. Set up the database
 
-1. Go to **Supabase Dashboard** → **Table Editor** → `user_profiles`
-2. Find your user and set `is_admin` to `true`
-3. Or run this SQL in the **SQL Editor**:
+Tables are **not** created automatically. Apply the migrations in `supabase/migrations/` in
+filename order, either with `supabase db push` or by pasting them into the **SQL Editor** in the
+Supabase dashboard:
+
+1. `20250317_template_directory.sql` — directory tables, `user_profiles`, timestamp triggers
+2. `20250318_initial_schema.sql` — `categories`, `templates`, `variables` + owner RLS
+3. `20250322_user_profiles_update.sql` — profile fields, `profile_images` storage bucket
+4. `20250323_fix_user_profiles_policies.sql` — `is_admin_user()` and non-recursive policies
+
+> ⚠️ **Upgrading an existing deployment:** `20250317_template_directory.sql` was previously named
+> `template_directory.sql`, which sorted *after* the timestamped files and broke fresh installs.
+> If your database already applied it under the old name, update the matching row in
+> `supabase_migrations.schema_migrations` instead of re-running the migration.
+
+### 4. Create an admin user
+
+Register through the app first, then promote the account:
+
 ```sql
-UPDATE user_profiles 
-SET is_admin = true 
+UPDATE user_profiles
+SET is_admin = true
 WHERE id = 'your-user-id-here';
 ```
 
-### 4. Start Development Server
+You can find the id under **Authentication → Users** in the Supabase dashboard. Admin routes are
+blocked server-side, so this must be set before `/admin` becomes reachable.
+
+### 5. Run it
+
 ```bash
 npm run dev
 ```
 
-Visit [http://localhost:5173](http://localhost:5173) to see your application!
+Open [http://localhost:5173](http://localhost:5173).
 
-## 🚀 Self-Hosting Guide
+## 🚀 Self-hosting
 
-### Production Deployment Options
+The project ships with `@sveltejs/adapter-auto`, which detects the target automatically on Vercel,
+Netlify, and Cloudflare. For any other host — Docker, a VPS, bare Node — install and configure
+`@sveltejs/adapter-node` first:
 
-#### Option 1: Vercel (Recommended)
-1. **Connect your repository** to Vercel
-2. **Set environment variables** in Vercel dashboard
-3. **Deploy** - Vercel handles everything automatically
-
-#### Option 2: Docker Deployment
 ```bash
-# Build the application
-npm run build
+npm install -D @sveltejs/adapter-node
+```
 
-# Create a simple Dockerfile
-cat > Dockerfile << EOF
-FROM node:18-alpine
+```js
+// svelte.config.js
+import adapter from '@sveltejs/adapter-node';
+```
+
+`npm run build` then emits a Node server at `build/index.js`, run with `node build`.
+
+### Option 1: Vercel / Netlify / Cloudflare
+1. Connect the repository
+2. Set the environment variables in the dashboard
+3. Deploy — `adapter-auto` detects the platform
+
+> On any serverless or multi-instance platform, the built-in rate limiter does nothing useful —
+> it is an in-process `Map`. Put platform-level rate limiting in front instead.
+
+### Option 2: Docker (requires `adapter-node`)
+
+```dockerfile
+FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 COPY . .
 RUN npm run build
+RUN npm prune --omit=dev
 EXPOSE 3000
-CMD ["npm", "run", "preview"]
-EOF
-
-# Build and run
-docker build -t prompt-templates .
-docker run -p 3000:3000 prompt-templates
+ENV PORT=3000
+CMD ["node", "build"]
 ```
 
-#### Option 3: Traditional VPS
-1. **Set up a VPS** (Ubuntu 20.04+ recommended)
-2. **Install Node.js** and PM2:
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+docker build -t prompt-templates .
+docker run -p 3000:3000 --env-file .env prompt-templates
+```
+
+### Option 3: VPS with PM2 (requires `adapter-node`)
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 sudo npm install -g pm2
-```
 
-3. **Deploy your application**:
-```bash
-git clone https://github.com/your-username/prompt-templates.git
+git clone https://github.com/dafterinc/prompt-templates.git
 cd prompt-templates
-npm install
+npm ci
 npm run build
-pm2 start npm --name "prompt-templates" -- start
-pm2 save
-pm2 startup
+pm2 start build/index.js --name prompt-templates
+pm2 save && pm2 startup
 ```
 
-### Production Environment Variables
+### Production environment
+
 ```env
-# Supabase Configuration
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Application Environment
-NODE_ENV=production
-MODE=production
-
-# Security Configuration
+APP_ENV=production
 FORCE_HTTPS=true
 ALLOWED_ORIGINS=https://yourdomain.com
 
-# Rate Limiting
 RATE_LIMIT_MAX_REQUESTS=1000
 RATE_LIMIT_WINDOW_MS=60000
-
-# Optional: External Services
-# OPENAI_API_KEY=your-openai-key
-# SENDGRID_API_KEY=your-sendgrid-key
 ```
 
-### Security Considerations
-- ✅ **HTTPS**: Always use HTTPS in production
-- ✅ **Environment Variables**: Never commit `.env` files
-- ✅ **Rate Limiting**: Configured to prevent abuse
-- ✅ **CORS**: Properly configured for your domain
-- ✅ **Row Level Security**: Database-level security with Supabase
-- ✅ **Input Validation**: All user inputs are validated
+Security headers, CSP, CORS allowlisting, and rate limiting are **only active when
+`APP_ENV` is not `development`**. Set `APP_ENV=production` locally to test them before shipping.
+
+### Security notes
+- ✅ HTTPS enforced via `FORCE_HTTPS` (skipped on localhost)
+- ✅ CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` set in production mode
+- ✅ CORS restricted to `ALLOWED_ORIGINS` in production; wide open in development
+- ✅ Row Level Security on every application table
+- ⚠️ Rate limiting is **in-memory per process** — it resets on restart and does not coordinate
+  across instances. Put a proper limiter (reverse proxy, WAF, or Redis-backed) in front of any
+  multi-instance or serverless deployment.
 
 ## 🏗️ Development
 
-### Available Scripts
+### Scripts
+
 ```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run check        # Type checking with Svelte
-npm run check:watch  # Type checking in watch mode
+npm run dev          # dev server
+npm run build        # production build
+npm run preview      # preview the production build (port 4173)
+npm run check        # type checking with svelte-check
+npm run check:watch  # type checking in watch mode
 
-# Code Quality
-npm run lint         # Lint and format code
-npm run format       # Format code with Prettier
+npm run lint         # prettier --check . && eslint .
+npm run format       # prettier --write .
 
-# Testing
-npm run test         # Run all tests
-npm run test:unit    # Run unit tests
-npm run test:e2e     # Run end-to-end tests
+npm run test:unit    # vitest
+npm run test:e2e     # playwright
+npm run test         # unit (single run) + e2e
 ```
 
-### Key Features Explained
+> The current test suite is scaffolding only — a trivial arithmetic test, a smoke render, and one
+> Playwright check. `npm run check` is the meaningful pre-commit gate.
 
-#### Template System
-- **Dynamic Variables**: Templates support variables with types (text, number, boolean, select)
-- **Smart Detection**: Automatically detects variables in template content
-- **Default Values**: Set default values for variables
-- **Validation**: Required fields and input validation
+### How the pieces fit together
 
-#### User Management
-- **Authentication**: Secure user registration and login
-- **Profiles**: User profile management with avatar uploads
-- **Admin System**: Role-based access control
-- **Public Directory**: Share templates with the community
+**Authentication.** `src/lib/supabase.ts` installs a custom session storage adapter that writes
+the Supabase session to `localStorage` and mirrors it into `sb-access-token` and `sb-auth-token`
+cookies. `src/hooks.server.ts` reads those cookies, validates the token with a service-role
+client, and populates `locals.user` / `locals.isAdmin`. `@supabase/ssr` is installed but not
+currently used.
 
-#### Security Features
-- **Row Level Security**: Database-level security policies
-- **Rate Limiting**: API rate limiting to prevent abuse
-- **Input Sanitization**: All user inputs are sanitized
-- **CORS Protection**: Properly configured cross-origin policies
+**Authorization.** `/admin/*` is blocked in the server hook, re-checked client-side in
+`src/routes/admin/+layout.svelte`, and enforced in the database through RLS policies that call
+the `is_admin_user()` SECURITY DEFINER function. Most data access happens directly from the
+browser, so **RLS is the real authorization boundary** — any new table needs policies.
 
-### Database Schema
-The application uses the following main tables:
-- `templates` - User-created prompt templates
-- `variables` - Template variables and their configurations
-- `categories` - Template organization categories
-- `user_profiles` - User profile information and admin status
-- `directory_categories` - Public template directory categories
-- `directory_templates` - Public templates in the directory
+**Templates.** Content is stored as plain text with `{{variable}}` placeholders. Variables are
+detected on save and stored in a `variables` row per placeholder, with a type, description,
+default value, and required flag. At usage time the content is split into text and variable
+segments, rendered as a form, and recombined.
+
+### Database schema
+
+| Table | Purpose |
+|---|---|
+| `categories` | Personal template categories (unique per user) |
+| `templates` | User-owned templates |
+| `variables` | Placeholder definitions for a template |
+| `directory_categories` | Public directory categories |
+| `directory_templates` | Public directory templates, with a `featured` flag |
+| `directory_variables` | Placeholder definitions for directory templates |
+| `user_profiles` | Profile fields and the `is_admin` flag |
+
+Plus the `profile_images` storage bucket (public read, 2 MB limit, owner-scoped writes) and the
+`is_admin_user(uuid)` helper function.
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Environment variables
+
 | Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL | Yes | - |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes | - |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes | - |
-| `NODE_ENV` | Environment mode | No | development |
-| `FORCE_HTTPS` | Force HTTPS redirects | No | false |
-| `ALLOWED_ORIGINS` | CORS allowed origins | No | * |
-| `RATE_LIMIT_MAX_REQUESTS` | Rate limit max requests | No | 100 |
-| `RATE_LIMIT_WINDOW_MS` | Rate limit window (ms) | No | 60000 |
-| `PUBLIC_ENABLE_LOGGING` | Enable client-side logging | No | false |
+|---|---|---|---|
+| `VITE_SUPABASE_URL` | Supabase project URL | Yes | — |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes | — |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-side admin operations) | Yes | falls back to anon key |
+| `APP_ENV` | `development` or `production` — gates security features | No | `NODE_ENV`, else `development` |
+| `FORCE_HTTPS` | Redirect HTTP → HTTPS (skipped on localhost) | No | `false` |
+| `ALLOWED_ORIGINS` | Comma-separated CORS allowlist (production only) | No | none |
+| `RATE_LIMIT_MAX_REQUESTS` | Requests per window per IP, `/api/*` only | No | `100` |
+| `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds | No | `60000` |
+| `PUBLIC_ENABLE_LOGGING` | Emit logs to the console outside development | No | `false` |
+| `MAX_FILE_SIZE_MB` | Documented upload ceiling (bucket limit is set in SQL) | No | `2` |
+| `ALLOWED_MIME_TYPES` | Documented upload allowlist (bucket list is set in SQL) | No | see `.env.example` |
+
+> `MAX_FILE_SIZE_MB` and `ALLOWED_MIME_TYPES` are declarative today — the effective limits are
+> the ones on the `profile_images` bucket in `20250322_user_profiles_update.sql`.
 
 ### Customization
-- **Themes**: Modify `src/app.css` for custom styling
-- **Components**: Add new UI components in `src/lib/components/`
-- **Routes**: Add new pages in `src/routes/`
-- **API**: Add new endpoints in `src/routes/api/`
+- **Theme tokens**: `src/app.css` and `src/variables.css`
+- **Components**: `src/lib/components/ui/` (configured by `components.json`)
+- **Pages**: `src/routes/`
+- **Server endpoints**: `src/routes/api/`
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+**"Missing Supabase credentials"** — `.env` is absent or `VITE_SUPABASE_URL` /
+`VITE_SUPABASE_ANON_KEY` are unset. Restart the dev server after editing `.env`; Vite only reads
+it at startup.
 
-#### "Missing Supabase credentials" Error
-- Ensure your `.env` file exists and contains the correct Supabase credentials
-- Check that `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set
+**Logged in on the client but signed out on the server** — the server reads the `sb-access-token`
+and `sb-auth-token` cookies written by the custom storage adapter in `src/lib/supabase.ts`.
+Clear site data and sign in again. Note these cookies expire after 8 hours.
 
-#### Database Connection Issues
-- Verify your Supabase project is active
-- Check that your database is not paused (free tier limitation)
-- Ensure your IP is not blocked in Supabase dashboard
+**`/admin` returns 403** — the server hook blocks it whenever `is_admin` is not `true` in
+`user_profiles`. Confirm the row exists and the flag is set for your user id.
 
-#### Build Errors
-- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-- Check Node.js version: `node --version` (should be 18+)
-- Run type checking: `npm run check`
+**"infinite recursion detected in policy"** — a policy on `user_profiles` is querying
+`user_profiles` directly. Apply `20250323_fix_user_profiles_policies.sql` and use
+`is_admin_user(auth.uid())` in any new policy.
 
-#### Admin Access Issues
-- Verify the user exists in the `user_profiles` table
-- Check that `is_admin` is set to `true`
-- Ensure you're using the correct user ID
+**Migration errors on a clean database** — apply the migrations in filename order as listed in
+[step 3](#3-set-up-the-database). If you are upgrading an instance created before
+`template_directory.sql` was renamed, see the note in that step.
 
-### Getting Help
-- Check the [Issues](https://github.com/your-username/prompt-templates/issues) page
-- Review the [Supabase documentation](https://supabase.com/docs)
-- Check [SvelteKit documentation](https://kit.svelte.dev/docs)
+**Database connection issues** — free-tier Supabase projects pause after a period of inactivity.
+Check the project is active and unpaused in the dashboard.
+
+**Build errors** — `rm -rf node_modules && npm install`, confirm Node 18+, and run `npm run check`
+for type errors.
+
+## 🗺️ Roadmap
+
+- **Move the database to [Neon](https://neon.tech/).** Free-tier Supabase projects pause when
+  inactive, which makes a lightly used deployment unreliable. Neon replaces Postgres only, so
+  Supabase Auth and Storage need separate replacements and Row Level Security stops being the
+  authorization boundary — the browser-side queries would move to server routes with explicit
+  ownership checks.
+- **Fixes and cleanup**: extract the duplicated CSV import/export out of the two large page
+  components, clear the Prettier/ESLint backlog, replace the in-memory rate limiter, and remove
+  the hand-written module declarations in `src/app.d.ts` that shadow SvelteKit's real types.
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Run tests: `npm run test`
-5. Commit your changes: `git commit -m 'Add amazing feature'`
-6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+conventions, and the workflow.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- [SvelteKit](https://kit.svelte.dev/) for the amazing framework
+- [SvelteKit](https://kit.svelte.dev/) for the framework
 - [Supabase](https://supabase.com/) for the backend infrastructure
-- [ShadCN](https://shadcn-svelte.com/) for the beautiful UI components
-- [TailwindCSS](https://tailwindcss.com/) for the utility-first CSS framework
+- [shadcn-svelte](https://shadcn-svelte.com/) for the component library
+- [TailwindCSS](https://tailwindcss.com/) for the styling system
 
 ---
 

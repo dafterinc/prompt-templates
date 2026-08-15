@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { createClient } from '@supabase/supabase-js';
 import { json } from '@sveltejs/kit';
+import { logger } from '$lib/utils/logger';
 
 // Create a server-side Supabase client with service role key
 const serverSupabase = createClient(
@@ -26,7 +27,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		const { data: authUsers, error: authError } = await serverSupabase.auth.admin.listUsers();
 
 		if (authError) {
-			console.error('Auth API error:', authError);
+			logger.error('Auth API error', authError, 'api:admin/users');
 			return json({ error: authError.message }, { status: 500 });
 		}
 
@@ -36,7 +37,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			.select('id, is_admin');
 
 		if (profilesError) {
-			console.error('Profiles error:', profilesError);
+			logger.error('Error fetching user profiles', profilesError, 'api:admin/users');
 			return json({ error: profilesError.message }, { status: 500 });
 		}
 
@@ -55,7 +56,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			});
 
 		if (templateCountsError) {
-			console.error('Template counts error:', templateCountsError);
+			logger.error('Error counting templates', templateCountsError, 'api:admin/users');
 			return json({ error: templateCountsError.message }, { status: 500 });
 		}
 
@@ -74,7 +75,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			});
 
 		if (categoryCountsError) {
-			console.error('Category counts error:', categoryCountsError);
+			logger.error('Error counting categories', categoryCountsError, 'api:admin/users');
 			return json({ error: categoryCountsError.message }, { status: 500 });
 		}
 
@@ -94,9 +95,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 		});
 
 		return json({ users });
-	} catch (error: any) {
-		console.error('Unexpected error:', error);
-		return json({ error: error.message || 'Failed to load users' }, { status: 500 });
+	} catch (error) {
+		logger.error('Unexpected error listing users', error, 'api:admin/users');
+		const message = error instanceof Error ? error.message : 'Failed to load users';
+		return json({ error: message }, { status: 500 });
 	}
 };
 
@@ -122,13 +124,14 @@ export const DELETE: RequestHandler = async ({ locals, request }) => {
 		const { error: deleteError } = await serverSupabase.auth.admin.deleteUser(userId);
 
 		if (deleteError) {
-			console.error('User deletion error:', deleteError);
+			logger.error('User deletion error', deleteError, 'api:admin/users');
 			return json({ error: deleteError.message }, { status: 500 });
 		}
 
 		return json({ success: true, message: 'User and all associated content deleted successfully' });
-	} catch (error: any) {
-		console.error('Unexpected error during user deletion:', error);
-		return json({ error: error.message || 'Failed to delete user' }, { status: 500 });
+	} catch (error) {
+		logger.error('Unexpected error during user deletion', error, 'api:admin/users');
+		const message = error instanceof Error ? error.message : 'Failed to delete user';
+		return json({ error: message }, { status: 500 });
 	}
 };
