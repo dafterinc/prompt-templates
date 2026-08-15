@@ -21,6 +21,7 @@
 	import Icon from '@iconify/svelte';
 	import { getUserFriendlyErrorMessage, getErrorMessage } from '$lib/utils';
 	import { logger } from '$lib/utils/logger';
+	import { downloadCSV, parseCSVRecords, timestampedFilename, toCSV } from '$lib/utils/csv';
 
 	interface Template {
 		id: string;
@@ -439,49 +440,18 @@
 				'Updated At'
 			];
 
-			// Convert data to CSV rows
-			const csvRows = templatesData.map((template) => {
-				// Convert variables to JSON string
-				const variablesJson = JSON.stringify(template.directory_variables || []);
+			const rows = templatesData.map((template) => [
+				template.title,
+				template.description,
+				template.content,
+				template.directory_categories?.name || '',
+				template.featured ? 'Yes' : 'No',
+				JSON.stringify(template.directory_variables || []),
+				template.created_at,
+				template.updated_at
+			]);
 
-				// Escape CSV values (handle commas, quotes, newlines)
-				const escapeCSV = (value: unknown) => {
-					if (value === null || value === undefined) return '';
-					const str = String(value);
-					if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-						return `"${str.replace(/"/g, '""')}"`;
-					}
-					return str;
-				};
-
-				return [
-					escapeCSV(template.title),
-					escapeCSV(template.description),
-					escapeCSV(template.content),
-					escapeCSV(template.directory_categories?.name || ''),
-					escapeCSV(template.featured ? 'Yes' : 'No'),
-					escapeCSV(variablesJson),
-					escapeCSV(template.created_at),
-					escapeCSV(template.updated_at)
-				].join(',');
-			});
-
-			// Combine headers and rows
-			const csvContent = [headers.join(','), ...csvRows].join('\n');
-
-			// Create and download file
-			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-			const link = document.createElement('a');
-			const url = URL.createObjectURL(blob);
-			link.setAttribute('href', url);
-			link.setAttribute(
-				'download',
-				`directory-templates-${new Date().toISOString().split('T')[0]}.csv`
-			);
-			link.style.visibility = 'hidden';
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+			downloadCSV(timestampedFilename('directory-templates'), toCSV(headers, rows));
 		} catch (e) {
 			error = getErrorMessage(e, 'Failed to export templates');
 		}
@@ -515,27 +485,14 @@
 				5 * 60 * 1000
 			);
 
-			// Read file content
-			const fileContent = await importFile.text();
-
-			// Parse CSV
-			const lines = fileContent.split('\n').filter((line) => line.trim());
-			if (lines.length < 2) {
-				importError = 'CSV file must have at least a header row and one data row';
-				return;
-			}
-
-			const headers = lines[0].split(',').map((h) => h.trim().replace(/"/g, ''));
-			const dataRows = lines.slice(1);
+			// Quote-aware, so template content spanning multiple lines survives the round trip.
+			const { records: dataRows, malformedRows } = parseCSVRecords(await importFile.text(), [
+				'Title',
+				'Description',
+				'Content',
+				'Category Name'
+			]);
 			importTotalRows = dataRows.length;
-
-			// Validate headers
-			const requiredHeaders = ['Title', 'Description', 'Content', 'Category Name'];
-			const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
-			if (missingHeaders.length > 0) {
-				importError = `Missing required headers: ${missingHeaders.join(', ')}`;
-				return;
-			}
 
 			let successCount = 0;
 			let errorCount = 0;
@@ -552,20 +509,13 @@
 				importProgress = Math.round((importCurrentRow / importTotalRows) * 100);
 
 				try {
-					const row = dataRows[i];
-					const values = parseCSVRow(row);
-
-					if (values.length !== headers.length) {
+					if (malformedRows.has(i)) {
 						errors.push(`Row ${i + 2}: Column count mismatch`);
 						errorCount++;
 						continue;
 					}
 
-					// Create row object
-					const rowData: Record<string, string> = {};
-					headers.forEach((header, index) => {
-						rowData[header] = values[index] || '';
-					});
+					const rowData = dataRows[i];
 
 					// Validate required fields
 					if (!rowData['Title']?.trim() || !rowData['Content']?.trim()) {
@@ -712,38 +662,6 @@
 				importTimeout = null;
 			}
 		}
-	}
-
-	function parseCSVRow(row: string): string[] {
-		const result: string[] = [];
-		let current = '';
-		let inQuotes = false;
-
-		for (let i = 0; i < row.length; i++) {
-			const char = row[i];
-
-			if (char === '"') {
-				if (inQuotes && row[i + 1] === '"') {
-					// Escaped quote
-					current += '"';
-					i++; // Skip next quote
-				} else {
-					// Toggle quote state
-					inQuotes = !inQuotes;
-				}
-			} else if (char === ',' && !inQuotes) {
-				// End of field
-				result.push(current.trim());
-				current = '';
-			} else {
-				current += char;
-			}
-		}
-
-		// Add last field
-		result.push(current.trim());
-
-		return result;
 	}
 
 	function handleFileSelect(event: Event) {
