@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
+	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -37,11 +37,6 @@
 		}
 	}
 	
-	// Check for registered param
-	$: if ($page.url.searchParams.get('registered') === 'true' && !error) {
-		error = 'Registration successful! Please check your email to verify your account before logging in.';
-	}
-	
 	// Handle tab change
 	function handleTabChange(value: string | undefined) {
 		if (value) {
@@ -63,16 +58,13 @@
 			loading = true;
 			error = '';
 			
-			const { error: signInError } = await supabase.auth.signInWithPassword({
-				email,
-				password
-			});
-			
+			const { error: signInError } = await authClient.signIn.email({ email, password });
+
 			if (signInError) {
-				error = signInError.message;
+				error = signInError.message || 'Failed to sign in';
 				return;
 			}
-			
+
 			// Redirect to templates page on success
 			goto('/templates');
 		} catch (e: any) {
@@ -102,18 +94,19 @@
 			loading = true;
 			error = '';
 			
-			const { error: signUpError } = await supabase.auth.signUp({
+			const { error: signUpError } = await authClient.signUp.email({
 				email,
-				password
+				password,
+				name: email
 			});
-			
+
 			if (signUpError) {
-				error = signUpError.message;
+				error = signUpError.message || 'Failed to sign up';
 				return;
 			}
-			
-			// Update URL to show registered message
-			goto('/auth/login?registered=true&tab=sign-in');
+
+			// Better Auth signs the user in on sign-up.
+			goto('/templates');
 		} catch (e: any) {
 			error = e.message || 'An unexpected error occurred';
 		} finally {

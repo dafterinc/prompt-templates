@@ -1,15 +1,17 @@
 import type { LayoutServerLoad } from './$types';
-import { logger } from '$lib/utils/logger';
+import { sql } from '$lib/server/db';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-  logger.debug('Server Load - Locals', {
-    userId: locals.user?.id,
-    isAdmin: locals.isAdmin
-  }, 'server');
+	let profileImageUrl: string | null = null;
+	if (locals.user) {
+		const rows = await sql<{ profile_image_url: string | null }[]>`
+			SELECT profile_image_url FROM user_profiles WHERE id = ${locals.user.id}`;
+		profileImageUrl = rows[0]?.profile_image_url ?? null;
+	}
 
-  // Return the user and admin status from server-side checks
-  return {
-    user: locals.user,
-    isAdmin: locals.isAdmin
-  };
-}; 
+	return {
+		user: locals.user,
+		isAdmin: locals.isAdmin,
+		profileImageUrl
+	};
+};

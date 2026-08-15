@@ -32,10 +32,9 @@ const config = {
 				],
 				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
 				'font-src': ['self', 'https://fonts.gstatic.com'],
-				'img-src': ['self', 'data:', 'https://*.supabase.co'],
+				'img-src': ['self', 'data:', 'https://*.public.blob.vercel-storage.com'],
 				'connect-src': [
 					'self',
-					'https://*.supabase.co',
 					'https://api.iconify.design',
 					'https://api.simplesvg.com',
 					'https://api.unisvg.com',

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { sql } from './db';
 
 // Data-access for the public directory. Reads are public (no ownership); the only write is copying
 // a directory template into the calling user's own collection, which is ownership-scoped to them.
@@ -14,49 +14,33 @@ export interface DirectoryListItem {
 }
 
 export async function listDirectoryTemplates(): Promise<DirectoryListItem[]> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_templates')
-		.select('id, title, description, category_id, featured, updated_at, directory_categories(name), directory_variables(count)')
-		.order('featured', { ascending: false })
-		.order('updated_at', { ascending: false });
-	if (error) throw error;
-	return (data ?? []).map((t: any) => ({
-		id: t.id,
-		title: t.title,
-		description: t.description,
-		category_id: t.category_id,
-		featured: !!t.featured,
-		category_name: t.directory_categories?.name ?? null,
-		variables_count: t.directory_variables?.[0]?.count ?? 0
-	}));
+	return await sql<DirectoryListItem[]>`
+		SELECT t.id, t.title, t.description, t.category_id, t.featured,
+			c.name AS category_name,
+			(SELECT count(*)::int FROM directory_variables v WHERE v.template_id = t.id) AS variables_count
+		FROM directory_templates t
+		LEFT JOIN directory_categories c ON c.id = t.category_id
+		ORDER BY t.featured DESC, t.updated_at DESC`;
 }
 
 export async function listDirectoryCategories(): Promise<{ id: string; name: string }[]> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_categories')
-		.select('id, name')
-		.order('name');
-	if (error) throw error;
-	return data ?? [];
+	return await sql<{ id: string; name: string }[]>`
+		SELECT id, name FROM directory_categories ORDER BY name`;
 }
 
 export async function getDirectoryTemplate(
 	id: string
 ): Promise<{ template: any; variables: any[] } | null> {
-	const { data: template, error } = await supabaseAdmin
-		.from('directory_templates')
-		.select('*, category:directory_categories(id, name)')
-		.eq('id', id)
-		.maybeSingle();
-	if (error) throw error;
+	const [template] = await sql<any[]>`
+		SELECT t.*,
+			CASE WHEN c.id IS NOT NULL THEN json_build_object('id', c.id, 'name', c.name) ELSE NULL END AS category
+		FROM directory_templates t
+		LEFT JOIN directory_categories c ON c.id = t.category_id
+		WHERE t.id = ${id}`;
 	if (!template) return null;
 
-	const { data: variables, error: vErr } = await supabaseAdmin
-		.from('directory_variables')
-		.select('*')
-		.eq('template_id', id)
-		.order('name');
-	if (vErr) throw vErr;
+	const variables = await sql<any[]>`
+		SELECT * FROM directory_variables WHERE template_id = ${id} ORDER BY name`;
 
 	return { template, variables: variables ?? [] };
 }
@@ -71,29 +55,26 @@ export async function addDirectoryTemplateToCollection(
 	if (!source) throw new Error('Template not found');
 	const { template, variables } = source;
 
-	const { data: created, error } = await supabaseAdmin
-		.from('templates')
-		.insert({
-			title: template.title,
-			description: template.description,
-			content: template.content,
-			category_id: categoryId,
-			user_id: userId
-		})
-		.select('id')
-		.single();
-	if (error) throw error;
+	await sql.begin(async (tx) => {
+		const [created] = await tx<{ id: string }[]>`
+			INSERT INTO templates ${tx({
+				title: template.title,
+				description: template.description,
+				content: template.content,
+				category_id: categoryId,
+				user_id: userId
+			})} RETURNING id`;
 
-	if (variables.length > 0) {
-		const rows = variables.map((v: any) => ({
-			template_id: created.id,
-			name: v.name,
-			description: v.description,
-			type: v.type,
-			default_value: v.default_value,
-			is_required: v.is_required
-		}));
-		const { error: vErr } = await supabaseAdmin.from('variables').insert(rows);
-		if (vErr) throw vErr;
-	}
+		if (variables.length > 0) {
+			const rows = variables.map((v: any) => ({
+				template_id: created.id,
+				name: v.name,
+				description: v.description,
+				type: v.type,
+				default_value: v.default_value,
+				is_required: v.is_required
+			}));
+			await tx`INSERT INTO variables ${tx(rows)}`;
+		}
+	});
 }

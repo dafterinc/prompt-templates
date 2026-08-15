@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { sql } from './db';
 import { extractVariableNames } from '$lib/utils/template';
 import { parseCSV } from '$lib/utils/csv';
 
@@ -17,18 +17,28 @@ export interface AdminDirectoryTemplateListItem {
 }
 
 export async function listAdminDirectoryTemplates(): Promise<AdminDirectoryTemplateListItem[]> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_templates')
-		.select('id, title, description, category_id, featured, directory_categories(name)')
-		.order('title');
-	if (error) throw error;
-	return (data ?? []).map((t: any) => ({
+	const rows = await sql<
+		{
+			id: string;
+			title: string;
+			description: string | null;
+			category_id: string | null;
+			featured: boolean;
+			category_name: string | null;
+		}[]
+	>`
+		SELECT t.id, t.title, t.description, t.category_id, t.featured,
+			c.name AS category_name
+		FROM directory_templates t
+		LEFT JOIN directory_categories c ON c.id = t.category_id
+		ORDER BY t.title`;
+	return rows.map((t) => ({
 		id: t.id,
 		title: t.title,
 		description: t.description,
 		category_id: t.category_id,
 		featured: !!t.featured,
-		category_name: t.directory_categories?.name ?? null
+		category_name: t.category_name ?? null
 	}));
 }
 
@@ -40,40 +50,38 @@ export interface NewDirectoryTemplateInput {
 	featured: boolean;
 }
 
-export async function createAdminDirectoryTemplate(input: NewDirectoryTemplateInput): Promise<string> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_templates')
-		.insert(input)
-		.select('id')
-		.single();
-	if (error) throw error;
-
+export async function createAdminDirectoryTemplate(
+	input: NewDirectoryTemplateInput
+): Promise<string> {
 	const names = extractVariableNames(input.content);
-	if (names.length > 0) {
-		const rows = names.map((name) => ({
-			template_id: data.id,
-			name,
-			description: '',
-			default_value: ''
-		}));
-		const { error: vErr } = await supabaseAdmin.from('directory_variables').insert(rows);
-		if (vErr) throw vErr;
-	}
-	return data.id;
+	let newId = '';
+	await sql.begin(async (tx) => {
+		const [row] = await tx<{ id: string }[]>`
+			INSERT INTO directory_templates ${tx(input)} RETURNING id`;
+		newId = row.id;
+		if (names.length > 0) {
+			const rows = names.map((name) => ({
+				template_id: row.id,
+				name,
+				description: '',
+				default_value: ''
+			}));
+			await tx`INSERT INTO directory_variables ${tx(rows)}`;
+		}
+	});
+	return newId;
 }
 
 export async function deleteAdminDirectoryTemplate(id: string): Promise<void> {
 	// directory_variables.template_id is ON DELETE CASCADE.
-	const { error } = await supabaseAdmin.from('directory_templates').delete().eq('id', id);
-	if (error) throw error;
+	await sql`DELETE FROM directory_templates WHERE id = ${id}`;
 }
 
-export async function toggleDirectoryTemplateFeatured(id: string, featured: boolean): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('directory_templates')
-		.update({ featured })
-		.eq('id', id);
-	if (error) throw error;
+export async function toggleDirectoryTemplateFeatured(
+	id: string,
+	featured: boolean
+): Promise<void> {
+	await sql`UPDATE directory_templates SET featured = ${featured}, updated_at = now() WHERE id = ${id}`;
 }
 
 // ---- Existing single-template helpers ----
@@ -81,22 +89,14 @@ export async function toggleDirectoryTemplateFeatured(id: string, featured: bool
 export async function getAdminDirectoryTemplate(
 	id: string
 ): Promise<{ template: any; variables: any[] } | null> {
-	const { data: template, error } = await supabaseAdmin
-		.from('directory_templates')
-		.select('*')
-		.eq('id', id)
-		.maybeSingle();
-	if (error) throw error;
+	const [template] = await sql<any[]>`
+		SELECT * FROM directory_templates WHERE id = ${id}`;
 	if (!template) return null;
 
-	const { data: variables, error: vErr } = await supabaseAdmin
-		.from('directory_variables')
-		.select('*')
-		.eq('template_id', id)
-		.order('name');
-	if (vErr) throw vErr;
+	const variables = await sql<any[]>`
+		SELECT * FROM directory_variables WHERE template_id = ${id} ORDER BY name`;
 
-	return { template, variables: variables ?? [] };
+	return { template, variables };
 }
 
 export interface DirectoryTemplateInput {
@@ -113,22 +113,17 @@ export async function updateAdminDirectoryTemplate(
 	id: string,
 	input: DirectoryTemplateInput
 ): Promise<void> {
-	const { error } = await supabaseAdmin.from('directory_templates').update(input).eq('id', id);
-	if (error) throw error;
+	await sql`UPDATE directory_templates SET ${sql(input)}, updated_at = now() WHERE id = ${id}`;
 
 	const names = extractVariableNames(input.content);
 	if (names.length === 0) return;
-	const { data: existing, error: exErr } = await supabaseAdmin
-		.from('directory_variables')
-		.select('name')
-		.eq('template_id', id);
-	if (exErr) throw exErr;
-	const existingNames = new Set((existing ?? []).map((v: { name: string }) => v.name));
+	const existing = await sql<{ name: string }[]>`
+		SELECT name FROM directory_variables WHERE template_id = ${id}`;
+	const existingNames = new Set(existing.map((v) => v.name));
 	const toAdd = names.filter((n) => !existingNames.has(n));
 	if (toAdd.length > 0) {
 		const rows = toAdd.map((name) => ({ template_id: id, name, type: 'text', is_required: false }));
-		const { error: vErr } = await supabaseAdmin.from('directory_variables').insert(rows);
-		if (vErr) throw vErr;
+		await sql`INSERT INTO directory_variables ${sql(rows)}`;
 	}
 }
 
@@ -138,31 +133,29 @@ export async function createDirectoryVariable(
 	templateId: string,
 	input: { name: string; description: string | null; default_value: string | null }
 ): Promise<void> {
-	const { error } = await supabaseAdmin.from('directory_variables').insert({
+	await sql`INSERT INTO directory_variables ${sql({
 		template_id: templateId,
 		name: input.name,
 		description: input.description,
 		type: 'text',
 		default_value: input.default_value,
 		is_required: false
-	});
-	if (error) throw error;
+	})}`;
 }
 
 export async function updateDirectoryVariable(
 	id: string,
 	input: { name: string; description: string | null; default_value: string | null }
 ): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('directory_variables')
-		.update({ name: input.name, description: input.description, default_value: input.default_value })
-		.eq('id', id);
-	if (error) throw error;
+	await sql`UPDATE directory_variables SET ${sql({
+		name: input.name,
+		description: input.description,
+		default_value: input.default_value
+	})}, updated_at = now() WHERE id = ${id}`;
 }
 
 export async function deleteDirectoryVariable(id: string): Promise<void> {
-	const { error } = await supabaseAdmin.from('directory_variables').delete().eq('id', id);
-	if (error) throw error;
+	await sql`DELETE FROM directory_variables WHERE id = ${id}`;
 }
 
 // ---- Categories ----
@@ -170,25 +163,17 @@ export async function deleteDirectoryVariable(id: string): Promise<void> {
 export async function listAdminDirectoryCategories(): Promise<
 	{ id: string; name: string; description: string | null }[]
 > {
-	const { data, error } = await supabaseAdmin
-		.from('directory_categories')
-		.select('id, name, description')
-		.order('name');
-	if (error) throw error;
-	return data ?? [];
+	return await sql<{ id: string; name: string; description: string | null }[]>`
+		SELECT id, name, description FROM directory_categories ORDER BY name`;
 }
 
 export async function createDirectoryCategory(
 	name: string,
 	description: string | null
 ): Promise<string> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_categories')
-		.insert({ name, description })
-		.select('id')
-		.single();
-	if (error) throw error;
-	return data.id;
+	const [row] = await sql<{ id: string }[]>`
+		INSERT INTO directory_categories (name, description) VALUES (${name}, ${description}) RETURNING id`;
+	return row.id;
 }
 
 export async function updateDirectoryCategory(
@@ -196,38 +181,41 @@ export async function updateDirectoryCategory(
 	name: string,
 	description: string | null
 ): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('directory_categories')
-		.update({ name, description })
-		.eq('id', id);
-	if (error) throw error;
+	await sql`UPDATE directory_categories SET name = ${name}, description = ${description}, updated_at = now() WHERE id = ${id}`;
 }
 
 /** Delete a directory category. Refuses if templates still reference it. */
 export async function deleteDirectoryCategory(
 	id: string
 ): Promise<{ ok: true } | { ok: false; count: number }> {
-	const { count, error: countError } = await supabaseAdmin
-		.from('directory_templates')
-		.select('id', { count: 'exact', head: true })
-		.eq('category_id', id);
-	if (countError) throw countError;
-	if ((count ?? 0) > 0) return { ok: false, count: count ?? 0 };
+	const [{ count }] = await sql<{ count: number }[]>`
+		SELECT count(*)::int AS count FROM directory_templates WHERE category_id = ${id}`;
+	if (count > 0) return { ok: false, count };
 
-	const { error } = await supabaseAdmin.from('directory_categories').delete().eq('id', id);
-	if (error) throw error;
+	await sql`DELETE FROM directory_categories WHERE id = ${id}`;
 	return { ok: true };
 }
 
 // ---- CSV ----
 
 export async function getAdminDirectoryTemplatesForExport(): Promise<any[]> {
-	const { data, error } = await supabaseAdmin
-		.from('directory_templates')
-		.select('*, directory_categories(name), directory_variables(name, description, type, default_value, is_required)')
-		.order('title');
-	if (error) throw error;
-	return data ?? [];
+	return await sql<any[]>`
+		SELECT t.*,
+			(SELECT json_build_object('name', c.name)
+				FROM directory_categories c WHERE c.id = t.category_id) AS directory_categories,
+			COALESCE(
+				(SELECT json_agg(json_build_object(
+					'name', v.name,
+					'description', v.description,
+					'type', v.type,
+					'default_value', v.default_value,
+					'is_required', v.is_required
+				) ORDER BY v.name)
+				FROM directory_variables v WHERE v.template_id = t.id),
+				'[]'::json
+			) AS directory_variables
+		FROM directory_templates t
+		ORDER BY t.title`;
 }
 
 export interface ImportResult {
@@ -239,19 +227,28 @@ export interface ImportResult {
 export async function importAdminDirectoryTemplatesFromCSV(csvText: string): Promise<ImportResult> {
 	const records = parseCSV(csvText);
 	if (records.length < 2) {
-		return { successCount: 0, errorCount: 0, errors: ['CSV must have a header row and at least one data row'] };
+		return {
+			successCount: 0,
+			errorCount: 0,
+			errors: ['CSV must have a header row and at least one data row']
+		};
 	}
 	const headers = records[0].map((h) => h.trim());
 	const dataRows = records.slice(1);
 	const required = ['Title', 'Description', 'Content', 'Category Name'];
 	const missing = required.filter((h) => !headers.includes(h));
 	if (missing.length > 0) {
-		return { successCount: 0, errorCount: 0, errors: [`Missing required headers: ${missing.join(', ')}`] };
+		return {
+			successCount: 0,
+			errorCount: 0,
+			errors: [`Missing required headers: ${missing.join(', ')}`]
+		};
 	}
 
-	const { data: cats } = await supabaseAdmin.from('directory_categories').select('id, name');
+	const cats = await sql<{ id: string; name: string }[]>`
+		SELECT id, name FROM directory_categories`;
 	const categoriesByName = new Map<string, string>(
-		(cats ?? []).map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
+		cats.map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
 	);
 
 	let successCount = 0;
@@ -282,7 +279,10 @@ export async function importAdminDirectoryTemplatesFromCSV(csvText: string): Pro
 				if (existing) {
 					categoryId = existing;
 				} else {
-					categoryId = await createDirectoryCategory(catName, `Imported category for ${row['Title']}`);
+					categoryId = await createDirectoryCategory(
+						catName,
+						`Imported category for ${row['Title']}`
+					);
 					categoriesByName.set(catName.toLowerCase(), categoryId);
 				}
 			}
@@ -298,40 +298,52 @@ export async function importAdminDirectoryTemplatesFromCSV(csvText: string): Pro
 			const seen = new Set(variables.map((v) => v.name));
 			for (const name of extractVariableNames(row['Content'])) {
 				if (!seen.has(name)) {
-					variables.push({ name, description: '', type: 'text', default_value: '', is_required: false });
+					variables.push({
+						name,
+						description: '',
+						type: 'text',
+						default_value: '',
+						is_required: false
+					});
 					seen.add(name);
 				}
 			}
 
-			const { data: tmpl, error: tErr } = await supabaseAdmin
-				.from('directory_templates')
-				.insert({
-					title: row['Title'].trim(),
-					description: row['Description']?.trim() || null,
-					content: row['Content'].trim(),
-					category_id: categoryId,
-					featured:
-						row['Featured']?.toLowerCase() === 'yes' || row['Featured']?.toLowerCase() === 'true'
-				})
-				.select('id')
-				.single();
-			if (tErr) {
-				errors.push(`Row ${i + 2}: Failed to create template: ${tErr.message}`);
+			let tmplId: string;
+			try {
+				const [tmpl] = await sql<{ id: string }[]>`
+					INSERT INTO directory_templates ${sql({
+						title: row['Title'].trim(),
+						description: row['Description']?.trim() || null,
+						content: row['Content'].trim(),
+						category_id: categoryId,
+						featured:
+							row['Featured']?.toLowerCase() === 'yes' ||
+							row['Featured']?.toLowerCase() === 'true'
+					})} RETURNING id`;
+				tmplId = tmpl.id;
+			} catch (tErr: any) {
+				errors.push(`Row ${i + 2}: Failed to create template: ${tErr?.message ?? tErr}`);
 				errorCount++;
 				continue;
 			}
 
 			if (variables.length > 0) {
 				const rows = variables.map((v) => ({
-					template_id: tmpl.id,
+					template_id: tmplId,
 					name: v.name,
 					description: v.description || '',
 					type: v.type || 'text',
 					default_value: v.default_value || '',
 					is_required: v.is_required || false
 				}));
-				const { error: vErr } = await supabaseAdmin.from('directory_variables').insert(rows);
-				if (vErr) errors.push(`Row ${i + 2}: Template created but variables failed: ${vErr.message}`);
+				try {
+					await sql`INSERT INTO directory_variables ${sql(rows)}`;
+				} catch (vErr: any) {
+					errors.push(
+						`Row ${i + 2}: Template created but variables failed: ${vErr?.message ?? vErr}`
+					);
+				}
 			}
 			successCount++;
 		} catch (e: any) {

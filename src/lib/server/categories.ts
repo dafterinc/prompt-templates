@@ -1,7 +1,7 @@
-import { supabaseAdmin } from './supabase';
+import { sql } from './db';
 
 // Data-access for the private "categories" domain. Every function takes the owning userId and
-// filters on it explicitly, so ownership is enforced here in one place rather than relying on RLS.
+// filters on it explicitly, so ownership is enforced here in one place.
 
 export interface CategoryWithCount {
 	id: string;
@@ -12,35 +12,24 @@ export interface CategoryWithCount {
 }
 
 export async function listCategories(userId: string): Promise<CategoryWithCount[]> {
-	const { data, error } = await supabaseAdmin
-		.from('categories')
-		.select('*, templates(count)')
-		.eq('user_id', userId)
-		.order('name');
-	if (error) throw error;
-	return (data ?? []).map((c: any) => ({
-		...c,
-		template_count: c.templates?.[0]?.count ?? 0
-	}));
+	return await sql<CategoryWithCount[]>`
+		SELECT c.id, c.name, c.created_at, c.updated_at,
+			(SELECT count(*)::int FROM templates t WHERE t.category_id = c.id) AS template_count
+		FROM categories c
+		WHERE c.user_id = ${userId}
+		ORDER BY c.name`;
 }
 
 export async function createCategory(userId: string, name: string): Promise<string> {
-	const { data, error } = await supabaseAdmin
-		.from('categories')
-		.insert({ name, user_id: userId })
-		.select('id')
-		.single();
-	if (error) throw error;
-	return data.id;
+	const [row] = await sql<{ id: string }[]>`
+		INSERT INTO categories (name, user_id) VALUES (${name}, ${userId}) RETURNING id`;
+	return row.id;
 }
 
 export async function updateCategory(userId: string, id: string, name: string): Promise<void> {
-	const { error } = await supabaseAdmin
-		.from('categories')
-		.update({ name, updated_at: new Date().toISOString() })
-		.eq('id', id)
-		.eq('user_id', userId);
-	if (error) throw error;
+	await sql`
+		UPDATE categories SET name = ${name}, updated_at = now()
+		WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 /** Delete a category the user owns. Refuses if the category still has templates. */
@@ -48,21 +37,12 @@ export async function deleteCategory(
 	userId: string,
 	id: string
 ): Promise<{ ok: true } | { ok: false; reason: 'has-templates' }> {
-	const { count, error: countError } = await supabaseAdmin
-		.from('templates')
-		.select('id', { count: 'exact', head: true })
-		.eq('category_id', id)
-		.eq('user_id', userId);
-	if (countError) throw countError;
-	if ((count ?? 0) > 0) {
+	const [{ count }] = await sql<{ count: number }[]>`
+		SELECT count(*)::int AS count FROM templates WHERE category_id = ${id} AND user_id = ${userId}`;
+	if (count > 0) {
 		return { ok: false, reason: 'has-templates' };
 	}
 
-	const { error } = await supabaseAdmin
-		.from('categories')
-		.delete()
-		.eq('id', id)
-		.eq('user_id', userId);
-	if (error) throw error;
+	await sql`DELETE FROM categories WHERE id = ${id} AND user_id = ${userId}`;
 	return { ok: true };
 }
